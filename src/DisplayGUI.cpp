@@ -31,8 +31,8 @@
 #define AIRCRAFT_DATABASE_FILE "aircraftDatabase.csv"
 #define ARTCC_BOUNDARY_FILE "Ground_Level_ARTCC_Boundary_Data_2025-05-15.csv"
 
-#define MAP_CENTER_LAT 40.73612
-#define MAP_CENTER_LON -80.33158
+#define MAP_CENTER_LAT 40.73612;
+#define MAP_CENTER_LON -80.33158;
 
 #define BIG_QUERY_UPLOAD_COUNT 50000
 #define BIG_QUERY_RUN_FILENAME "SimpleCSVtoBigQuery.py"
@@ -66,7 +66,6 @@ uint32_t createRGB(uint8_t r, uint8_t g, uint8_t b)
 {
     return ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
 }
-
 //---------------------------------------------------------------------------
 uint32_t PopularColors[] = {
     createRGB(255, 0, 0),     // Red
@@ -78,6 +77,7 @@ uint32_t PopularColors[] = {
     createRGB(0, 255, 255),   // Cyan
     createRGB(255, 0, 255),   // Magenta
     createRGB(255, 255, 255), // White
+    // createRGB(0, 0, 0),        // Black
     createRGB(128, 128, 128), // Gray
     createRGB(165, 42, 42)    // Brown
 };
@@ -106,6 +106,7 @@ typedef struct
             COLORREF Rgb;
         };
     };
+
 } TMultiColor;
 
 //---------------------------------------------------------------------------
@@ -136,12 +137,12 @@ static const char *strnistr(const char *pszSource, DWORD dwLength, const char *p
             pszSubStr = pszSource + dwIndex;
             break;
         }
+
         dwIndex++;
     }
 
     return pszSubStr;
 }
-
 //---------------------------------------------------------------------------
 static char *stristr(const char *String, const char *Pattern)
 {
@@ -158,10 +159,9 @@ static char *stristr(const char *String, const char *Pattern)
             slen--;
 
             /* if pattern longer than string */
+
             if (slen < plen)
-            {
                 return (NULL);
-            }
         }
 
         sptr = start;
@@ -173,25 +173,22 @@ static char *stristr(const char *String, const char *Pattern)
             pptr++;
 
             /* if end of pattern then pattern was found */
+
             if ('\0' == *pptr)
-            {
                 return (start);
-            }
         }
     }
     return (NULL);
 }
+//---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
 __fastcall TForm1::TForm1(TComponent *Owner)
     : TForm(Owner)
 {
-    AircraftDBPathFileName = ExtractFilePath(ExtractFileDir(Application->ExeName)) +
-                             AnsiString("..\\AircraftDB\\") + AIRCRAFT_DATABASE_FILE;
-    ARTCCBoundaryDataPathFileName = ExtractFilePath(ExtractFileDir(Application->ExeName)) +
-                                    AnsiString("..\\ARTCC_Boundary_Data\\") + ARTCC_BOUNDARY_FILE;
-    BigQueryPath = ExtractFilePath(ExtractFileDir(Application->ExeName)) +
-                   AnsiString("..\\BigQuery\\");
+    AircraftDBPathFileName = ExtractFilePath(ExtractFileDir(Application->ExeName)) + AnsiString("..\\AircraftDB\\") + AIRCRAFT_DATABASE_FILE;
+    ARTCCBoundaryDataPathFileName = ExtractFilePath(ExtractFileDir(Application->ExeName)) + AnsiString("..\\ARTCC_Boundary_Data\\") + ARTCC_BOUNDARY_FILE;
+    BigQueryPath = ExtractFilePath(ExtractFileDir(Application->ExeName)) + AnsiString("..\\BigQuery\\");
     BigQueryPythonScript = BigQueryPath + AnsiString(BIG_QUERY_RUN_FILENAME);
     DeleteFilesWithExtension(BigQueryPath, "csv");
     BigQueryLogFileName = BigQueryPath + "BigQuery.log";
@@ -204,6 +201,7 @@ __fastcall TForm1::TForm1(TComponent *Owner)
     TrackHook.Valid_CPA = false;
 
     HashTable = ght_create(50000);
+
     if (!HashTable)
     {
         throw Sysutils::Exception("Create Hash Failed");
@@ -220,9 +218,12 @@ __fastcall TForm1::TForm1(TComponent *Owner)
 
     LoadMapFromInternet = false;
     MapComboBox->ItemIndex = GoogleMaps;
+    // MapComboBox->ItemIndex=SkyVector_VFR;
+    // MapComboBox->ItemIndex=SkyVector_IFR_Low;
+    // MapComboBox->ItemIndex=SkyVector_IFR_High;
     LoadMap(MapComboBox->ItemIndex);
 
-    g_EarthView->m_Eye.h /= pow(1.3, 18);
+    g_EarthView->m_Eye.h /= pow(1.3, 18); // pow(1.3,43);
     SetMapCenter(g_EarthView->m_Eye.x, g_EarthView->m_Eye.y);
     TimeToGoTrackBar->Position = 120;
     BigQueryCSV = NULL;
@@ -231,7 +232,6 @@ __fastcall TForm1::TForm1(TComponent *Owner)
     InitAircraftDB(AircraftDBPathFileName);
     printf("init complete\n");
 }
-
 //---------------------------------------------------------------------------
 __fastcall TForm1::~TForm1()
 {
@@ -248,7 +248,6 @@ __fastcall TForm1::~TForm1()
             delete g_Keyhole;
     }
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::SetMapCenter(double &x, double &y)
 {
@@ -258,7 +257,6 @@ void __fastcall TForm1::SetMapCenter(double &x, double &y)
     siny = fmin(fmax(siny, -0.9999), 0.9999);
     y = (log((1 + siny) / (1 - siny)) / (4 * M_PI));
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ObjectDisplayInit(TObject *Sender)
 {
@@ -267,6 +265,7 @@ void __fastcall TForm1::ObjectDisplayInit(TObject *Sender)
     glEnable(GL_BLEND);
     glEnable(GL_LINE_STIPPLE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     NumSpriteImages = MakeAirplaneImages();
     MakeAirTrackFriend();
     MakeAirTrackHostile();
@@ -278,34 +277,34 @@ void __fastcall TForm1::ObjectDisplayInit(TObject *Sender)
     glPopAttrib();
     printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 }
-
 //---------------------------------------------------------------------------
+
 void __fastcall TForm1::ObjectDisplayResize(TObject *Sender)
 {
+    double Value;
+    // ObjectDisplay->Width=ObjectDisplay->Height;
     glViewport(0, 0, (GLsizei)ObjectDisplay->Width, (GLsizei)ObjectDisplay->Height);
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glEnable(GL_LINE_STIPPLE);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     g_EarthView->Resize(ObjectDisplay->Width, ObjectDisplay->Height);
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ObjectDisplayPaint(TObject *Sender)
 {
+
     if (DrawMap->Checked)
-    {
         glClearColor(0.0, 0.0, 0.0, 0.0);
-    }
     else
-    {
         glClearColor(BG_INTENSITY, BG_INTENSITY, BG_INTENSITY, 0.0);
-    }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    g_EarthView->Animate();
     g_EarthView->Render(DrawMap->Checked);
     g_GETileManager->Cleanup();
-
     Mw1 = Map_w[1].x - Map_w[0].x;
     Mw2 = Map_v[1].x - Map_v[0].x;
     Mh1 = Map_w[1].y - Map_w[0].y;
@@ -316,15 +315,16 @@ void __fastcall TForm1::ObjectDisplayPaint(TObject *Sender)
 
     DrawObjects();
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::Timer1Timer(TObject *Sender)
 {
-    __int64 CurrentTime = GetCurrentTimeInMsec();
+    __int64 CurrentTime;
+
+    CurrentTime = GetCurrentTimeInMsec();
     SystemTime->Caption = TimeToChar(CurrentTime);
+
     ObjectDisplay->Repaint();
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::DrawObjects(void)
 {
@@ -355,16 +355,15 @@ void __fastcall TForm1::DrawObjects(void)
     uint32_t *Key;
     ght_iterator_t iterator;
     TADS_B_Aircraft *Data, *DataCPA;
+
     DWORD i, j, Count;
 
     if (AreaTemp)
     {
         glPointSize(3.0);
         for (DWORD i = 0; i < AreaTemp->NumPoints; i++)
-        {
             LatLon2XY(AreaTemp->Points[i][1], AreaTemp->Points[i][0],
                       AreaTemp->PointsAdj[i][0], AreaTemp->PointsAdj[i][1]);
-        }
 
         glBegin(GL_POINTS);
         for (DWORD i = 0; i < AreaTemp->NumPoints; i++)
@@ -381,7 +380,6 @@ void __fastcall TForm1::DrawObjects(void)
         }
         glEnd();
     }
-
     Count = Areas->Count;
     for (i = 0; i < Count; i++)
     {
@@ -404,7 +402,6 @@ void __fastcall TForm1::DrawObjects(void)
             glVertex2f(ScrX, ScrY);
         }
         glEnd();
-
         if (Area->Selected)
         {
             glPopAttrib();
@@ -418,8 +415,8 @@ void __fastcall TForm1::DrawObjects(void)
             LatLon2XY(Area->Points[j][1], Area->Points[j][0],
                       Area->PointsAdj[j][0], Area->PointsAdj[j][1]);
         }
-
         TTriangles *Tri = Area->Triangles;
+
         while (Tri)
         {
             glBegin(GL_TRIANGLES);
@@ -444,10 +441,9 @@ void __fastcall TForm1::DrawObjects(void)
             glColor4f(1.0, 1.0, 1.0, 1.0);
 
             LatLon2XY(Data->Latitude, Data->Longitude, ScrX, ScrY);
+            // DrawPoint(ScrX,ScrY);
             if (Data->HaveSpeedAndHeading)
-            {
                 glColor4f(1.0, 0.0, 1.0, 1.0);
-            }
             else
             {
                 Data->Heading = 0.0;
@@ -462,8 +458,7 @@ void __fastcall TForm1::DrawObjects(void)
             {
                 double lat, lon, az;
                 if (VDirect(Data->Latitude, Data->Longitude,
-                            Data->Heading, Data->Speed / 3060.0 * TimeToGoTrackBar->Position,
-                            &lat, &lon, &az) == OKNOERROR)
+                            Data->Heading, Data->Speed / 3060.0 * TimeToGoTrackBar->Position, &lat, &lon, &az) == OKNOERROR)
                 {
                     double ScrX2, ScrY2;
                     LatLon2XY(lat, lon, ScrX2, ScrY2);
@@ -476,9 +471,7 @@ void __fastcall TForm1::DrawObjects(void)
             }
         }
     }
-
     ViewableAircraftCountLabel->Caption = ViewableAircraft;
-
     if (TrackHook.Valid_CC)
     {
         Data = (TADS_B_Aircraft *)ght_get(HashTable, sizeof(TrackHook.ICAO_CC), (void *)&TrackHook.ICAO_CC);
@@ -486,13 +479,9 @@ void __fastcall TForm1::DrawObjects(void)
         {
             ICAOLabel->Caption = Data->HexAddr;
             if (Data->HaveFlightNum)
-            {
                 FlightNumLabel->Caption = Data->FlightNum;
-            }
             else
-            {
                 FlightNumLabel->Caption = "N/A";
-            }
             if (Data->HaveLatLon)
             {
                 CLatLabel->Caption = DMS::DegreesMinutesSecondsLat(Data->Latitude).c_str();
@@ -505,8 +494,7 @@ void __fastcall TForm1::DrawObjects(void)
             }
             if (Data->HaveSpeedAndHeading)
             {
-                SpdLabel->Caption = FloatToStrF(Data->Speed, ffFixed, 12, 2) + " KTS  VRATE:" +
-                                    FloatToStrF(Data->VerticalRate, ffFixed, 12, 2);
+                SpdLabel->Caption = FloatToStrF(Data->Speed, ffFixed, 12, 2) + " KTS  VRATE:" + FloatToStrF(Data->VerticalRate, ffFixed, 12, 2);
                 HdgLabel->Caption = FloatToStrF(Data->Heading, ffFixed, 12, 2) + " DEG";
             }
             else
@@ -515,22 +503,18 @@ void __fastcall TForm1::DrawObjects(void)
                 HdgLabel->Caption = "N/A";
             }
             if (Data->Altitude)
-            {
                 AltLabel->Caption = FloatToStrF(Data->Altitude, ffFixed, 12, 2) + " FT";
-            }
             else
-            {
                 AltLabel->Caption = "N/A";
-            }
 
-            MsgCntLabel->Caption = "Raw: " + IntToStr((int)Data->NumMessagesRaw) +
-                                   " SBS: " + IntToStr((int)Data->NumMessagesSBS);
+            MsgCntLabel->Caption = "Raw: " + IntToStr((int)Data->NumMessagesRaw) + " SBS: " + IntToStr((int)Data->NumMessagesSBS);
             TrkLastUpdateTimeLabel->Caption = TimeToChar(Data->LastSeen);
 
             glColor4f(1.0, 0.0, 0.0, 1.0);
             LatLon2XY(Data->Latitude, Data->Longitude, ScrX, ScrY);
             DrawTrackHook(ScrX, ScrY);
         }
+
         else
         {
             TrackHook.Valid_CC = false;
@@ -545,13 +529,13 @@ void __fastcall TForm1::DrawObjects(void)
             TrkLastUpdateTimeLabel->Caption = "N/A";
         }
     }
-
     if (TrackHook.Valid_CPA)
     {
         bool CpaDataIsValid = false;
         DataCPA = (TADS_B_Aircraft *)ght_get(HashTable, sizeof(TrackHook.ICAO_CPA), (void *)&TrackHook.ICAO_CPA);
         if ((DataCPA) && (TrackHook.Valid_CC))
         {
+
             double tcpa, cpa_distance_nm, vertical_cpa;
             double lat1, lon1, lat2, lon2, junk;
             if (computeCPA(Data->Latitude, Data->Longitude, Data->Altitude,
@@ -561,12 +545,10 @@ void __fastcall TForm1::DrawObjects(void)
                            tcpa, cpa_distance_nm, vertical_cpa))
             {
                 if (VDirect(Data->Latitude, Data->Longitude,
-                            Data->Heading, Data->Speed / 3600.0 * tcpa,
-                            &lat1, &lon1, &junk) == OKNOERROR)
+                            Data->Heading, Data->Speed / 3600.0 * tcpa, &lat1, &lon1, &junk) == OKNOERROR)
                 {
                     if (VDirect(DataCPA->Latitude, DataCPA->Longitude,
-                                DataCPA->Heading, DataCPA->Speed / 3600.0 * tcpa,
-                                &lat2, &lon2, &junk) == OKNOERROR)
+                                DataCPA->Heading, DataCPA->Speed / 3600.0 * tcpa, &lat2, &lon2, &junk) == OKNOERROR)
                     {
                         glColor4f(0.0, 1.0, 0.0, 1.0);
                         glBegin(GL_LINE_STRIP);
@@ -588,10 +570,8 @@ void __fastcall TForm1::DrawObjects(void)
                         LatLon2XY(lat2, lon2, ScrX, ScrY);
                         glVertex2f(ScrX, ScrY);
                         glEnd();
-
                         CpaTimeValue->Caption = TimeToChar(tcpa * 1000);
-                        CpaDistanceValue->Caption = FloatToStrF(cpa_distance_nm, ffFixed, 10, 2) +
-                                                    " NM VDIST: " + IntToStr((int)vertical_cpa) + " FT";
+                        CpaDistanceValue->Caption = FloatToStrF(cpa_distance_nm, ffFixed, 10, 2) + " NM VDIST: " + IntToStr((int)vertical_cpa) + " FT";
                         CpaDataIsValid = true;
                     }
                 }
@@ -605,7 +585,6 @@ void __fastcall TForm1::DrawObjects(void)
         }
     }
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ObjectDisplayMouseDown(TObject *Sender,
                                                TMouseButton Button, TShiftState Shift, int X, int Y)
@@ -647,15 +626,14 @@ void __fastcall TForm1::ObjectDisplayMouseDown(TObject *Sender,
     else if (Button == mbMiddle)
         ResetXYOffset();
 }
-
 //---------------------------------------------------------------------------
+
 void __fastcall TForm1::ObjectDisplayMouseUp(TObject *Sender,
                                              TMouseButton Button, TShiftState Shift, int X, int Y)
 {
     if (Button == mbLeft)
         g_MouseDownMask &= ~LEFT_MOUSE_DOWN;
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ObjectDisplayMouseMove(TObject *Sender,
                                                TShiftState Shift, int X, int Y)
@@ -684,7 +662,7 @@ void __fastcall TForm1::ObjectDisplayMouseMove(TObject *Sender,
             if (PointInPolygon(Area->Points, Area->NumPoints, Point))
             {
 #if 0
-          MsgLog->Lines->Add("In Polygon "+ Area->Name);
+		  MsgLog->Lines->Add("In Polygon "+ Area->Name);
 #endif
             }
         }
@@ -696,20 +674,17 @@ void __fastcall TForm1::ObjectDisplayMouseMove(TObject *Sender,
         ObjectDisplay->Repaint();
     }
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ResetXYOffset(void)
 {
     SetMapCenter(g_EarthView->m_Eye.x, g_EarthView->m_Eye.y);
     ObjectDisplay->Repaint();
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::Exit1Click(TObject *Sender)
 {
     Close();
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::AddPoint(int X, int Y)
 {
@@ -725,7 +700,6 @@ void __fastcall TForm1::AddPoint(int X, int Y)
         ObjectDisplay->Repaint();
     }
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::HookTrack(int X, int Y, bool CPA_Hook)
 {
@@ -808,14 +782,12 @@ void __fastcall TForm1::HookTrack(int X, int Y, bool CPA_Hook)
         }
     }
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::LatLon2XY(double lat, double lon, double &x, double &y)
 {
     x = (Map_v[1].x - ((Map_w[1].x - (lon / 360.0)) / xf));
     y = Map_v[3].y - (Map_w[1].y / yf) + (asinh(tan(lat * M_PI / 180.0)) / (2 * M_PI * yf));
 }
-
 //---------------------------------------------------------------------------
 int __fastcall TForm1::XY2LatLon2(int x, int y, double &lat, double &lon)
 {
@@ -834,22 +806,20 @@ int __fastcall TForm1::XY2LatLon2(int x, int y, double &lat, double &lon)
 
     return 0;
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ZoomInClick(TObject *Sender)
 {
     g_EarthView->SingleMovement(NAV_ZOOM_IN);
     ObjectDisplay->Repaint();
 }
-
 //---------------------------------------------------------------------------
+
 void __fastcall TForm1::ZoomOutClick(TObject *Sender)
 {
     g_EarthView->SingleMovement(NAV_ZOOM_OUT);
 
     ObjectDisplay->Repaint();
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::Purge(void)
 {
@@ -877,13 +847,11 @@ void __fastcall TForm1::Purge(void)
         }
     }
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::Timer2Timer(TObject *Sender)
 {
     Purge();
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::PurgeButtonClick(TObject *Sender)
 {
@@ -903,7 +871,6 @@ void __fastcall TForm1::PurgeButtonClick(TObject *Sender)
         delete Data;
     }
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::InsertClick(TObject *Sender)
 {
@@ -919,7 +886,6 @@ void __fastcall TForm1::InsertClick(TObject *Sender)
     AreaTemp->Selected = false;
     AreaTemp->Triangles = NULL;
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::CancelClick(TObject *Sender)
 {
@@ -934,7 +900,6 @@ void __fastcall TForm1::CancelClick(TObject *Sender)
     // if (Areas->Count>0)  Delete->Enabled=true;
     // else   Delete->Enabled=false;
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::CompleteClick(TObject *Sender)
 {
@@ -966,7 +931,6 @@ void __fastcall TForm1::CompleteClick(TObject *Sender)
 
     AreaConfirm->ShowDialog();
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::AreaListViewSelectItem(TObject *Sender, TListItem *Item,
                                                bool Selected)
@@ -997,7 +961,6 @@ void __fastcall TForm1::AreaListViewSelectItem(TObject *Sender, TListItem *Item,
         Delete->Enabled = false;
     ObjectDisplay->Repaint();
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::DeleteClick(TObject *Sender)
 {
@@ -1040,7 +1003,6 @@ void __fastcall TForm1::DeleteClick(TObject *Sender)
 
     ObjectDisplay->Repaint();
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::AreaListViewCustomDrawItem(TCustomListView *Sender,
                                                    TListItem *Item, TCustomDrawState State, bool &DefaultDraw)
@@ -1074,7 +1036,6 @@ void __fastcall TForm1::AreaListViewCustomDrawItem(TCustomListView *Sender,
     }
     DefaultDraw = false;
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::DeleteAllAreas(void)
 {
@@ -1109,7 +1070,6 @@ void __fastcall TForm1::DeleteAllAreas(void)
 
     ObjectDisplay->Repaint();
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::FormMouseWheel(TObject *Sender, TShiftState Shift,
                                        int WheelDelta, TPoint &MousePos, bool &Handled)
@@ -1120,7 +1080,6 @@ void __fastcall TForm1::FormMouseWheel(TObject *Sender, TShiftState Shift,
         g_EarthView->SingleMovement(NAV_ZOOM_OUT);
     ObjectDisplay->Repaint();
 }
-
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 void __fastcall TTCPClientRawHandleThread::HandleInput(void)
@@ -1176,7 +1135,6 @@ void __fastcall TTCPClientRawHandleThread::HandleInput(void)
     else
         printf("Raw Decode Error:%d\n", Status);
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::RawConnectButtonClick(TObject *Sender)
 {
@@ -1207,7 +1165,6 @@ void __fastcall TForm1::RawConnectButtonClick(TObject *Sender)
         RawPlaybackButton->Enabled = true;
     }
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::IdTCPClientRawConnected(TObject *Sender)
 {
@@ -1216,13 +1173,11 @@ void __fastcall TForm1::IdTCPClientRawConnected(TObject *Sender)
     RawConnectButton->Caption = "Raw Disconnect";
     RawPlaybackButton->Enabled = false;
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::IdTCPClientRawDisconnected(TObject *Sender)
 {
     TCPClientRawHandleThread->Terminate();
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::RawRecordButtonClick(TObject *Sender)
 {
@@ -1253,7 +1208,6 @@ void __fastcall TForm1::RawRecordButtonClick(TObject *Sender)
         RawRecordButton->Caption = "Raw Record";
     }
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::RawPlaybackButtonClick(TObject *Sender)
 {
@@ -1294,21 +1248,18 @@ void __fastcall TForm1::RawPlaybackButtonClick(TObject *Sender)
         RawConnectButton->Enabled = true;
     }
 }
-
 //---------------------------------------------------------------------------
 // Constructor for the thread class
 __fastcall TTCPClientRawHandleThread::TTCPClientRawHandleThread(bool value) : TThread(value)
 {
     FreeOnTerminate = true; // Automatically free the thread object after execution
 }
-
 //---------------------------------------------------------------------------
 // Destructor for the thread class
 __fastcall TTCPClientRawHandleThread::~TTCPClientRawHandleThread()
 {
     // Clean up resources if needed
 }
-
 //---------------------------------------------------------------------------
 // Execute method where the thread's logic resides
 void __fastcall TTCPClientRawHandleThread::Execute(void)
@@ -1377,25 +1328,21 @@ void __fastcall TTCPClientRawHandleThread::Execute(void)
         }
     }
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TTCPClientRawHandleThread::StopPlayback(void)
 {
     Form1->RawPlaybackButtonClick(NULL);
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TTCPClientRawHandleThread::StopTCPClient(void)
 {
     Form1->RawConnectButtonClick(NULL);
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::CycleImagesClick(TObject *Sender)
 {
     CurrentSpriteImage = 0;
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::SBSConnectButtonClick(TObject *Sender)
 {
@@ -1426,7 +1373,6 @@ void __fastcall TForm1::SBSConnectButtonClick(TObject *Sender)
         SBSPlaybackButton->Enabled = true;
     }
 }
-
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 void __fastcall TTCPClientSBSHandleThread::HandleInput(void)
@@ -1457,21 +1403,18 @@ void __fastcall TTCPClientSBSHandleThread::HandleInput(void)
     }
     SBS_Message_Decode(StringMsgBuffer.c_str());
 }
-
 //---------------------------------------------------------------------------
 // Constructor for the thread class
 __fastcall TTCPClientSBSHandleThread::TTCPClientSBSHandleThread(bool value) : TThread(value)
 {
     FreeOnTerminate = true; // Automatically free the thread object after execution
 }
-
 //---------------------------------------------------------------------------
 // Destructor for the thread class
 __fastcall TTCPClientSBSHandleThread::~TTCPClientSBSHandleThread()
 {
     // Clean up resources if needed
 }
-
 //---------------------------------------------------------------------------
 // Execute method where the thread's logic resides
 void __fastcall TTCPClientSBSHandleThread::Execute(void)
@@ -1540,19 +1483,16 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
         }
     }
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TTCPClientSBSHandleThread::StopPlayback(void)
 {
     Form1->SBSPlaybackButtonClick(NULL);
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TTCPClientSBSHandleThread::StopTCPClient(void)
 {
     Form1->SBSConnectButtonClick(NULL);
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::SBSRecordButtonClick(TObject *Sender)
 {
@@ -1583,7 +1523,6 @@ void __fastcall TForm1::SBSRecordButtonClick(TObject *Sender)
         SBSRecordButton->Caption = "SBS Record";
     }
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::SBSPlaybackButtonClick(TObject *Sender)
 {
@@ -1624,7 +1563,6 @@ void __fastcall TForm1::SBSPlaybackButtonClick(TObject *Sender)
         SBSConnectButton->Enabled = true;
     }
 }
-
 //---------------------------------------------------------------------------
 
 void __fastcall TForm1::IdTCPClientSBSConnected(TObject *Sender)
@@ -1634,13 +1572,11 @@ void __fastcall TForm1::IdTCPClientSBSConnected(TObject *Sender)
     SBSConnectButton->Caption = "SBS Disconnect";
     SBSPlaybackButton->Enabled = false;
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::IdTCPClientSBSDisconnected(TObject *Sender)
 {
     TCPClientSBSHandleThread->Terminate();
 }
-
 //---------------------------------------------------------------------------
 
 void __fastcall TForm1::TimeToGoTrackBarChange(TObject *Sender)
@@ -1649,7 +1585,6 @@ void __fastcall TForm1::TimeToGoTrackBarChange(TObject *Sender)
     hmsm = TimeToGoTrackBar->Position * 1000;
     TimeToGoText->Caption = TimeToChar(hmsm);
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::LoadMap(int Type)
 {
@@ -1744,7 +1679,6 @@ void __fastcall TForm1::LoadMap(int Type)
     g_EarthView = new FlatEarthView(g_MasterLayer);
     g_EarthView->Resize(ObjectDisplay->Width, ObjectDisplay->Height);
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::MapComboBoxChange(TObject *Sender)
 {
@@ -1782,7 +1716,6 @@ void __fastcall TForm1::MapComboBoxChange(TObject *Sender)
     Timer1->Enabled = true;
     Timer2->Enabled = true;
 }
-
 //---------------------------------------------------------------------------
 
 void __fastcall TForm1::BigQueryCheckBoxClick(TObject *Sender)
@@ -1795,7 +1728,6 @@ void __fastcall TForm1::BigQueryCheckBoxClick(TObject *Sender)
         RunPythonScript(BigQueryPythonScript, BigQueryPath + " " + BigQueryCSVFileName);
     }
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::CreateBigQueryCSV(void)
 {
@@ -1812,7 +1744,6 @@ void __fastcall TForm1::CreateBigQueryCSV(void)
     AnsiString Header = AnsiString("Message Type,Transmission Type,SessionID,AircraftID,HexIdent,FlightID,Date_MSG_Generated,Time_MSG_Generated,Date_MSG_Logged,Time_MSG_Logged,Callsign,Altitude,GroundSpeed,Track,Latitude,Longitude,VerticalRate,Squawk,Alert,Emergency,SPI,IsOnGround");
     BigQueryCSV->WriteLine(Header);
 }
-
 //--------------------------------------------------------------------------
 void __fastcall TForm1::CloseBigQueryCSV(void)
 {
@@ -1822,7 +1753,6 @@ void __fastcall TForm1::CloseBigQueryCSV(void)
         BigQueryCSV = NULL;
     }
 }
-
 //--------------------------------------------------------------------------
 static void RunPythonScript(AnsiString scriptPath, AnsiString args)
 {
@@ -1860,6 +1790,7 @@ static void RunPythonScript(AnsiString scriptPath, AnsiString args)
             nullptr,          // No module name (use command line)
             cmdLineCharArray, // Command line
             nullptr,          // Process handle not inheritable
+            nullptr,          // Thread handle not inheritable
 #if LOG_PYTHON
             TRUE,
 #else
@@ -1887,14 +1818,12 @@ void __fastcall TForm1::UseSBSRemoteClick(TObject *Sender)
 {
     SBSIpAddress->Text = "data.adsbhub.org";
 }
-
 //---------------------------------------------------------------------------
 
 void __fastcall TForm1::UseSBSLocalClick(TObject *Sender)
 {
     SBSIpAddress->Text = "128.237.96.41";
 }
-
 //---------------------------------------------------------------------------
 static bool DeleteFilesWithExtension(AnsiString dirPath, AnsiString extension)
 {
@@ -1923,7 +1852,6 @@ static bool DeleteFilesWithExtension(AnsiString dirPath, AnsiString extension)
 }
 static bool IsFirstRow = true;
 static bool CallBackInit = false;
-
 //---------------------------------------------------------------------------
 static int CSV_callback_ARTCCBoundaries(struct CSV_context *ctx, const char *value)
 {
@@ -2006,7 +1934,6 @@ static int CSV_callback_ARTCCBoundaries(struct CSV_context *ctx, const char *val
     }
     return (rc);
 }
-
 //---------------------------------------------------------------------------
 bool __fastcall TForm1::LoadARTCCBoundaries(AnsiString FileName)
 {
@@ -2037,13 +1964,11 @@ bool __fastcall TForm1::LoadARTCCBoundaries(AnsiString FileName)
     printf("Done\n");
     return (true);
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TForm1::LoadARTCCBoundaries1Click(TObject *Sender)
 {
     LoadARTCCBoundaries(ARTCCBoundaryDataPathFileName);
 }
-
 //---------------------------------------------------------------------------
 static int FinshARTCCBoundary(void)
 {
@@ -2113,5 +2038,4 @@ static int FinshARTCCBoundary(void)
     Form1->AreaTemp = NULL;
     return 0;
 }
-
 //---------------------------------------------------------------------------
