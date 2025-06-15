@@ -1,0 +1,77 @@
+Running ADSB Software on Raspberry Pi and Configuring Raspberry Pi for ADSBHub.org
+
+
+
+Basic setup for dump1090 on Raspberry Pi
+===================================
+
+The following 7 steps (i.e., sudo apt update -> make) are completed with the base Raspberry Pi image.  
+This information is for your awareness or to build your own station from a basic Raspberry Pi OS.
+------------------------------------------------
+sudo apt update
+sudo apt full-upgrade
+sudo apt install librtlsdr-dev
+sudo apt install netcat-traditional
+git clone https://github.com/antirez/dump1090.git
+cd dump1090/
+make
+
+
+Plug in your SDR with antenna attached and run the following command:
+------------------------------------------------
+sudo ./dump1090 --interactive --net
+
+
+You should see flight information if you are able to receive ADS-B signals (e.g., near a window).
+
+
+
+Configuration of your ADS-B receiver/software for ADSBHub.org
+===================================
+
+Instructions are also here: https://www.adsbhub.org/howtofeed.php
+
+Download and install ADSBHub client (Note: See separate instructions for establishing an ADSBHub account)
+------------------------------------------------
+sudo su -
+sudo bash
+cd /usr/bin
+wget https://www.adsbhub.org/downloads/adsbhub.php --no-check-certificate -O adsbhub.sh
+chmod 755 adsbhub.sh
+
+Check you ckey
+------------------------------------------------
+cat adsbhub.sh | grep "ckey="
+
+
+Note: If your ckey is not configured automatically (i.e. it is an empty ckey=' '), please edit adsbhub.sh and add "Station dynamic IP update ckey" from Step 2 in the ADSB Hub account set up. For example:
+sudo nano adsbhub.sh
+
+Replace the ' ' with the station dynamic IP update ckey in quotation marks after ckey=. 
+ 
+
+
+Start ADSBHub client
+------------------------------------------------
+/usr/bin/adsbhub.sh &
+
+Note: The "&" allows the process to run in the background.  It's not mandatory.
+
+
+For automatic start of ADSBHub client after reboot edit your /etc/rc.local file and add before 'exit 0'
+------------------------------------------------
+sudo nano /etc/rc.local
+
+Go to line before 'exit0' and add:
+ /usr/bin/adsbhub.sh &
+Save and Exit:
+ Ctrl+O Enter Ctrl+X
+ 
+
+To be sure that /etc/rc.local is executed during startup
+------------------------------------------------
+chmod +x /etc/rc.local
+wget https://www.adsbhub.org/downloads/rc-local.service --no-check-certificate -O /etc/systemd/system/rc-local.service
+systemctl enable rc-local.service
+
+
