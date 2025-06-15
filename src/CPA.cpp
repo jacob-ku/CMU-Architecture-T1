@@ -72,7 +72,7 @@ bool computeCPA(double lat1, double lon1, double altitude1, double speed1, doubl
 
     // Compute velocity vectors for both aircraft in ECEF frame
     velocityVector(lat1, lon1, speed1, heading1, &vx1, &vy1, &vz1);
-    velocityVector(lat1, lon2, speed2, heading2, &vx2, &vy2, &vz2);
+    velocityVector(lat2, lon2, speed2, heading2, &vx2, &vy2, &vz2);
 
     // Relative position and velocity
     double dx = x2 - x1, dy = y2 - y1, dz = z2 - z1;
