@@ -24,6 +24,7 @@
 #include <IdTCPClient.hpp>
 #include <IdTCPConnection.hpp>
 #include "cspin.h"
+#include "MapProviderFactory.h"
 
 typedef float T_GL_Color[4];
 
@@ -224,6 +225,8 @@ class TForm1 : public TForm
     void __fastcall LoadARTCCBoundaries1Click(TObject *Sender);
 
 private: // User declarations
+    MapProvider* currentMapProvider;
+
 public:  // User declarations
     __fastcall TForm1(TComponent *Owner);
     __fastcall ~TForm1();
@@ -247,11 +250,6 @@ public:  // User declarations
     Vector3d Map_v[4], Map_p[4];
     Vector2d Map_w[2];
     double Mw1, Mw2, Mh1, Mh2, xf, yf;
-    KeyholeConnection *g_Keyhole;
-    FilesystemStorage *g_Storage;
-    MasterLayer *g_MasterLayer;
-    TileManager *g_GETileManager;
-    EarthView *g_EarthView;
     double MapCenterLat, MapCenterLon;
     int g_MouseLeftDownX;
     int g_MouseLeftDownY;
@@ -277,6 +275,8 @@ public:  // User declarations
     int CurrentSpriteImage;
     AnsiString AircraftDBPathFileName;
     AnsiString ARTCCBoundaryDataPathFileName;
+    FlatEarthView* GetEarthView() const;
+    TileManager* GetTileManager() const;
 };
 //---------------------------------------------------------------------------
 extern PACKAGE TForm1 *Form1;
