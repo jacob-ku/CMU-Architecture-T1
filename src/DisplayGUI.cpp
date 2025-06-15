@@ -26,6 +26,7 @@
 #include "CPA.h"
 #include "AircraftDB.h"
 #include "csv.h"
+#include "MapProviderFactory.h"
 
 #define AIRCRAFT_DATABASE_URL "https://opensky-network.org/datasets/metadata/aircraftDatabase.zip"
 #define AIRCRAFT_DATABASE_FILE "aircraftDatabase.csv"
@@ -223,8 +224,8 @@ __fastcall TForm1::TForm1(TComponent *Owner)
     // MapComboBox->ItemIndex=SkyVector_IFR_High;
     LoadMap(MapComboBox->ItemIndex);
 
-    g_EarthView->m_Eye.h /= pow(1.3, 18); // pow(1.3,43);
-    SetMapCenter(g_EarthView->m_Eye.x, g_EarthView->m_Eye.y);
+    GetEarthView()->m_Eye.h /= pow(1.3,18);//pow(1.3,43);
+    SetMapCenter(GetEarthView()->m_Eye.x, GetEarthView()->m_Eye.y);
     TimeToGoTrackBar->Position = 120;
     BigQueryCSV = NULL;
     BigQueryRowCount = 0;
@@ -237,15 +238,9 @@ __fastcall TForm1::~TForm1()
 {
     Timer1->Enabled = false;
     Timer2->Enabled = false;
-    delete g_EarthView;
-    if (g_GETileManager)
-        delete g_GETileManager;
-    delete g_MasterLayer;
-    delete g_Storage;
-    if (LoadMapFromInternet)
-    {
-        if (g_Keyhole)
-            delete g_Keyhole;
+    if (currentMapProvider) {
+        delete currentMapProvider;
+	    currentMapProvider = nullptr;
     }
 }
 //---------------------------------------------------------------------------
@@ -272,7 +267,7 @@ void __fastcall TForm1::ObjectDisplayInit(TObject *Sender)
     MakeAirTrackUnknown();
     MakePoint();
     MakeTrackHook();
-    g_EarthView->Resize(ObjectDisplay->Width, ObjectDisplay->Height);
+    currentMapProvider->Resize(ObjectDisplay->Width,ObjectDisplay->Height);
     glPushAttrib(GL_LINE_BIT);
     glPopAttrib();
     printf("OpenGL Version %s\n", glGetString(GL_VERSION));
@@ -289,7 +284,7 @@ void __fastcall TForm1::ObjectDisplayResize(TObject *Sender)
     glEnable(GL_LINE_STIPPLE);
     // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    g_EarthView->Resize(ObjectDisplay->Width, ObjectDisplay->Height);
+    currentMapProvider->Resize(ObjectDisplay->Width,ObjectDisplay->Height);
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ObjectDisplayPaint(TObject *Sender)
@@ -302,9 +297,9 @@ void __fastcall TForm1::ObjectDisplayPaint(TObject *Sender)
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    g_EarthView->Animate();
-    g_EarthView->Render(DrawMap->Checked);
-    g_GETileManager->Cleanup();
+    GetEarthView()->Animate();
+    GetEarthView()->Render(DrawMap->Checked);
+    GetTileManager()->Cleanup();
     Mw1 = Map_w[1].x - Map_w[0].x;
     Mw2 = Map_v[1].x - Map_v[0].x;
     Mh1 = Map_w[1].y - Map_w[0].y;
@@ -600,7 +595,7 @@ void __fastcall TForm1::ObjectDisplayMouseDown(TObject *Sender,
             g_MouseLeftDownX = X;
             g_MouseLeftDownY = Y;
             g_MouseDownMask |= LEFT_MOUSE_DOWN;
-            g_EarthView->StartDrag(X, Y, NAV_DRAG_PAN);
+            GetEarthView()->StartDrag(X, Y, NAV_DRAG_PAN);
         }
     }
     else if (Button == mbRight)
@@ -670,14 +665,14 @@ void __fastcall TForm1::ObjectDisplayMouseMove(TObject *Sender,
 
     if (g_MouseDownMask & LEFT_MOUSE_DOWN)
     {
-        g_EarthView->Drag(g_MouseLeftDownX, g_MouseLeftDownY, X, Y, NAV_DRAG_PAN);
+        GetEarthView()->Drag(g_MouseLeftDownX, g_MouseLeftDownY, X,Y, NAV_DRAG_PAN);
         ObjectDisplay->Repaint();
     }
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ResetXYOffset(void)
 {
-    SetMapCenter(g_EarthView->m_Eye.x, g_EarthView->m_Eye.y);
+    SetMapCenter(GetEarthView()->m_Eye.x, GetEarthView()->m_Eye.y);
     ObjectDisplay->Repaint();
 }
 //---------------------------------------------------------------------------
@@ -809,14 +804,14 @@ int __fastcall TForm1::XY2LatLon2(int x, int y, double &lat, double &lon)
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ZoomInClick(TObject *Sender)
 {
-    g_EarthView->SingleMovement(NAV_ZOOM_IN);
+    GetEarthView()->SingleMovement(NAV_ZOOM_IN);
     ObjectDisplay->Repaint();
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TForm1::ZoomOutClick(TObject *Sender)
 {
-    g_EarthView->SingleMovement(NAV_ZOOM_OUT);
+    GetEarthView()->SingleMovement(NAV_ZOOM_OUT);
 
     ObjectDisplay->Repaint();
 }
@@ -1075,9 +1070,9 @@ void __fastcall TForm1::FormMouseWheel(TObject *Sender, TShiftState Shift,
                                        int WheelDelta, TPoint &MousePos, bool &Handled)
 {
     if (WheelDelta > 0)
-        g_EarthView->SingleMovement(NAV_ZOOM_IN);
+        GetEarthView()->SingleMovement(NAV_ZOOM_IN);
     else
-        g_EarthView->SingleMovement(NAV_ZOOM_OUT);
+        GetEarthView()->SingleMovement(NAV_ZOOM_OUT);
     ObjectDisplay->Repaint();
 }
 //---------------------------------------------------------------------------
@@ -1588,131 +1583,31 @@ void __fastcall TForm1::TimeToGoTrackBarChange(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm1::LoadMap(int Type)
 {
-    AnsiString HomeDir = ExtractFilePath(ExtractFileDir(Application->ExeName));
-    if (Type == GoogleMaps)
-    {
-        HomeDir += "..\\GoogleMap";
-        if (LoadMapFromInternet)
-            HomeDir += "_Live\\";
-        else
-            HomeDir += "\\";
-        std::string cachedir;
-        cachedir = HomeDir.c_str();
-
-        if (mkdir(cachedir.c_str()) != 0 && errno != EEXIST)
-            throw Sysutils::Exception("Can not create cache directory");
-
-        g_Storage = new FilesystemStorage(cachedir, true);
-        if (LoadMapFromInternet)
-        {
-            g_Keyhole = new KeyholeConnection(GoogleMaps);
-            g_Keyhole->SetSaveStorage(g_Storage);
-            g_Storage->SetNextLoadStorage(g_Keyhole);
-        }
+    // Clean up previous provider if any
+    if (currentMapProvider) {
+        delete currentMapProvider;
+        currentMapProvider = nullptr;
     }
-    else if (Type == SkyVector_VFR)
-    {
-        HomeDir += "..\\VFR_Map";
-        if (LoadMapFromInternet)
-            HomeDir += "_Live\\";
-        else
-            HomeDir += "\\";
-        std::string cachedir;
-        cachedir = HomeDir.c_str();
-
-        if (mkdir(cachedir.c_str()) != 0 && errno != EEXIST)
-            throw Sysutils::Exception("Can not create cache directory");
-
-        g_Storage = new FilesystemStorage(cachedir, true);
-        if (LoadMapFromInternet)
-        {
-            g_Keyhole = new KeyholeConnection(SkyVector_VFR);
-            g_Keyhole->SetSaveStorage(g_Storage);
-            g_Storage->SetNextLoadStorage(g_Keyhole);
-        }
+    // Create new provider using the factory
+    currentMapProvider = MapProviderFactory::Create(Type);
+    if (currentMapProvider) {
+        currentMapProvider->Initialize(LoadMapFromInternet);
+        currentMapProvider->Resize(ObjectDisplay->Width, ObjectDisplay->Height);
     }
-    else if (Type == SkyVector_IFR_Low)
-    {
-        HomeDir += "..\\IFR_Low_Map";
-        if (LoadMapFromInternet)
-            HomeDir += "_Live\\";
-        else
-            HomeDir += "\\";
-        std::string cachedir;
-        cachedir = HomeDir.c_str();
-
-        if (mkdir(cachedir.c_str()) != 0 && errno != EEXIST)
-            throw Sysutils::Exception("Can not create cache directory");
-
-        g_Storage = new FilesystemStorage(cachedir, true);
-        if (LoadMapFromInternet)
-        {
-            g_Keyhole = new KeyholeConnection(SkyVector_IFR_Low);
-            g_Keyhole->SetSaveStorage(g_Storage);
-            g_Storage->SetNextLoadStorage(g_Keyhole);
-        }
-    }
-    else if (Type == SkyVector_IFR_High)
-    {
-        HomeDir += "..\\IFR_High_Map";
-        if (LoadMapFromInternet)
-            HomeDir += "_Live\\";
-        else
-            HomeDir += "\\";
-        std::string cachedir;
-        cachedir = HomeDir.c_str();
-
-        if (mkdir(cachedir.c_str()) != 0 && errno != EEXIST)
-            throw Sysutils::Exception("Can not create cache directory");
-
-        g_Storage = new FilesystemStorage(cachedir, true);
-        if (LoadMapFromInternet)
-        {
-            g_Keyhole = new KeyholeConnection(SkyVector_IFR_High);
-            g_Keyhole->SetSaveStorage(g_Storage);
-            g_Storage->SetNextLoadStorage(g_Keyhole);
-        }
-    }
-    g_GETileManager = new TileManager(g_Storage);
-    g_MasterLayer = new GoogleLayer(g_GETileManager);
-
-    g_EarthView = new FlatEarthView(g_MasterLayer);
-    g_EarthView->Resize(ObjectDisplay->Width, ObjectDisplay->Height);
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::MapComboBoxChange(TObject *Sender)
 {
-    double m_Eyeh = g_EarthView->m_Eye.h;
-    double m_Eyex = g_EarthView->m_Eye.x;
-    double m_Eyey = g_EarthView->m_Eye.y;
+    double m_Eyeh = GetEarthView()->m_Eye.h;
+    double m_Eyex = GetEarthView()->m_Eye.x;
+    double m_Eyey = GetEarthView()->m_Eye.y;
 
     Timer1->Enabled = false;
     Timer2->Enabled = false;
-    delete g_EarthView;
-    if (g_GETileManager)
-        delete g_GETileManager;
-    delete g_MasterLayer;
-    delete g_Storage;
-    if (LoadMapFromInternet)
-    {
-        if (g_Keyhole)
-            delete g_Keyhole;
-    }
-    if (MapComboBox->ItemIndex == 0)
-        LoadMap(GoogleMaps);
-
-    else if (MapComboBox->ItemIndex == 1)
-        LoadMap(SkyVector_VFR);
-
-    else if (MapComboBox->ItemIndex == 2)
-        LoadMap(SkyVector_IFR_Low);
-
-    else if (MapComboBox->ItemIndex == 3)
-        LoadMap(SkyVector_IFR_High);
-
-    g_EarthView->m_Eye.h = m_Eyeh;
-    g_EarthView->m_Eye.x = m_Eyex;
-    g_EarthView->m_Eye.y = m_Eyey;
+    LoadMap(MapComboBox->ItemIndex);
+    GetEarthView()->m_Eye.h =m_Eyeh;
+    GetEarthView()->m_Eye.x=m_Eyex;
+    GetEarthView()->m_Eye.y=m_Eyey;
     Timer1->Enabled = true;
     Timer2->Enabled = true;
 }
@@ -2039,3 +1934,11 @@ static int FinshARTCCBoundary(void)
     return 0;
 }
 //---------------------------------------------------------------------------
+
+FlatEarthView* TForm1::GetEarthView() const {
+    return currentMapProvider ? currentMapProvider->GetEarthView() : nullptr;
+}
+
+TileManager* TForm1::GetTileManager() const {
+    return currentMapProvider ? currentMapProvider->GetTileManager() : nullptr;
+}

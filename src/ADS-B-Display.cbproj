@@ -191,6 +191,12 @@
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
     </PropertyGroup>
     <ItemGroup>
+        <CppCompile Include="AbstractMapProvider.cpp">
+            <BuildOrder>40</BuildOrder>
+        </CppCompile>
+        <None Include="AbstractMapProvider.h">
+            <BuildOrder>46</BuildOrder>
+        </None>
         <CppCompile Include="ADS-B-Display.cpp">
             <BuildOrder>0</BuildOrder>
         </CppCompile>
@@ -233,10 +239,37 @@
         <None Include="dms.h">
             <BuildOrder>36</BuildOrder>
         </None>
+        <CppCompile Include="GoogleMapProvider.cpp">
+            <BuildOrder>41</BuildOrder>
+        </CppCompile>
+        <None Include="GoogleMapProvider.h">
+            <BuildOrder>47</BuildOrder>
+        </None>
+        <CppCompile Include="IFRHighMapProvider.cpp">
+            <BuildOrder>42</BuildOrder>
+        </CppCompile>
+        <None Include="IFRHighMapProvider.h">
+            <BuildOrder>48</BuildOrder>
+        </None>
+        <CppCompile Include="IFRLowMapProvider.cpp">
+            <BuildOrder>43</BuildOrder>
+        </CppCompile>
+        <None Include="IFRLowMapProvider.h">
+            <BuildOrder>49</BuildOrder>
+        </None>
         <CppCompile Include="LatLonConv.cpp">
             <DependentOn>LatLonConv.h</DependentOn>
             <BuildOrder>33</BuildOrder>
         </CppCompile>
+        <None Include="MapProvider.h">
+            <BuildOrder>50</BuildOrder>
+        </None>
+        <CppCompile Include="MapProviderFactory.cpp">
+            <BuildOrder>44</BuildOrder>
+        </CppCompile>
+        <None Include="MapProviderFactory.h">
+            <BuildOrder>51</BuildOrder>
+        </None>
         <CppCompile Include="Map\MapSrc\EarthView.cpp">
             <DependentOn>Map\MapSrc\EarthView.h</DependentOn>
             <BuildOrder>23</BuildOrder>
@@ -346,6 +379,12 @@
             <DependentOn>TriangulatPoly.h</DependentOn>
             <BuildOrder>32</BuildOrder>
         </CppCompile>
+        <CppCompile Include="VFRMapProvider.cpp">
+            <BuildOrder>45</BuildOrder>
+        </CppCompile>
+        <None Include="VFRMapProvider.h">
+            <BuildOrder>52</BuildOrder>
+        </None>
         <FormResources Include="DisplayGUI.dfm"/>
         <FormResources Include="AreaDialog.dfm"/>
         <BuildConfiguration Include="Base">
