@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <filesystem>
 #include <fileapi.h>
+#include <chrono>
 
 #pragma hdrstop
 
@@ -232,6 +233,10 @@ __fastcall TForm1::TForm1(TComponent *Owner)
     BigQueryRowCount = 0;
     BigQueryFileCount = 0;
     InitAircraftDB(AircraftDBPathFileName);
+
+    isSBSConnected = false;
+    isSBSPlayBacked = false;
+
     printf("init complete\n");
 }
 //---------------------------------------------------------------------------
@@ -324,6 +329,8 @@ void __fastcall TForm1::Timer1Timer(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm1::DrawObjects(void)
 {
+    auto start_time = std::chrono::high_resolution_clock::now();
+
     double ScrX, ScrY;
     int ViewableAircraft = 0;
 
@@ -363,11 +370,15 @@ void __fastcall TForm1::DrawObjects(void)
     // --- drawing area of interest (polygon) ---
     if (AreaTemp)
     {
+        // 점 크기 설정
         glPointSize(3.0);
+
+        // 모든 점의 위도/경도를 화면 좌표로 변환
         for (DWORD i = 0; i < AreaTemp->NumPoints; i++)
             LatLon2XY(AreaTemp->Points[i][1], AreaTemp->Points[i][0],
                       AreaTemp->PointsAdj[i][0], AreaTemp->PointsAdj[i][1]);
 
+        // 점 그리기
         glBegin(GL_POINTS);
         for (DWORD i = 0; i < AreaTemp->NumPoints; i++)
         {
@@ -375,6 +386,8 @@ void __fastcall TForm1::DrawObjects(void)
                        AreaTemp->PointsAdj[i][1]);
         }
         glEnd();
+
+        // 점 연결 선 그리기
         glBegin(GL_LINE_STRIP);
         for (DWORD i = 0; i < AreaTemp->NumPoints; i++)
         {
@@ -389,14 +402,18 @@ void __fastcall TForm1::DrawObjects(void)
         TArea *Area = (TArea *)Areas->Items[i];
         TMultiColor MC;
 
+        // 영역 색상 설정
         MC.Rgb = ColorToRGB(Area->Color);
+
+        // 선택된 영역은 특별한 스타일 적용
         if (Area->Selected)
         {
             glLineWidth(4.0);
             glPushAttrib(GL_LINE_BIT);
-            glLineStipple(3, 0xAAAA);
+            glLineStipple(3, 0xAAAA);   // 점선 스타일
         }
 
+        // 영역의 외곽선 그리기
         glColor4f(MC.Red / 255.0, MC.Green / 255.0, MC.Blue / 255.0, 1.0);
         glBegin(GL_LINE_LOOP);
         for (j = 0; j < Area->NumPoints; j++)
@@ -405,19 +422,25 @@ void __fastcall TForm1::DrawObjects(void)
             glVertex2f(ScrX, ScrY);
         }
         glEnd();
+
+        // 선택된 영역의 스타일 복원
         if (Area->Selected)
         {
             glPopAttrib();
             glLineWidth(2.0);
         }
 
+        // 영역 내부 채우기
         glColor4f(MC.Red / 255.0, MC.Green / 255.0, MC.Blue / 255.0, 0.4);
 
+        // 모든 점의 좌표 변환
         for (j = 0; j < Area->NumPoints; j++)
         {
             LatLon2XY(Area->Points[j][1], Area->Points[j][0],
                       Area->PointsAdj[j][0], Area->PointsAdj[j][1]);
         }
+
+        // 삼각형으로 영역 내부 채우기
         TTriangles *Tri = Area->Triangles;
 
         while (Tri)
@@ -439,11 +462,12 @@ void __fastcall TForm1::DrawObjects(void)
     for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
          Data; Data = (TADS_B_Aircraft *)ght_next(HashTable, &iterator, (const void **)&Key))
     {
-        if (Data->HaveLatLon)
+        if (Data->HaveLatLon)  // 위치 정보가 있는 항공기만 렌더링
         {
             ViewableAircraft++;
             glColor4f(1.0, 1.0, 1.0, 1.0);  // white color - is this necessary?
 
+            // 위도/경도를 화면 좌표로 변환
             LatLon2XY(Data->Latitude, Data->Longitude, ScrX, ScrY);
             // DrawPoint(ScrX,ScrY);
             if (Data->HaveSpeedAndHeading) {
@@ -599,6 +623,19 @@ void __fastcall TForm1::DrawObjects(void)
             CpaTimeValue->Caption = "None";
             CpaDistanceValue->Caption = "None";
         }
+    }
+
+    if ((isSBSConnected or isSBSPlayBacked) and ViewableAircraft > 0) {
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto end_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time.time_since_epoch()).count();
+        auto end_time_sec = std::chrono::duration_cast<std::chrono::seconds>(end_time.time_since_epoch()).count();
+        time_t end_time_t = end_time_sec;
+        struct tm* end_tm = localtime(&end_time_t);
+        char end_time_str[32];
+        strftime(end_time_str, sizeof(end_time_str), "%Y-%m-%d %H:%M:%S", end_tm);
+
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+        printf("End time: (%s.%03lld), elapsed time: %lld ms, - Total: %d, Viewable: %d\n", end_time_str, end_time_ms % 1000, duration.count(), (int)ght_size(HashTable), ViewableAircraft);
     }
 }
 //---------------------------------------------------------------------------
@@ -1105,8 +1142,17 @@ void __fastcall TForm1::RawConnectButtonClick(TObject *Sender)
     IdTCPClientRaw->Host = RawIpAddress->Text;
     IdTCPClientRaw->Port = 30002;
 
+    auto start_time = std::chrono::high_resolution_clock::now();
+    auto start_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(start_time.time_since_epoch()).count();
+    auto start_time_sec = std::chrono::duration_cast<std::chrono::seconds>(start_time.time_since_epoch()).count();
+    time_t start_time_t = start_time_sec;
+    struct tm* start_tm = localtime(&start_time_t);
+    char start_time_str[32];
+    strftime(start_time_str, sizeof(start_time_str), "%Y-%m-%d %H:%M:%S", start_tm);
+
     if ((RawConnectButton->Caption == "Raw Connect") && (Sender != NULL))
     {
+        printf("[START] Raw Connect: %lld ms (%s.%03lld)\n", start_time_ms, start_time_str, start_time_ms % 1000);
         try
         {
             IdTCPClientRaw->Connect();
@@ -1127,6 +1173,8 @@ void __fastcall TForm1::RawConnectButtonClick(TObject *Sender)
         IdTCPClientRaw->IOHandler->InputBuffer->Clear();
         RawConnectButton->Caption = "Raw Connect";
         RawPlaybackButton->Enabled = true;
+
+        printf("[END] Raw Connect: %lld ms (%s.%03lld)\n", start_time_ms, start_time_str, start_time_ms % 1000);
     }
 }
 //---------------------------------------------------------------------------
@@ -1175,8 +1223,17 @@ void __fastcall TForm1::RawRecordButtonClick(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm1::RawPlaybackButtonClick(TObject *Sender)
 {
+    auto start_time = std::chrono::high_resolution_clock::now();
+    auto start_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(start_time.time_since_epoch()).count();
+    auto start_time_sec = std::chrono::duration_cast<std::chrono::seconds>(start_time.time_since_epoch()).count();
+    time_t start_time_t = start_time_sec;
+    struct tm* start_tm = localtime(&start_time_t);
+    char start_time_str[32];
+    strftime(start_time_str, sizeof(start_time_str), "%Y-%m-%d %H:%M:%S", start_tm);
+
     if ((RawPlaybackButton->Caption == "Raw Playback") && (Sender != NULL))
     {
+        printf("[START] Raw Playback: %lld ms (%s.%03lld)\n", start_time_ms, start_time_str, start_time_ms % 1000);
         if (PlaybackRawDialog->Execute())
         {
             // First, check if the file exists.
@@ -1210,6 +1267,8 @@ void __fastcall TForm1::RawPlaybackButtonClick(TObject *Sender)
         PlayBackRawStream = NULL;
         RawPlaybackButton->Caption = "Raw Playback";
         RawConnectButton->Enabled = true;
+
+        printf("[END] Raw Playback: %lld ms (%s.%03lld)\n", start_time_ms, start_time_str, start_time_ms % 1000);
     }
 }
 //---------------------------------------------------------------------------
@@ -1321,8 +1380,17 @@ void __fastcall TForm1::SBSConnectButtonClick(TObject *Sender)
     IdTCPClientSBS->Host = SBSIpAddress->Text;
     IdTCPClientSBS->Port = 5002;
 
+    auto start_time = std::chrono::high_resolution_clock::now();
+    auto start_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(start_time.time_since_epoch()).count();
+    auto start_time_sec = std::chrono::duration_cast<std::chrono::seconds>(start_time.time_since_epoch()).count();
+    time_t start_time_t = start_time_sec;
+    struct tm* start_tm = localtime(&start_time_t);
+    char start_time_str[32];
+    strftime(start_time_str, sizeof(start_time_str), "%Y-%m-%d %H:%M:%S", start_tm);
+
     if ((SBSConnectButton->Caption == "SBS Connect") && (Sender != NULL))
     {
+        printf("[START] SBS Connect: %lld ms (%s.%03lld)\n", start_time_ms, start_time_str, start_time_ms % 1000);
         try
         {
             IdTCPClientSBS->Connect();
@@ -1330,6 +1398,8 @@ void __fastcall TForm1::SBSConnectButtonClick(TObject *Sender)
             TCPClientSBSHandleThread->UseFileInsteadOfNetwork = false;
             TCPClientSBSHandleThread->FreeOnTerminate = TRUE;
             TCPClientSBSHandleThread->Resume();
+
+            isSBSConnected = true;
         }
         catch (const EIdException &e)
         {
@@ -1343,6 +1413,10 @@ void __fastcall TForm1::SBSConnectButtonClick(TObject *Sender)
         IdTCPClientSBS->IOHandler->InputBuffer->Clear();
         SBSConnectButton->Caption = "SBS Connect";
         SBSPlaybackButton->Enabled = true;
+
+        isSBSConnected = false;
+
+        printf("[END] SBS Connect: %lld ms (%s.%03lld)\n", start_time_ms, start_time_str, start_time_ms % 1000);
     }
 }
 //---------------------------------------------------------------------------
@@ -1618,8 +1692,18 @@ void __fastcall TForm1::SBSRecordButtonClick(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm1::SBSPlaybackButtonClick(TObject *Sender)
 {
+    auto start_time = std::chrono::high_resolution_clock::now();
+    auto start_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(start_time.time_since_epoch()).count();
+    auto start_time_sec = std::chrono::duration_cast<std::chrono::seconds>(start_time.time_since_epoch()).count();
+    time_t start_time_t = start_time_sec;
+    struct tm* start_tm = localtime(&start_time_t);
+    char start_time_str[32];
+    strftime(start_time_str, sizeof(start_time_str), "%Y-%m-%d %H:%M:%S", start_tm);
+
     if ((SBSPlaybackButton->Caption == "SBS Playback") && (Sender != NULL))
     {
+        printf("[START] SBS Palyback: %lld ms (%s.%03lld)\n", start_time_ms, start_time_str, start_time_ms % 1000);
+
         if (PlaybackSBSDialog->Execute())
         {
             // First, check if the file exists.
@@ -1642,6 +1726,7 @@ void __fastcall TForm1::SBSPlaybackButtonClick(TObject *Sender)
                     TCPClientSBSHandleThread->Resume();
                     SBSPlaybackButton->Caption = "Stop SBS Playback";
                     SBSConnectButton->Enabled = false;
+                    isSBSPlayBacked = true;
                 }
             }
         }
@@ -1653,6 +1738,9 @@ void __fastcall TForm1::SBSPlaybackButtonClick(TObject *Sender)
         PlayBackSBSStream = NULL;
         SBSPlaybackButton->Caption = "SBS Playback";
         SBSConnectButton->Enabled = true;
+        isSBSPlayBacked = false;
+
+        printf("[END] SBS Palyback: %lld ms (%s.%03lld)\n", start_time_ms, start_time_str, start_time_ms % 1000);
     }
 }
 //---------------------------------------------------------------------------
