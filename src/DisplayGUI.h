@@ -175,6 +175,7 @@ class TForm1 : public TForm
     TLabel *CpaDistanceValue;
     TPanel *Panel2;
     TComboBox *MapComboBox;
+    TCheckBox *CheckBoxUpdateMapTiles;
     TCheckBox *BigQueryCheckBox;
     TMenuItem *UseSBSLocal;
     TMenuItem *UseSBSRemote;
@@ -219,6 +220,7 @@ class TForm1 : public TForm
     void __fastcall IdTCPClientSBSDisconnected(TObject *Sender);
     void __fastcall TimeToGoTrackBarChange(TObject *Sender);
     void __fastcall MapComboBoxChange(TObject *Sender);
+    void __fastcall CheckBoxUpdateMapTilesClick(TObject *Sender);
     void __fastcall BigQueryCheckBoxClick(TObject *Sender);
     void __fastcall UseSBSRemoteClick(TObject *Sender);
     void __fastcall UseSBSLocalClick(TObject *Sender);
@@ -226,6 +228,8 @@ class TForm1 : public TForm
 
 private: // User declarations
     MapProvider* currentMapProvider;
+    bool LoadMapFromInternet;
+    void ReloadMapProvider();
 
 public:  // User declarations
     __fastcall TForm1(TComponent *Owner);
@@ -254,7 +258,6 @@ public:  // User declarations
     int g_MouseLeftDownX;
     int g_MouseLeftDownY;
     int g_MouseDownMask;
-    bool LoadMapFromInternet;
     TList *Areas;
     TArea *AreaTemp;
     ght_hash_table_t *HashTable;
