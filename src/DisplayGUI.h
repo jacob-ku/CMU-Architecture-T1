@@ -258,6 +258,8 @@ private: // User declarations
     MapProvider* currentMapProvider;
     bool LoadMapFromInternet;
     void ReloadMapProvider();
+    bool isSBSConnected;              // Manage SBS connect status
+    bool isSBSPlayBacked;             // Manage SBS PlayBack status
 
 public:  // User declarations
     __fastcall TForm1(TComponent *Owner);
