@@ -778,6 +778,15 @@ object Form1: TForm1
           'IFS Low'
           'IFS High')
       end
+      object CheckBoxUpdateMapTiles: TCheckBox
+        Left = 120
+        Top = 6
+        Width = 150
+        Height = 17
+        Caption = 'Update map tiles'
+        TabOrder = 1
+        OnClick = CheckBoxUpdateMapTilesClick
+      end
       object BigQueryCheckBox: TCheckBox
         Left = 5
         Top = 32

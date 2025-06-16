@@ -218,6 +218,7 @@ __fastcall TForm1::TForm1(TComponent *Owner)
     MapCenterLon = MAP_CENTER_LON;
 
     LoadMapFromInternet = false;
+    CheckBoxUpdateMapTiles->Checked = false;
     MapComboBox->ItemIndex = GoogleMaps;
     // MapComboBox->ItemIndex=SkyVector_VFR;
     // MapComboBox->ItemIndex=SkyVector_IFR_Low;
@@ -1598,6 +1599,12 @@ void __fastcall TForm1::LoadMap(int Type)
 //---------------------------------------------------------------------------
 void __fastcall TForm1::MapComboBoxChange(TObject *Sender)
 {
+    ReloadMapProvider();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::ReloadMapProvider()
+{
     double m_Eyeh = GetEarthView()->m_Eye.h;
     double m_Eyex = GetEarthView()->m_Eye.x;
     double m_Eyey = GetEarthView()->m_Eye.y;
@@ -1605,14 +1612,20 @@ void __fastcall TForm1::MapComboBoxChange(TObject *Sender)
     Timer1->Enabled = false;
     Timer2->Enabled = false;
     LoadMap(MapComboBox->ItemIndex);
-    GetEarthView()->m_Eye.h =m_Eyeh;
-    GetEarthView()->m_Eye.x=m_Eyex;
-    GetEarthView()->m_Eye.y=m_Eyey;
+    GetEarthView()->m_Eye.h = m_Eyeh;
+    GetEarthView()->m_Eye.x = m_Eyex;
+    GetEarthView()->m_Eye.y = m_Eyey;
     Timer1->Enabled = true;
     Timer2->Enabled = true;
 }
-//---------------------------------------------------------------------------
 
+void __fastcall TForm1::CheckBoxUpdateMapTilesClick(TObject *Sender)
+{
+    LoadMapFromInternet = CheckBoxUpdateMapTiles->Checked;
+    ReloadMapProvider();
+}
+
+//---------------------------------------------------------------------------
 void __fastcall TForm1::BigQueryCheckBoxClick(TObject *Sender)
 {
     if (BigQueryCheckBox->State == cbChecked)
