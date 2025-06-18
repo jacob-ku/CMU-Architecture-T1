@@ -1,1 +1,4 @@
 .DS_Store
+src/Python/*
+!src/Python/Python.zip
+src/BigQuery/YourJsonFile.json
