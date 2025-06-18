@@ -1,6 +1,59 @@
 {
+  "files.exclude": {
+    "src\\AircraftDB\\aircraftDatabase.zip": true,
+    "**/Win64": true,
+    "**/Win32": true,
+    "**/Demos": true,
+    "**/IFR_High_Map": true,
+    "**/IFR_Low_Map": true,
+    "**/GoogleMap": true,
+    "**/VFR_Map": true,
+    "**/OpenStreetGoogleConversion": true,
+    // "**/HashTable": true,
+  },
+  "search.exclude": {
+    "**/docs": true,
+    "**/Win64": true,
+    "**/Win32": true,
+    "**/Demos": true,
+    "**/Components": true,
+    "**/IFR_High_Map": true,
+    "**/IFR_Low_Map": true,
+    "**/GoogleMap": true,
+    "**/VFR_Map": true,
+    "**/OpenStreetGoogleConversion": true,
+    "**/HashTable": true,
+  },
+  
+  
+  // Build and Debug settings
   "C_Cpp.default.includePath": [
     "C:\\Program Files (x86)\\Embarcadero\\Studio\\23.0\\include\\windows\\vcl"
   ],
-  "editor.tabSize": 4
+  "C_Cpp.default.compilerPath": "C:\\Program Files (x86)\\Embarcadero\\Studio\\23.0\\bin\\win64\\Release\\bcc32.exe",
+  "C_Cpp.default.forcedInclude": [
+    "C:\\Program Files (x86)\\Embarcadero\\Studio\\23.0\\include\\windows\\vcl\\vcl.h"
+  ],
+  "C_Cpp.default.compileCommands": "C:\\Program Files (x86)\\Embarcadero\\Studio\\23.0\\bin\\win64\\Release\\compile_commands.json",
+  
+  "C_Cpp.default.cStandard": "c11",
+  "C_Cpp.default.cppStandard": "c++17",
+  "C_Cpp.default.intelliSenseMode": "gcc-x64",
+  "C_Cpp.default.windowsSdkVersion": "10.0.19041.0",
+  "C_Cpp.default.defines": [
+    "_WIN32",
+    "_WIN64",
+    "NDEBUG",
+    "UNICODE",
+    "_UNICODE"
+  ],
+  "C_Cpp.default.configurationProvider": "ms-vscode.cpptools",
+  
+  // Style and Formatting settings
+  "editor.tabSize": 4,
+  "C_Cpp.errorSquiggles": "enabled",
+  "C_Cpp.autocomplete": "default",  
+  "C_Cpp.formatting": "default",
+  "C_Cpp.clang_format_style": "file",
+  "C_Cpp.clang_format_fallbackStyle": "Microsoft",
 }
