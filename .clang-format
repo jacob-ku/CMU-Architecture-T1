@@ -1,0 +1,25 @@
+# .clang-format for C++ code style customization
+BasedOnStyle: Microsoft
+IndentWidth: 4
+TabWidth: 4
+<!-- UseTab: Never -->
+BreakBeforeBraces: Allman
+AllowShortIfStatementsOnASingleLine: false
+ColumnLimit: 120
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+NamespaceIndentation: All
+AccessModifierOffset: -4
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: false
+AlignOperands: true
+AllowShortFunctionsOnASingleLine: Inline
+IndentCaseLabels: true
+IndentGotoLabels: false <!-- true -->
+Cpp11BracedListStyle: true
+SpaceAfterCStyleCast: true
+<!-- SpaceBeforeParens: ControlStatements -->
+<!-- SpacesInParentheses: false -->
+<!-- SpacesInAngles: false -->
+<!-- SpacesInSquareBrackes: false -->
+<!-- SpacesInContainerLiterals: flse -->

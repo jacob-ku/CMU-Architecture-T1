@@ -1,1 +1,14 @@
 .DS_Store
+src/Map/
+src/Win64/
+src/Win32/
+src/ADS-B-Group.groupproj.local
+src/HashTable/Lib/__history
+
+*.local
+*.d
+*.a
+*.o
+*.pch
+*.res
+*.obj
