@@ -1,0 +1,31 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${default}",
+                "${workspaceFolder}/src/**",
+                "C:\\Program Files (x86)\\Embarcadero\\Studio\\23.0\\include\\**"
+            ],
+            "forcedInclude": [
+                "C:\\Program Files (x86)\\Embarcadero\\Studio\\23.0\\include\\windows\\vcl\\vcl.h"
+            ],
+
+            "compilerPath": "C:\\Program Files (x86)\\Embarcadero\\Studio\\23.0\\bin\\bcc32.exe",
+            
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64",
+            "windowsSdkVersion": "10.0.19041.0",
+            "defines": [
+                "_WIN32",
+                "_WIN64",
+                "NDEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "configurationProvider": "ms-vscode.cpptools"
+        }
+    ],
+    "version": 4
+}
