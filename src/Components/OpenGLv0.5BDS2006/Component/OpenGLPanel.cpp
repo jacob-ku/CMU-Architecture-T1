@@ -71,14 +71,17 @@ __fastcall TOpenGLPanel::TOpenGLPanel(TComponent* Owner)
  Font3DDefault=NULL;
 
  Font2DEnabled=false;
- Font2DType= new TFont;
+ Font2DType= new TFont; // no delete -> memory leak?
  Font2DType->Name="Arial";
  Font2DType->Style<< fsBold;
  Font2DType->Height=-9;
  Font2DType->Charset=ANSI_CHARSET;
- Font2DFirstGylph=32;
- Font2DNumGylph=96;
+ Font2DFirstGylph=32; // first character (ASCII) to include
+ Font2DNumGylph=96;   // # characters to include from the first character
  Font2DDefault=NULL;
+
+ Font2DAdditionalType= new TFont; // no delete -> memory leak?
+ Font2DAdditional=NULL;
 }
 //---------------------------------------------------------------------------
 namespace Openglpanel
@@ -189,6 +192,7 @@ namespace Openglpanel
  {
   delete Font3DDefault;
   delete Font2DDefault;
+  delete Font2DAdditional;
   wglMakeCurrent(NULL,NULL);
   if (GLRenderingContext!=NULL)
         {
@@ -249,11 +253,12 @@ void __fastcall TOpenGLPanel::Create3DFont(void)
   }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-void __fastcall TOpenGLPanel::Create2DFont(void)
-  {
-   delete Font2DDefault;
-   Font2DDefault=Create2DFont(Font2DType,Font2DFirstGylph,Font2DNumGylph);
-  }
+void __fastcall TOpenGLPanel::Create2DFont(void) {
+  delete Font2DDefault;
+  Font2DDefault = Create2DFont(Font2DType, Font2DFirstGylph, Font2DNumGylph);
+  delete Font2DAdditional;
+  Font2DAdditional = Create2DFont(Font2DAdditionalType, Font2DFirstGylph, Font2DNumGylph);
+}
 //---------------------------------------------------------------------------
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Private Methods (Property)
@@ -326,11 +331,17 @@ void __fastcall TOpenGLPanel::SetFont3DFormat(const TFont3DFormat Value)
    return;
   }
 //---------------------------------------------------------------------------
-void __fastcall TOpenGLPanel::SetFont(TFont* Value)
-  {
-   Font2DType->Assign(Value);
-   return;
-  }
+void __fastcall TOpenGLPanel::SetFont2DDefaultType(TFont* Value)
+{
+  Font2DType->Assign(Value);
+  return;
+}
+//---------------------------------------------------------------------------
+void __fastcall TOpenGLPanel::SetFont2DAdditionalType(TFont* Value)
+{
+  Font2DAdditionalType->Assign(Value);
+  return;
+}
 //---------------------------------------------------------------------------
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Protected Methods
@@ -747,10 +758,15 @@ OpenGLFont2D * __fastcall TOpenGLPanel::Create2DFont(TFont *Font,
  return(Font2D);
  }
 //---------------------------------------------------------------------------
-void __fastcall TOpenGLPanel::Draw2DText(AnsiString Text)
+void __fastcall TOpenGLPanel::Draw2DTextDefault(AnsiString Text)
  {
   Draw2DText(Font2DDefault,Text);
  }
+ //---------------------------------------------------------------------------
+void __fastcall TOpenGLPanel::Draw2DTextAdditional(AnsiString Text)
+{
+  Draw2DText(Font2DAdditional,Text);
+}
 //---------------------------------------------------------------------------
 void __fastcall TOpenGLPanel::Draw2DText(OpenGLFont2D *Font,AnsiString Text)
 {

@@ -819,6 +819,11 @@ object Form1: TForm1
     Font2D_Type.Height = -27
     Font2D_Type.Name = 'Arial'
     Font2D_Type.Style = [fsBold]
+    Font2D_AdditionalType.Charset = ANSI_CHARSET
+    Font2D_AdditionalType.Color = clWindowText
+    Font2D_AdditionalType.Height = -12
+    Font2D_AdditionalType.Name = 'Arial'
+    Font2D_AdditionalType.Style = [fsBold]
     OnMouseDown = ObjectDisplayMouseDown
     OnMouseMove = ObjectDisplayMouseMove
     OnMouseUp = ObjectDisplayMouseUp

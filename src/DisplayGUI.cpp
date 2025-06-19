@@ -446,10 +446,9 @@ void __fastcall TForm1::DrawObjects(void)
 
             LatLon2XY(Data->Latitude, Data->Longitude, ScrX, ScrY);
             // DrawPoint(ScrX,ScrY);
-            if (Data->HaveSpeedAndHeading)
+            if (Data->HaveSpeedAndHeading) {
                 glColor4f(1.0, 0.0, 1.0, 1.0);  // with speed & heading - magenta color
-            else
-            {
+            } else {
                 Data->Heading = 0.0;
                 glColor4f(1.0, 0.0, 0.0, 1.0);  // no speed & heading - red
             }
@@ -458,7 +457,7 @@ void __fastcall TForm1::DrawObjects(void)
 
             // ICAO code text besides the aircraft
             glRasterPos2i(ScrX + 60, ScrY - 10);
-            ObjectDisplay->Draw2DText(Data->HexAddr);
+            ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
 
             // heading line
             if ((Data->HaveSpeedAndHeading) && (TimeToGoCheckBox->State == cbChecked))
