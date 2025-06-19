@@ -20,7 +20,6 @@ protected:
   struct MapSettings
   {
     std::string baseDirectory;
-    std::string liveDirectory;
     int mapType;
     bool loadFromInternet;
   };
