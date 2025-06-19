@@ -54,6 +54,9 @@
 #pragma link "cspin"
 #pragma resource "*.dfm"
 TForm1 *Form1;
+// Global message counters for debugging
+static int g_SBSMessageCount = 0;
+static int g_RAWMessageCount = 0;
 //---------------------------------------------------------------------------
 static void RunPythonScript(AnsiString scriptPath, AnsiString args);
 static bool DeleteFilesWithExtension(AnsiString dirPath, AnsiString extension);
@@ -339,6 +342,8 @@ void __fastcall TForm1::DrawObjects(void)
 
     double ScrX, ScrY;
     int ViewableAircraft = 0;
+    int TotalAircraft = 0;
+    int NoPositionAircraft = 0;
 
     // OpenGL 렌더링 설정
     glEnable(GL_LINE_SMOOTH);
@@ -462,6 +467,7 @@ void __fastcall TForm1::DrawObjects(void)
     for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
          Data; Data = (TADS_B_Aircraft *)ght_next(HashTable, &iterator, (const void **)&Key))
     {
+        TotalAircraft++;
         if (Data->HaveLatLon)  // 위치 정보가 있는 항공기만 렌더링
         {
             ViewableAircraft++;
@@ -501,6 +507,10 @@ void __fastcall TForm1::DrawObjects(void)
                     glEnd();
                 }
             }
+        }
+        else
+        {
+            NoPositionAircraft++;
         }
     }
     ViewableAircraftCountLabel->Caption = ViewableAircraft;
@@ -629,6 +639,7 @@ void __fastcall TForm1::DrawObjects(void)
         printf("DrawObjects ended at: %lld ms (%s.%03lld)\n", end_time_ms, end_time_str, end_time_ms % 1000);
 
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+        printf("Aircraft Analysis - Total: %d, Viewable: %d, No Position: %d\n", TotalAircraft, ViewableAircraft, NoPositionAircraft);
         printf("Rendering time: %lld ms, Aircraft count: %d\n", duration.count(), ViewableAircraft);
     }
 }
@@ -1145,6 +1156,7 @@ void __fastcall TForm1::RawConnectButtonClick(TObject *Sender)
     if ((RawConnectButton->Caption == "Raw Connect") && (Sender != NULL))
     {
         printf("[START] Raw Connect: %lld ms (%s.%03lld)\n", start_time_ms, start_time_str, start_time_ms % 1000);
+        g_RAWMessageCount = 0;
         try
         {
             IdTCPClientRaw->Connect();
@@ -1226,6 +1238,7 @@ void __fastcall TForm1::RawPlaybackButtonClick(TObject *Sender)
     if ((RawPlaybackButton->Caption == "Raw Playback") && (Sender != NULL))
     {
         printf("[START] Raw Playback: %lld ms (%s.%03lld)\n", start_time_ms, start_time_str, start_time_ms % 1000);
+        g_RAWMessageCount = 0;
         if (PlaybackRawDialog->Execute())
         {
             // First, check if the file exists.
@@ -1383,6 +1396,7 @@ void __fastcall TForm1::SBSConnectButtonClick(TObject *Sender)
     if ((SBSConnectButton->Caption == "SBS Connect") && (Sender != NULL))
     {
         printf("[START] SBS Connect: %lld ms (%s.%03lld)\n", start_time_ms, start_time_str, start_time_ms % 1000);
+        g_SBSMessageCount = 0;
         try
         {
             IdTCPClientSBS->Connect();
@@ -1571,6 +1585,11 @@ void __fastcall TMessageProcessorThread::Execute(void)
 
             switch (qMsg.type) {
                 case MessageType::SBS:
+                    g_SBSMessageCount++;
+                    if (g_SBSMessageCount % 1000 == 0) {
+                        printf("SBS messages processed: %d\n", g_SBSMessageCount);
+                    }
+
                     if (Form1->RecordSBSStream)
                     {
                         __int64 CurrentTime;
@@ -1596,6 +1615,11 @@ void __fastcall TMessageProcessorThread::Execute(void)
                     break;
 
                 case MessageType::RAW: {
+                    g_RAWMessageCount++;
+                    if (g_RAWMessageCount % 1000 == 0) {
+                        printf("RAW messages processed: %d\n", g_RAWMessageCount);
+                    }
+
                     modeS_message mm;
                     TDecodeStatus Status;
 
@@ -1697,8 +1721,8 @@ void __fastcall TForm1::SBSPlaybackButtonClick(TObject *Sender)
 
     if ((SBSPlaybackButton->Caption == "SBS Playback") && (Sender != NULL))
     {
-        printf("[START] SBS Palyback: %lld ms (%s.%03lld)\n", start_time_ms, start_time_str, start_time_ms % 1000);
-
+        printf("[START] SBS Playback: %lld ms (%s.%03lld)\n", start_time_ms, start_time_str, start_time_ms % 1000);
+        g_SBSMessageCount = 0;
         if (PlaybackSBSDialog->Execute())
         {
             // First, check if the file exists.
