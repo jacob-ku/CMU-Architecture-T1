@@ -457,7 +457,7 @@ void __fastcall TForm1::DrawObjects(void)
             DrawAirplaneImage(ScrX, ScrY, 1.5, Data->Heading, Data->SpriteImage);   // Draw airplane image
 
             // ICAO code text besides the aircraft
-            glRasterPos2i(ScrX + 30, ScrY - 10);
+            glRasterPos2i(ScrX + 60, ScrY - 10);
             ObjectDisplay->Draw2DText(Data->HexAddr);
 
             // heading line
