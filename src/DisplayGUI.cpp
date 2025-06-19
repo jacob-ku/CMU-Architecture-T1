@@ -1,4 +1,4 @@
-//---------------------------------------------------------------------------
+﻿//---------------------------------------------------------------------------
 
 #include <vcl.h>
 #include <new>
@@ -27,6 +27,7 @@
 #include "AircraftDB.h"
 #include "csv.h"
 #include "MapProviderFactory.h"
+#include "Debug.h"
 
 #define AIRCRAFT_DATABASE_URL "https://opensky-network.org/datasets/metadata/aircraftDatabase.zip"
 #define AIRCRAFT_DATABASE_FILE "aircraftDatabase.csv"
@@ -427,8 +428,13 @@ void __fastcall TForm1::DrawObjects(void)
         }
     }
 
-    AircraftCountLabel->Caption = IntToStr((int)ght_size(HashTable));
-    for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
+    //NOTE: 비행기 object를 그리는 부분 - Yonggyung Bae
+	
+    int numOfAircraft = (int)ght_size(HashTable);
+	AircraftCountLabel->Caption = IntToStr(numOfAircraft);
+
+    __int64 elapsedTime = getTime_Start();
+	for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
          Data; Data = (TADS_B_Aircraft *)ght_next(HashTable, &iterator, (const void **)&Key))
     {
         if (Data->HaveLatLon)
@@ -467,6 +473,10 @@ void __fastcall TForm1::DrawObjects(void)
             }
         }
     }
+    printLog("Visible Aircraft Count: " + std::to_string(ViewableAircraft)
+             + " | Total Aircraft Count: " + std::to_string(numOfAircraft)
+             + " | Elapsed Time: " + getTime_Elapsed(elapsedTime));
+
     ViewableAircraftCountLabel->Caption = ViewableAircraft;
     if (TrackHook.Valid_CC)
     {
@@ -924,7 +934,6 @@ void __fastcall TForm1::CompleteClick(TObject *Sender)
         CancelClick(NULL);
         return;
     }
-
     AreaConfirm->ShowDialog();
 }
 //---------------------------------------------------------------------------
