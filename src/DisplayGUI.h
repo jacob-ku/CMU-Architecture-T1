@@ -44,6 +44,7 @@ typedef struct
 } TPolyLine;
 
 #define MAX_AREA_POINTS 500
+
 typedef struct
 {
     AnsiString Name;
@@ -53,7 +54,8 @@ typedef struct
     pfVec3 PointsAdj[MAX_AREA_POINTS];
     TTriangles *Triangles;
     bool Selected;
-} TArea;
+} TArea;    // Target Area - area of interest
+
 //---------------------------------------------------------------------------
 class TTCPClientRawHandleThread : public TThread
 {
@@ -234,9 +236,9 @@ private: // User declarations
 public:  // User declarations
     __fastcall TForm1(TComponent *Owner);
     __fastcall ~TForm1();
-    void __fastcall LatLon2XY(double lat, double lon, double &x, double &y);
-    int __fastcall XY2LatLon2(int x, int y, double &lat, double &lon);
-    void __fastcall HookTrack(int X, int Y, bool CPA_Hook);
+    void __fastcall LatLon2XY(double lat, double lon, double &x, double &y);    // convert lat/lon to x/y
+    int __fastcall XY2LatLon2(int x, int y, double &lat, double &lon);          // convert x/y to lat/lon
+    void __fastcall HookTrack(int X, int Y, bool CPA_Hoo);
     void __fastcall DrawObjects(void);
     void __fastcall DeleteAllAreas(void);
     void __fastcall Purge(void);
@@ -259,7 +261,7 @@ public:  // User declarations
     int g_MouseLeftDownY;
     int g_MouseDownMask;
     TList *Areas;
-    TArea *AreaTemp;
+    TArea *AreaTemp;    // target area - area of interest
     ght_hash_table_t *HashTable;
     TTCPClientRawHandleThread *TCPClientRawHandleThread;
     TTCPClientSBSHandleThread *TCPClientSBSHandleThread;
