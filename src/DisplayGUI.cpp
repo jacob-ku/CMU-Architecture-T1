@@ -1129,60 +1129,6 @@ void __fastcall TForm1::FormMouseWheel(TObject *Sender, TShiftState Shift,
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-void __fastcall TTCPClientRawHandleThread::HandleInput(void)
-{
-    modeS_message mm;
-    TDecodeStatus Status;
-
-    // Form1->MsgLog->Lines->Add(StringMsgBuffer);
-    if (Form1->RecordRawStream)
-    {
-        __int64 CurrentTime;
-        CurrentTime = GetCurrentTimeInMsec();
-        Form1->RecordRawStream->WriteLine(IntToStr(CurrentTime));
-        Form1->RecordRawStream->WriteLine(StringMsgBuffer);
-    }
-
-    Status = decode_RAW_message(StringMsgBuffer, &mm);
-    if (Status == HaveMsg)
-    {
-        TADS_B_Aircraft *ADS_B_Aircraft;
-        uint32_t addr;
-
-        addr = (mm.AA[0] << 16) | (mm.AA[1] << 8) | mm.AA[2];
-
-        ADS_B_Aircraft = (TADS_B_Aircraft *)ght_get(Form1->HashTable, sizeof(addr), &addr);
-        if (ADS_B_Aircraft)
-        {
-            // Form1->MsgLog->Lines->Add("Retrived");
-        }
-        else
-        {
-            ADS_B_Aircraft = new TADS_B_Aircraft;
-            ADS_B_Aircraft->ICAO = addr;
-            snprintf(ADS_B_Aircraft->HexAddr, sizeof(ADS_B_Aircraft->HexAddr), "%06X", (int)addr);
-            ADS_B_Aircraft->NumMessagesSBS = 0;
-            ADS_B_Aircraft->NumMessagesRaw = 0;
-            ADS_B_Aircraft->VerticalRate = 0;
-            ADS_B_Aircraft->HaveAltitude = false;
-            ADS_B_Aircraft->HaveLatLon = false;
-            ADS_B_Aircraft->HaveSpeedAndHeading = false;
-            ADS_B_Aircraft->HaveFlightNum = false;
-            ADS_B_Aircraft->SpriteImage = Form1->CurrentSpriteImage;
-            if (Form1->CycleImages->Checked)
-                Form1->CurrentSpriteImage = (Form1->CurrentSpriteImage + 1) % Form1->NumSpriteImages;
-            if (ght_insert(Form1->HashTable, ADS_B_Aircraft, sizeof(addr), &addr) < 0)
-            {
-                printf("ght_insert Error - Should Not Happen\n");
-            }
-        }
-
-        RawToAircraft(&mm, ADS_B_Aircraft);
-    }
-    else
-        printf("Raw Decode Error:%d\n", Status);
-}
-//---------------------------------------------------------------------------
 void __fastcall TForm1::RawConnectButtonClick(TObject *Sender)
 {
     IdTCPClientRaw->Host = RawIpAddress->Text;
@@ -1322,12 +1268,20 @@ void __fastcall TForm1::RawPlaybackButtonClick(TObject *Sender)
 __fastcall TTCPClientRawHandleThread::TTCPClientRawHandleThread(bool value) : TThread(value)
 {
     FreeOnTerminate = true; // Automatically free the thread object after execution
+    processorThread = new TMessageProcessorThread(true);
+    processorThread->Start();
 }
 //---------------------------------------------------------------------------
 // Destructor for the thread class
 __fastcall TTCPClientRawHandleThread::~TTCPClientRawHandleThread()
 {
     // Clean up resources if needed
+    if (processorThread) {
+        processorThread->Terminate();
+        processorThread->WaitFor();
+        delete processorThread;
+        processorThread = NULL;
+    }
 }
 //---------------------------------------------------------------------------
 // Execute method where the thread's logic resides
@@ -1388,8 +1342,8 @@ void __fastcall TTCPClientRawHandleThread::Execute(void)
         }
         try
         {
-            // Synchronize method to safely access UI components
-            TThread::Synchronize(HandleInput);
+            // Push RAW message into shared processor thread
+            processorThread->AddMessage(MessageType::RAW, StringMsgBuffer);
         }
         catch (...)
         {
@@ -1459,52 +1413,31 @@ void __fastcall TForm1::SBSConnectButtonClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-void __fastcall TTCPClientSBSHandleThread::HandleInput(void)
-{
-    modeS_message mm;
-    TDecodeStatus Status;
-
-    // Form1->MsgLog->Lines->Add(StringMsgBuffer);
-    if (Form1->RecordSBSStream)
-    {
-        __int64 CurrentTime;
-        CurrentTime = GetCurrentTimeInMsec();
-        Form1->RecordSBSStream->WriteLine(IntToStr(CurrentTime));
-        Form1->RecordSBSStream->WriteLine(StringMsgBuffer);
-    }
-
-    if (Form1->BigQueryCSV)
-    {
-        Form1->BigQueryCSV->WriteLine(StringMsgBuffer);
-        Form1->BigQueryRowCount++;
-        if (Form1->BigQueryRowCount >= BIG_QUERY_UPLOAD_COUNT)
-        {
-            Form1->CloseBigQueryCSV();
-            // printf("string is:%s\n", Form1->BigQueryPythonScript.c_str());
-            RunPythonScript(Form1->BigQueryPythonScript, Form1->BigQueryPath + " " + Form1->BigQueryCSVFileName);
-            Form1->CreateBigQueryCSV();
-        }
-    }
-
-    SBS_Message_Decode(StringMsgBuffer.c_str());
-}
-//---------------------------------------------------------------------------
 // Constructor for the thread class
 __fastcall TTCPClientSBSHandleThread::TTCPClientSBSHandleThread(bool value) : TThread(value)
 {
     FreeOnTerminate = true; // Automatically free the thread object after execution
+    processorThread = new TMessageProcessorThread(true);
+    processorThread->Start();
 }
 //---------------------------------------------------------------------------
 // Destructor for the thread class
 __fastcall TTCPClientSBSHandleThread::~TTCPClientSBSHandleThread()
 {
     // Clean up resources if needed
+    if (processorThread) {
+        processorThread->Terminate();
+        processorThread->WaitFor();
+        delete processorThread;
+        processorThread = NULL;
+    }
 }
 //---------------------------------------------------------------------------
 // Execute method where the thread's logic resides
 void __fastcall TTCPClientSBSHandleThread::Execute(void)
 {
     __int64 Time, SleepTime;
+    AnsiString SBSMsg;
     while (!Terminated)
     {
         if (!UseFileInsteadOfNetwork)
@@ -1513,7 +1446,9 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
             {
                 if (!Form1->IdTCPClientSBS->Connected())
                     Terminate();
-                StringMsgBuffer = Form1->IdTCPClientSBS->IOHandler->ReadLn();
+
+                // Receive message from Hub
+                SBSMsg = Form1->IdTCPClientSBS->IOHandler->ReadLn();
             }
             catch (...)
             {
@@ -1531,8 +1466,10 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
                     TThread::Synchronize(StopPlayback);
                     break;
                 }
-                StringMsgBuffer = Form1->PlayBackSBSStream->ReadLine();
-                Time = StrToInt64(StringMsgBuffer);
+
+                // Read timestamp frist
+                AnsiString TimestampMsg = Form1->PlayBackSBSStream->ReadLine();
+                Time = StrToInt64(TimestampMsg);
                 if (First)
                 {
                     First = false;
@@ -1548,7 +1485,9 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
                     TThread::Synchronize(StopPlayback);
                     break;
                 }
-                StringMsgBuffer = Form1->PlayBackSBSStream->ReadLine();
+
+                // Read SBS message
+                SBSMsg = Form1->PlayBackSBSStream->ReadLine();
             }
             catch (...)
             {
@@ -1559,12 +1498,11 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
         }
         try
         {
-            // Synchronize method to safely access UI components
-            TThread::Synchronize(HandleInput);
+            processorThread->AddMessage(MessageType::SBS, SBSMsg);
         }
         catch (...)
         {
-            ShowMessage("TTCPClientSBSHandleThread::Execute Exception 3");
+            ShowMessage("Failed to add SBS message");
         }
     }
 }
@@ -1578,6 +1516,141 @@ void __fastcall TTCPClientSBSHandleThread::StopTCPClient(void)
 {
     Form1->SBSConnectButtonClick(NULL);
 }
+//---------------------------------------------------------------------------
+// [START] TMessageProcessorThread
+//---------------------------------------------------------------------------
+__fastcall TMessageProcessorThread::TMessageProcessorThread(bool value) : TThread(value)
+{
+    queueLock = new TCriticalSection();
+    messageEvent = new TEvent(nullptr, false, false, "", false);
+    isProcessing = false;
+}
+//---------------------------------------------------------------------------
+TMessageProcessorThread::~TMessageProcessorThread()
+{
+    if (messageEvent) {
+        delete messageEvent;
+        messageEvent = NULL;
+    }
+    if (queueLock) {
+        delete queueLock;
+        queueLock = NULL;
+    }
+}
+//---------------------------------------------------------------------------
+void TMessageProcessorThread::AddMessage(MessageType type, const AnsiString& msg)
+{
+    queueLock->Enter();
+    messageQueue.push({type, msg});
+    queueLock->Leave();
+
+    messageEvent->SetEvent();
+}
+//---------------------------------------------------------------------------
+void __fastcall TMessageProcessorThread::Execute(void)
+{
+    while (!Terminated) {
+        messageEvent->WaitFor(INFINITE);
+
+        while (true) {
+            QueuedMessage qMsg;
+            {
+                queueLock->Enter();
+                if (messageQueue.empty()) {
+                    queueLock->Leave();
+                    break;
+                }
+                qMsg = messageQueue.front();
+                messageQueue.pop();
+                queueLock->Leave();
+            }
+
+            switch (qMsg.type) {
+                case MessageType::SBS:
+                    if (Form1->RecordSBSStream)
+                    {
+                        __int64 CurrentTime;
+                        CurrentTime = GetCurrentTimeInMsec();
+                        Form1->RecordSBSStream->WriteLine(IntToStr(CurrentTime));
+                        Form1->RecordSBSStream->WriteLine(qMsg.message);
+                    }
+
+                    if (Form1->BigQueryCSV)
+                    {
+                        Form1->BigQueryCSV->WriteLine(qMsg.message);
+                        Form1->BigQueryRowCount++;
+                        if (Form1->BigQueryRowCount >= BIG_QUERY_UPLOAD_COUNT)
+                        {
+                            Form1->CloseBigQueryCSV();
+                            // printf("string is:%s\n", Form1->BigQueryPythonScript.c_str());
+                            RunPythonScript(Form1->BigQueryPythonScript, Form1->BigQueryPath + " " + Form1->BigQueryCSVFileName);
+                            Form1->CreateBigQueryCSV();
+                        }
+                    }
+
+                    // Handle SBS message including hashmap update
+                    SBS_Message_Decode(qMsg.message.c_str());
+                    break;
+
+                case MessageType::RAW: {
+                    modeS_message mm;
+                    TDecodeStatus Status;
+
+                    if (Form1->RecordRawStream)
+                    {
+                        __int64 CurrentTime;
+                        CurrentTime = GetCurrentTimeInMsec();
+                        Form1->RecordRawStream->WriteLine(IntToStr(CurrentTime));
+                        Form1->RecordRawStream->WriteLine(qMsg.message);
+                    }
+
+                    Status = decode_RAW_message(qMsg.message, &mm);
+                    if (Status == HaveMsg)
+                    {
+                        uint32_t addr = (mm.AA[0] << 16) | (mm.AA[1] << 8) | mm.AA[2];
+
+                        // Lookup or create aircraft entry
+                        TADS_B_Aircraft *ADS_B_Aircraft = (TADS_B_Aircraft *)ght_get(Form1->HashTable, sizeof(addr), &addr);
+                        if (ADS_B_Aircraft)
+                        {
+                            // Form1->MsgLog->Lines->Add("Retrived");
+                        }
+                        else
+                        {
+                            ADS_B_Aircraft = new TADS_B_Aircraft;
+                            ADS_B_Aircraft->ICAO = addr;
+                            snprintf(ADS_B_Aircraft->HexAddr, sizeof(ADS_B_Aircraft->HexAddr), "%06X", (int)addr);
+                            ADS_B_Aircraft->NumMessagesSBS = 0;
+                            ADS_B_Aircraft->NumMessagesRaw = 0;
+                            ADS_B_Aircraft->VerticalRate = 0;
+                            ADS_B_Aircraft->HaveAltitude = false;
+                            ADS_B_Aircraft->HaveLatLon = false;
+                            ADS_B_Aircraft->HaveSpeedAndHeading = false;
+                            ADS_B_Aircraft->HaveFlightNum = false;
+                            ADS_B_Aircraft->SpriteImage = Form1->CurrentSpriteImage;
+
+                            if (Form1->CycleImages->Checked)
+                                Form1->CurrentSpriteImage = (Form1->CurrentSpriteImage + 1) % Form1->NumSpriteImages;
+
+                            if (ght_insert(Form1->HashTable, ADS_B_Aircraft, sizeof(addr), &addr) < 0)
+                            {
+                                printf("ght_insert Error - Should Not Happen\n");
+                            }
+                        }
+
+                        RawToAircraft(&mm, ADS_B_Aircraft);
+                    }
+                    else {
+                        printf("Raw Decode Error:%d\n", Status);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+}
+//---------------------------------------------------------------------------
+// [END] TMessageProcessorThread
 //---------------------------------------------------------------------------
 void __fastcall TForm1::SBSRecordButtonClick(TObject *Sender)
 {
