@@ -1671,7 +1671,8 @@ static void RunPythonScript(AnsiString scriptPath, AnsiString args)
     si.cb = sizeof(si);
     ZeroMemory(&pi, sizeof(pi));
 
-    AnsiString commandLine = "python " + scriptPath + " " + args;
+    AnsiString pythonExecutableName = ExtractFilePath(ExtractFileDir(Application->ExeName)) + AnsiString("..\\Python\\python.exe");
+    AnsiString commandLine = pythonExecutableName + " " + scriptPath + " " + args;
     char *cmdLineCharArray = new char[strlen(commandLine.c_str()) + 1];
     strcpy(cmdLineCharArray, commandLine.c_str());
 #define LOG_PYTHON 1
