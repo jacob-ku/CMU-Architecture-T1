@@ -209,7 +209,7 @@ object Form1: TForm1
         MaxValue = 1000
         MinValue = 5
         TabOrder = 2
-        Value = 90
+        Value = 30
       end
       object PurgeButton: TButton
         Left = 186
