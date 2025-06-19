@@ -1467,27 +1467,31 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
                     break;
                 }
 
-                // Read timestamp frist
-                AnsiString TimestampMsg = Form1->PlayBackSBSStream->ReadLine();
-                Time = StrToInt64(TimestampMsg);
-                if (First)
+                // Read combined timestamp,message line
+                AnsiString CombinedLine = Form1->PlayBackSBSStream->ReadLine();
+                int commaPos = CombinedLine.Pos(",");
+                if (commaPos > 0)
                 {
-                    First = false;
+                    AnsiString TimestampPart = CombinedLine.SubString(1, commaPos - 1);
+                    SBSMsg = CombinedLine.SubString(commaPos + 1, CombinedLine.Length() - commaPos);
+
+                    Time = StrToInt64(TimestampPart);
+                    if (First)
+                    {
+                        First = false;
+                        LastTime = Time;
+                    }
+                    SleepTime = Time - LastTime;
                     LastTime = Time;
+                    if (SleepTime > 0)
+                        Sleep(SleepTime);
                 }
-                SleepTime = Time - LastTime;
-                LastTime = Time;
-                if (SleepTime > 0)
-                    Sleep(SleepTime);
-                if (Form1->PlayBackSBSStream->EndOfStream)
+                else
                 {
-                    printf("End SBS Playback 2\n");
+                    printf("Invalid SBS playback format - no comma found\n");
                     TThread::Synchronize(StopPlayback);
                     break;
                 }
-
-                // Read SBS message
-                SBSMsg = Form1->PlayBackSBSStream->ReadLine();
             }
             catch (...)
             {
@@ -1571,8 +1575,7 @@ void __fastcall TMessageProcessorThread::Execute(void)
                     {
                         __int64 CurrentTime;
                         CurrentTime = GetCurrentTimeInMsec();
-                        Form1->RecordSBSStream->WriteLine(IntToStr(CurrentTime));
-                        Form1->RecordSBSStream->WriteLine(qMsg.message);
+                        Form1->RecordSBSStream->WriteLine(IntToStr(CurrentTime) + "," + qMsg.message);
                     }
 
                     if (Form1->BigQueryCSV)
