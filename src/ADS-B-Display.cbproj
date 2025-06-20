@@ -93,8 +93,8 @@
         <Icon_MainIcon>$(BDS)\bin\cbuilder_PROJECTICON.ico</Icon_MainIcon>
         <UWP_CppLogo44>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_44.png</UWP_CppLogo44>
         <UWP_CppLogo150>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_150.png</UWP_CppLogo150>
-        <IncludePath>Map\MapSrc\;..\..\..\..\..\Desktop\ADS-B-2025\ADS-B-Display\;$(IncludePath)</IncludePath>
-        <ILINK_LibraryPath>Map\MapSrc\;..\..\..\..\..\Desktop\ADS-B-2025\ADS-B-Display\;$(ILINK_LibraryPath)</ILINK_LibraryPath>
+        <IncludePath>OSC\include;OSC\testsrc\curl\;Map\MapSrc\;..\..\..\..\..\Desktop\ADS-B-2025\ADS-B-Display\;$(IncludePath)</IncludePath>
+        <ILINK_LibraryPath>OSC\testsrc\curl\;Map\MapSrc\;..\..\..\..\..\Desktop\ADS-B-2025\ADS-B-Display\;OSC\bin\bcclib;$(ILINK_LibraryPath)</ILINK_LibraryPath>
         <SanitizedProjectName>ADS-B-Display</SanitizedProjectName>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
@@ -360,6 +360,12 @@
             <DependentOn>ntds2d.h</DependentOn>
             <BuildOrder>30</BuildOrder>
         </CppCompile>
+        <CppCompile Include="OSC\testsrc\curl\TestCurl.cpp">
+            <BuildOrder>53</BuildOrder>
+        </CppCompile>
+        <None Include="OSC\testsrc\curl\TestCurl.h">
+            <BuildOrder>54</BuildOrder>
+        </None>
         <CppCompile Include="PointInPolygon.cpp">
             <DependentOn>PointInPolygon.h</DependentOn>
             <BuildOrder>32</BuildOrder>

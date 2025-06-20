@@ -3,6 +3,7 @@
 #include <vcl.h>
 #pragma hdrstop
 #include <tchar.h>
+
 //---------------------------------------------------------------------------
 USEFORM("DisplayGUI.cpp", Form1);
 USEFORM("AreaDialog.cpp", AreaConfirm);
@@ -24,11 +25,13 @@ int WINAPI _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int)
     try
     {
         SetStdOutToNewConsole();
+
         Application->Initialize();
         Application->MainFormOnTaskBar = true;
         Application->CreateForm(__classid(TForm1), &Form1);
         Application->CreateForm(__classid(TAreaConfirm), &AreaConfirm);
         Application->Run();
+
         if (pCout)
         {
             fclose(pCout);
