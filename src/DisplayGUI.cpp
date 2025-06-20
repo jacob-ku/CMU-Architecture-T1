@@ -459,6 +459,12 @@ void __fastcall TForm1::DrawObjects(void)
             glRasterPos2i(ScrX + 60, ScrY - 10);
             ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
 
+            // track age information below the ICAO code
+            glColor4f(1.0, 0.0, 0.0, 1.0);  // red
+            glRasterPos2i(ScrX + 60, ScrY - 25);    // TODO: location should be adjusted based on font size setting from the dfm file
+            TimeDifferenceInSecToChar(Data->LastSeen, Data->TimeElapsedInSec, sizeof(Data->TimeElapsedInSec));
+            ObjectDisplay->Draw2DTextAdditional(Data->TimeElapsedInSec + AnsiString(" seconds ago"));
+
             // heading line
             if ((Data->HaveSpeedAndHeading) && (TimeToGoCheckBox->State == cbChecked))
             {
