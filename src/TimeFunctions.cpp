@@ -41,3 +41,18 @@ char *TimeToChar(__int64 hmsm)
     return timdsp;
 }
 //---------------------------------------------------------------------------
+void TimeDifferenceInSecToChar(__int64 timestamp, char *buffer, int bufferSize)
+{
+    __int64 diff = GetCurrentTimeInMsec() - timestamp;
+
+    buffer[0] = '\0'; // Ensure null-termination
+    if (diff < 0)
+    {
+        return;
+    }
+
+    int seconds = static_cast<int>(diff / 1000);
+
+    snprintf(buffer, bufferSize, "%d", seconds);
+}
+//---------------------------------------------------------------------------

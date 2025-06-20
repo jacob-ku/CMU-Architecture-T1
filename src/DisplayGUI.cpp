@@ -327,17 +327,23 @@ void __fastcall TForm1::DrawObjects(void)
     double ScrX, ScrY;
     int ViewableAircraft = 0;
 
+    // --- drawing center crosshair ---
+    // below 5 lines are anti-aliasing options which can be turned off for performance
     glEnable(GL_LINE_SMOOTH);
     glEnable(GL_POINT_SMOOTH);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+
+    // line settings
     glLineWidth(3.0);
     glPointSize(4.0);
-    glColor4f(1.0, 1.0, 1.0, 1.0);
+    glColor4f(1.0, 1.0, 1.0, 1.0); 
 
+    // XY position
     LatLon2XY(MapCenterLat, MapCenterLon, ScrX, ScrY);
 
+    // draw crosshair
     glBegin(GL_LINE_STRIP);
     glVertex2f(ScrX - 20.0, ScrY);
     glVertex2f(ScrX + 20.0, ScrY);
@@ -354,6 +360,7 @@ void __fastcall TForm1::DrawObjects(void)
 
     DWORD i, j, Count;
 
+    // --- drawing area of interest (polygon) ---
     if (AreaTemp)
     {
         glPointSize(3.0);
@@ -427,6 +434,7 @@ void __fastcall TForm1::DrawObjects(void)
         }
     }
 
+    // --- drawing aircrafts ---
     AircraftCountLabel->Caption = IntToStr((int)ght_size(HashTable));
     for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
          Data; Data = (TADS_B_Aircraft *)ght_next(HashTable, &iterator, (const void **)&Key))
@@ -434,22 +442,30 @@ void __fastcall TForm1::DrawObjects(void)
         if (Data->HaveLatLon)
         {
             ViewableAircraft++;
-            glColor4f(1.0, 1.0, 1.0, 1.0);
+            glColor4f(1.0, 1.0, 1.0, 1.0);  // white color - is this necessary?
 
             LatLon2XY(Data->Latitude, Data->Longitude, ScrX, ScrY);
             // DrawPoint(ScrX,ScrY);
-            if (Data->HaveSpeedAndHeading)
-                glColor4f(1.0, 0.0, 1.0, 1.0);
-            else
-            {
+            if (Data->HaveSpeedAndHeading) {
+                glColor4f(1.0, 0.0, 1.0, 1.0);  // with speed & heading - magenta color
+            } else {
                 Data->Heading = 0.0;
-                glColor4f(1.0, 0.0, 0.0, 1.0);
+                glColor4f(1.0, 0.0, 0.0, 1.0);  // no speed & heading - red
             }
 
-            DrawAirplaneImage(ScrX, ScrY, 1.5, Data->Heading, Data->SpriteImage);
-            glRasterPos2i(ScrX + 30, ScrY - 10);
-            ObjectDisplay->Draw2DText(Data->HexAddr);
+            DrawAirplaneImage(ScrX, ScrY, 1.5, Data->Heading, Data->SpriteImage);   // Draw airplane image
 
+            // ICAO code text besides the aircraft
+            glRasterPos2i(ScrX + 60, ScrY - 10);
+            ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
+
+            // track age information below the ICAO code
+            glColor4f(1.0, 0.0, 0.0, 1.0);  // red
+            glRasterPos2i(ScrX + 60, ScrY - 25);    // TODO: location should be adjusted based on font size setting from the dfm file
+            TimeDifferenceInSecToChar(Data->LastSeen, Data->TimeElapsedInSec, sizeof(Data->TimeElapsedInSec));
+            ObjectDisplay->Draw2DTextAdditional(Data->TimeElapsedInSec + AnsiString(" seconds ago"));
+
+            // heading line
             if ((Data->HaveSpeedAndHeading) && (TimeToGoCheckBox->State == cbChecked))
             {
                 double lat, lon, az;
@@ -458,7 +474,7 @@ void __fastcall TForm1::DrawObjects(void)
                 {
                     double ScrX2, ScrY2;
                     LatLon2XY(lat, lon, ScrX2, ScrY2);
-                    glColor4f(1.0, 1.0, 0.0, 1.0);
+                    glColor4f(1.0, 1.0, 0.0, 1.0);  // yellow color for heading line
                     glBegin(GL_LINE_STRIP);
                     glVertex2f(ScrX, ScrY);
                     glVertex2f(ScrX2, ScrY2);
@@ -467,6 +483,8 @@ void __fastcall TForm1::DrawObjects(void)
             }
         }
     }
+
+    // --- side bar - contents for text box: Close Control which is for hooked airplane ----
     ViewableAircraftCountLabel->Caption = ViewableAircraft;
     if (TrackHook.Valid_CC)
     {
@@ -525,6 +543,8 @@ void __fastcall TForm1::DrawObjects(void)
             TrkLastUpdateTimeLabel->Caption = "N/A";
         }
     }
+
+    // --- side bar - contents for text box: CPA when two aircraft are hooked ----
     if (TrackHook.Valid_CPA)
     {
         bool CpaDataIsValid = false;
@@ -779,12 +799,14 @@ void __fastcall TForm1::HookTrack(int X, int Y, bool CPA_Hook)
     }
 }
 //---------------------------------------------------------------------------
+// convert lat/lon to x/y
 void __fastcall TForm1::LatLon2XY(double lat, double lon, double &x, double &y)
 {
     x = (Map_v[1].x - ((Map_w[1].x - (lon / 360.0)) / xf));
     y = Map_v[3].y - (Map_w[1].y / yf) + (asinh(tan(lat * M_PI / 180.0)) / (2 * M_PI * yf));
 }
 //---------------------------------------------------------------------------
+// convert x/y to lat/lon
 int __fastcall TForm1::XY2LatLon2(int x, int y, double &lat, double &lon)
 {
     double Lat, Lon, dlat, dlon, Range;

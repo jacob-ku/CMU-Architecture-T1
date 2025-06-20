@@ -11,6 +11,7 @@ typedef struct
     uint32_t ICAO;
     char HexAddr[7];     /* Printable ICAO address */
     __int64 LastSeen;    /* Time at which the last packet was received. */
+    char TimeElapsedInSec[3]; /* Time elapsed in seconds since the last packet was received. */
     long NumMessagesRaw; /* Number of Mode S messages received. */
     long NumMessagesSBS;
     int odd_cprlat; /* Encoded latitude and longitude as extracted by odd and even */

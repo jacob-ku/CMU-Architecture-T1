@@ -64,6 +64,9 @@ private:
    int                   Font2DNumGylph;
    OpenGLFont2D        * Font2DDefault;
 
+   TFont               * Font2DAdditionalType;
+   OpenGLFont2D        * Font2DAdditional;
+
    // Methods
               bool   __fastcall CreateGLContext(void);
               void   __fastcall DestroyGLContext(void);
@@ -82,7 +85,8 @@ private:
 
               void   __fastcall SetFont3DType(TFont* Value);
               void   __fastcall SetFont3DFormat(const TFont3DFormat Value);
-              void   __fastcall SetFont(TFont* Value);
+              void   __fastcall SetFont2DDefaultType(TFont* Value);
+              void   __fastcall SetFont2DAdditionalType(TFont* Value);
 
 protected:
    // Variables
@@ -115,7 +119,8 @@ public:
               OpenGLFont2D *
                      __fastcall Create2DFont(TFont *Font, int FirstGylph,
                                              int NumGylph);
-              void   __fastcall Draw2DText(AnsiString Text);
+              void   __fastcall Draw2DTextDefault(AnsiString Text);
+              void   __fastcall Draw2DTextAdditional(AnsiString Text);
               void   __fastcall Draw2DText(OpenGLFont2D * Font,AnsiString Text);
 
               BMPTexture *
@@ -191,7 +196,10 @@ __published:
                                  write=Font2DEnabled, default=false};
 
    __property TFont              * Font2D_Type = {read=Font2DType,
-                                 write=SetFont};
+                                 write=SetFont2DDefaultType};
+
+   __property TFont              * Font2D_AdditionalType = {read=Font2DAdditionalType,
+                                 write=SetFont2DAdditionalType};
 
    __property int                Font2D_FirstGylph = {read=Font2DFirstGylph,
                                  write=Font2DFirstGylph, default=32};
