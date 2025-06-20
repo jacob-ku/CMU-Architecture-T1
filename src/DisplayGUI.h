@@ -24,7 +24,7 @@
 #include <IdTCPClient.hpp>
 #include <IdTCPConnection.hpp>
 #include "cspin.h"
-#include "MapProviderFactory.h"
+#include "Map/Providers/MapProviderFactory.h"
 
 typedef float T_GL_Color[4];
 
