@@ -66,10 +66,6 @@ void AbstractMapProvider::Initialize(const MapSettings &settings)
 
     AnsiString homeDir = ExtractFilePath(ExtractFileDir(Application->ExeName));
     homeDir += settings.baseDirectory.c_str();
-    if (settings.loadFromInternet)
-        homeDir += settings.liveDirectory.c_str();
-    else
-        homeDir += "\\";
     std::string cachedir = homeDir.c_str();
 
     if (mkdir(cachedir.c_str()) != 0 && errno != EEXIST)
