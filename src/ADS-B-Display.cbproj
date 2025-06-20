@@ -93,8 +93,8 @@
         <Icon_MainIcon>$(BDS)\bin\cbuilder_PROJECTICON.ico</Icon_MainIcon>
         <UWP_CppLogo44>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_44.png</UWP_CppLogo44>
         <UWP_CppLogo150>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_150.png</UWP_CppLogo150>
-        <IncludePath>OSC\include;OSC\testsrc\curl\;Map\MapSrc\;..\..\..\..\..\Desktop\ADS-B-2025\ADS-B-Display\;$(IncludePath)</IncludePath>
-        <ILINK_LibraryPath>OSC\testsrc\curl\;Map\MapSrc\;..\..\..\..\..\Desktop\ADS-B-2025\ADS-B-Display\;OSC\bin\bcclib;$(ILINK_LibraryPath)</ILINK_LibraryPath>
+        <IncludePath>Map\Providers\;OSC\include;OSC\testsrc\curl\;Map\MapSrc\;..\..\..\..\..\Desktop\ADS-B-2025\ADS-B-Display\;$(IncludePath)</IncludePath>
+        <ILINK_LibraryPath>Map\Providers\;OSC\testsrc\curl\;Map\MapSrc\;..\..\..\..\..\Desktop\ADS-B-2025\ADS-B-Display\;OSC\bin\bcclib;$(ILINK_LibraryPath)</ILINK_LibraryPath>
         <SanitizedProjectName>ADS-B-Display</SanitizedProjectName>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
@@ -191,12 +191,6 @@
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
     </PropertyGroup>
     <ItemGroup>
-        <CppCompile Include="AbstractMapProvider.cpp">
-            <BuildOrder>40</BuildOrder>
-        </CppCompile>
-        <None Include="AbstractMapProvider.h">
-            <BuildOrder>46</BuildOrder>
-        </None>
         <CppCompile Include="ADS-B-Display.cpp">
             <BuildOrder>0</BuildOrder>
         </CppCompile>
@@ -239,37 +233,10 @@
         <None Include="dms.h">
             <BuildOrder>36</BuildOrder>
         </None>
-        <CppCompile Include="GoogleMapProvider.cpp">
-            <BuildOrder>41</BuildOrder>
-        </CppCompile>
-        <None Include="GoogleMapProvider.h">
-            <BuildOrder>47</BuildOrder>
-        </None>
-        <CppCompile Include="IFRHighMapProvider.cpp">
-            <BuildOrder>42</BuildOrder>
-        </CppCompile>
-        <None Include="IFRHighMapProvider.h">
-            <BuildOrder>48</BuildOrder>
-        </None>
-        <CppCompile Include="IFRLowMapProvider.cpp">
-            <BuildOrder>43</BuildOrder>
-        </CppCompile>
-        <None Include="IFRLowMapProvider.h">
-            <BuildOrder>49</BuildOrder>
-        </None>
         <CppCompile Include="LatLonConv.cpp">
             <DependentOn>LatLonConv.h</DependentOn>
             <BuildOrder>33</BuildOrder>
         </CppCompile>
-        <None Include="MapProvider.h">
-            <BuildOrder>50</BuildOrder>
-        </None>
-        <CppCompile Include="MapProviderFactory.cpp">
-            <BuildOrder>44</BuildOrder>
-        </CppCompile>
-        <None Include="MapProviderFactory.h">
-            <BuildOrder>51</BuildOrder>
-        </None>
         <CppCompile Include="Map\MapSrc\EarthView.cpp">
             <DependentOn>Map\MapSrc\EarthView.h</DependentOn>
             <BuildOrder>23</BuildOrder>
@@ -356,6 +323,45 @@
         <None Include="Map\MapSrc\VMath.h">
             <BuildOrder>29</BuildOrder>
         </None>
+        <CppCompile Include="Map\Providers\AbstractMapProvider.cpp">
+            <BuildOrder>40</BuildOrder>
+        </CppCompile>
+        <None Include="Map\Providers\AbstractMapProvider.h">
+            <BuildOrder>46</BuildOrder>
+        </None>
+        <CppCompile Include="Map\Providers\GoogleMapProvider.cpp">
+            <BuildOrder>41</BuildOrder>
+        </CppCompile>
+        <None Include="Map\Providers\GoogleMapProvider.h">
+            <BuildOrder>47</BuildOrder>
+        </None>
+        <CppCompile Include="Map\Providers\IFRHighMapProvider.cpp">
+            <BuildOrder>42</BuildOrder>
+        </CppCompile>
+        <None Include="Map\Providers\IFRHighMapProvider.h">
+            <BuildOrder>48</BuildOrder>
+        </None>
+        <CppCompile Include="Map\Providers\IFRLowMapProvider.cpp">
+            <BuildOrder>43</BuildOrder>
+        </CppCompile>
+        <None Include="Map\Providers\IFRLowMapProvider.h">
+            <BuildOrder>49</BuildOrder>
+        </None>
+        <None Include="Map\Providers\MapProvider.h">
+            <BuildOrder>50</BuildOrder>
+        </None>
+        <CppCompile Include="Map\Providers\MapProviderFactory.cpp">
+            <BuildOrder>44</BuildOrder>
+        </CppCompile>
+        <None Include="Map\Providers\MapProviderFactory.h">
+            <BuildOrder>51</BuildOrder>
+        </None>
+        <CppCompile Include="Map\Providers\VFRMapProvider.cpp">
+            <BuildOrder>45</BuildOrder>
+        </CppCompile>
+        <None Include="Map\Providers\VFRMapProvider.h">
+            <BuildOrder>52</BuildOrder>
+        </None>
         <CppCompile Include="ntds2d.cpp">
             <DependentOn>ntds2d.h</DependentOn>
             <BuildOrder>30</BuildOrder>
@@ -385,12 +391,6 @@
             <DependentOn>TriangulatPoly.h</DependentOn>
             <BuildOrder>32</BuildOrder>
         </CppCompile>
-        <CppCompile Include="VFRMapProvider.cpp">
-            <BuildOrder>45</BuildOrder>
-        </CppCompile>
-        <None Include="VFRMapProvider.h">
-            <BuildOrder>52</BuildOrder>
-        </None>
         <FormResources Include="DisplayGUI.dfm"/>
         <FormResources Include="AreaDialog.dfm"/>
         <BuildConfiguration Include="Base">

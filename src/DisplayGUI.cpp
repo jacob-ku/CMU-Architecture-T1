@@ -26,7 +26,7 @@
 #include "CPA.h"
 #include "AircraftDB.h"
 #include "csv.h"
-#include "MapProviderFactory.h"
+#include "Map/Providers/MapProviderFactory.h"
 
 #define AIRCRAFT_DATABASE_URL "https://opensky-network.org/datasets/metadata/aircraftDatabase.zip"
 #define AIRCRAFT_DATABASE_FILE "aircraftDatabase.csv"
