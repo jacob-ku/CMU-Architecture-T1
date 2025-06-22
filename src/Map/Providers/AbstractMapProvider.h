@@ -1,10 +1,10 @@
 #pragma once
-#include "FilesystemStorage.h"
-#include "FlatEarthView.h"
-#include "GoogleLayer.h"
-#include "KeyholeConnection.h"
+#include "../MapSrc/FilesystemStorage.h"
+#include "../MapSrc/FlatEarthView.h"
+#include "../MapSrc/GoogleLayer.h"
+#include "../MapSrc/KeyholeConnection.h"
 #include "MapProvider.h"
-#include "TileManager.h"
+#include "../MapSrc/TileManager.h"
 
 class AbstractMapProvider : public MapProvider
 {
