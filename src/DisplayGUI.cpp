@@ -1475,8 +1475,16 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
                     break;
                 }
 
-                // Read timestamp frist
-                AnsiString TimestampMsg = Form1->PlayBackSBSStream->ReadLine();
+                // NEW FORMAT: each line contains "timestamp,SBS message"
+                AnsiString Line = Form1->PlayBackSBSStream->ReadLine();
+                int DelimPos = Line.Pos(",");
+                if (DelimPos == 0) {
+                    // Malformed line, skip this iteration
+                    continue;
+                }
+                AnsiString TimestampMsg = Line.SubString(1, DelimPos - 1);
+                SBSMsg = Line.SubString(DelimPos + 1, Line.Length() - DelimPos);
+
                 Time = StrToInt64(TimestampMsg);
                 if (First)
                 {
@@ -1487,15 +1495,6 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
                 LastTime = Time;
                 if (SleepTime > 0)
                     Sleep(SleepTime);
-                if (Form1->PlayBackSBSStream->EndOfStream)
-                {
-                    printf("End SBS Playback 2\n");
-                    TThread::Synchronize(StopPlayback);
-                    break;
-                }
-
-                // Read SBS message
-                SBSMsg = Form1->PlayBackSBSStream->ReadLine();
             }
             catch (...)
             {
@@ -1579,8 +1578,7 @@ void __fastcall TMessageProcessorThread::Execute(void)
                     {
                         __int64 CurrentTime;
                         CurrentTime = GetCurrentTimeInMsec();
-                        Form1->RecordSBSStream->WriteLine(IntToStr(CurrentTime));
-                        Form1->RecordSBSStream->WriteLine(qMsg.message);
+                        Form1->RecordSBSStream->WriteLine(IntToStr(CurrentTime) + "," + qMsg.message);
                     }
 
                     if (Form1->BigQueryCSV)
