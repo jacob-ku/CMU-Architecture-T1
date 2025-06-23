@@ -25,6 +25,13 @@
 #include <IdTCPConnection.hpp>
 #include "cspin.h"
 #include "Map/Providers/MapProviderFactory.h"
+#include <queue>
+
+// Define message types for the central processor
+enum class MessageType {
+    SBS,   // SBS-formatted message ("Type 1,2,3" style)
+    RAW    // Raw Mode-S/ADS-B message (hex payload)
+};
 
 typedef float T_GL_Color[4];
 
@@ -57,11 +64,31 @@ typedef struct
 } TArea;    // Target Area - area of interest
 
 //---------------------------------------------------------------------------
+class TMessageProcessorThread : public TThread
+{
+private:
+    struct QueuedMessage {
+        MessageType type;
+        AnsiString  message;
+    };
+    std::queue<QueuedMessage> messageQueue;
+    TCriticalSection* queueLock;
+    TEvent* messageEvent;
+    bool isProcessing;
+
+public:
+    __fastcall TMessageProcessorThread(bool value);
+    ~TMessageProcessorThread();
+
+    void __fastcall Execute(void);
+    void AddMessage(MessageType type, const AnsiString& msg);
+};
+//---------------------------------------------------------------------------
 class TTCPClientRawHandleThread : public TThread
 {
 private:
     AnsiString StringMsgBuffer;
-    void __fastcall HandleInput(void);
+    TMessageProcessorThread* processorThread;
     void __fastcall StopPlayback(void);
     void __fastcall StopTCPClient(void);
 
@@ -76,12 +103,11 @@ public:
     ~TTCPClientRawHandleThread();
 };
 //---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
 class TTCPClientSBSHandleThread : public TThread
 {
 private:
     AnsiString StringMsgBuffer;
-    void __fastcall HandleInput(void);
+    TMessageProcessorThread* processorThread;
     void __fastcall StopPlayback(void);
     void __fastcall StopTCPClient(void);
 
