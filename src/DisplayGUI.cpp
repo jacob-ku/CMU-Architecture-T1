@@ -779,7 +779,12 @@ void __fastcall TForm1::HookTrack(int X, int Y, bool CPA_Hook)
             {
                 TrackHook.Valid_CC = true;
                 TrackHook.ICAO_CC = ADS_B_Aircraft->ICAO;
-                printf("%s\n\n", AircraftDB->GetAircraftDBInfo(ADS_B_Aircraft->ICAO));
+                const TAircraftData* acData = AircraftDB->GetAircraftDBInfo(ADS_B_Aircraft->ICAO);
+                if (acData) {
+                    printf("%s\n\n", acData->toString().c_str());
+                } else {
+                    printf("No AircraftDB info\n\n");
+                }
             }
             else
             {

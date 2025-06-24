@@ -47,20 +47,41 @@ int TAircraftDB::CSV_callback(struct CSV_context *ctx, const char *value)
 
     if (Init)
     {
-        for (int i = 0; i < AC_DB_NUM_FIELDS; i++)
-        {
-            Record.Fields[i] = "?";
-            Init = false;
+        memset(&Record, 0, sizeof(Record));
+        Init = false;
+    }
+    if (strlen(value)) {
+        switch (ctx->field_num) {
+            case 0: Record.ICAO24 = mg_unhexn(value, strlen(value)); break;
+            case 1: Record.Registration = value; break;
+            case 2: Record.ManufacturerICAO = value; break;
+            case 3: Record.ManufacturerName = value; break;
+            case 4: Record.Model = value; break;
+            case 5: Record.TypeCode = value; break;
+            case 6: Record.SerialNumber = value; break;
+            case 7: Record.LineNumber = value; break;
+            case 8: Record.ICAOAircraftType = value; break;
+            case 9: Record.OperatorName = value; break;
+            case 10: Record.OperatorCallsign = value; break;
+            case 11: Record.OperatorICAO = value; break;
+            case 12: Record.OperatorIata = value; break;
+            case 13: Record.Owner = value; break;
+            case 14: Record.TestReg = value; break;
+            case 15: Record.Registered = value; break;
+            case 16: Record.RegUntil = value; break;
+            case 17: Record.Status = value; break;
+            case 18: Record.Built = value; break;
+            case 19: Record.FirstFlightDate = value; break;
+            case 20: Record.SeatConfiguration = value; break;
+            case 21: Record.Engines = value; break;
+            case 22: Record.Modes = value; break;
+            case 23: Record.ADSB = value; break;
+            case 24: Record.ACARS = value; break;
+            case 25: Record.Notes = value; break;
+            case 26: Record.CategoryDescription = value; break;
         }
     }
-    if (strlen(value))
-        Record.Fields[ctx->field_num] = value;
-    if (ctx->field_num == 0)
-    {
-        Record.ICAO24 = mg_unhexn(value, strlen(value));
-        // printf("%x %s\n",Record.ICAO24,Record.Fields[ctx->field_num].c_str());
-    }
-    else if (ctx->field_num == (ctx->num_fields - 1))
+    if (ctx->field_num == (ctx->num_fields - 1))
     {
         TAircraftData *Data;
         if (Record.ICAO24 != 0)
@@ -68,24 +89,19 @@ int TAircraftDB::CSV_callback(struct CSV_context *ctx, const char *value)
             Data = (TAircraftData *)ght_get(AircraftDB->FAircraftDBHashTable, sizeof(Record.ICAO24), &Record.ICAO24);
             if (Data)
             {
-                printf("Duplicate Aircraft Record %s %x\n", Data->Fields[0].c_str(), Record.ICAO24);
+                printf("Duplicate Aircraft Record %s %x\n", Data->Registration.c_str(), Record.ICAO24);
             }
             else
             {
                 Data = new TAircraftData;
-                Data->ICAO24 = Record.ICAO24;
-
-                for (int i = 0; i < AC_DB_NUM_FIELDS; i++)
-                    Data->Fields[i] = Record.Fields[i];
+                *Data = Record;
                 if (ght_insert(AircraftDB->FAircraftDBHashTable, Data, sizeof(Data->ICAO24), &Data->ICAO24) < 0)
                 {
                     printf("ght_insert Error-Should Not Happen\n");
                 }
-                // printf("Record Added %s\n",Data->Fields[0].c_str());
             }
         }
-        for (int i = 0; i < AC_DB_NUM_FIELDS; i++)
-            Record.Fields[i] = "?";
+        memset(&Record, 0, sizeof(Record));
     }
     return (rc);
 }
@@ -162,48 +178,12 @@ TAircraftDB::~TAircraftDB()
     }
 }
 //---------------------------------------------------------------------------
-const char *TAircraftDB::GetAircraftDBInfo(uint32_t addr)
+const TAircraftData *TAircraftDB::GetAircraftDBInfo(uint32_t addr)
 {
-    static char buf[2048];
     std::lock_guard<std::mutex> lock(FMutex);
-
     if (!FInitialized)
-    {
-        snprintf(buf, sizeof(buf), "addr: 0x%06X, Database not initialized", addr);
-        return (buf);
-    }
-
-    const TAircraftData *a;
-    a = (TAircraftData *)ght_get(FAircraftDBHashTable, sizeof(addr), &addr);
-
-    if (a)
-    {
-        const char *type2 = NULL;
-        bool isHelo = IsHelicopter(addr, &type2);
-        type2 = NULL;
-        snprintf(buf, sizeof(buf), "addr:0x%06X, Reg:%s, Manufact-ICAO:%s, Manufact-Name:%s, Model:%s\n"
-                                   "Type:%s, Serial:%s, Line:%s, ICAO-Air-Type:%s, Op:%s, Op-CallSign:%s\n"
-                                   "Op-ICAO %s, OP-IATA:%s, Owner:%s, TestReg:%s, Reg:%s, Reg-Until: %s\n"
-                                   "Status:%s, Built:%s, First-Flight:%s, Seat-Config:%s, Engines:%s\n"
-                                   "Modes:%s, ADSB:%s, ACARS:%s, Notes:%s, Cat-Desc:%s, Country:%s\n"
-                                   "%s %s %s",
-                 a->ICAO24, a->Fields[1].c_str(),
-                 a->Fields[2].c_str(), a->Fields[3].c_str(), a->Fields[4].c_str(),
-                 a->Fields[5].c_str(), a->Fields[6].c_str(), a->Fields[7].c_str(),
-                 a->Fields[8].c_str(), a->Fields[9].c_str(), a->Fields[10].c_str(),
-                 a->Fields[11].c_str(), a->Fields[12].c_str(), a->Fields[13].c_str(),
-                 a->Fields[14].c_str(), a->Fields[15].c_str(), a->Fields[16].c_str(),
-                 a->Fields[17].c_str(), a->Fields[18].c_str(), a->Fields[19].c_str(),
-                 a->Fields[20].c_str(), a->Fields[21].c_str(), a->Fields[22].c_str(),
-                 a->Fields[23].c_str(), a->Fields[24].c_str(), a->Fields[25].c_str(),
-                 a->Fields[26].c_str(), GetCountry(addr, false),
-                 IsMilitary(addr, NULL) ? "Military " : "",
-                 isHelo ? "Helo-" : " ", isHelo ? type2 : " ");
-    }
-    else
-        snprintf(buf, sizeof(buf), "addr: 0x%06X, No Data", addr);
-
-    return (buf);
+        return nullptr;
+    return (const TAircraftData *)ght_get(FAircraftDBHashTable, sizeof(addr), &addr);
 }
 //---------------------------------------------------------------------------
 /*
@@ -529,10 +509,10 @@ bool TAircraftDB::IsHelicopter(uint32_t addr, const char **type_ptr)
         *type_ptr = NULL;
 
     a = (TAircraftData *)ght_get(FAircraftDBHashTable, sizeof(addr), &addr);
-    if (a && IsHelicopterType(a->Fields[AC_DB_ICAOAircraftType].c_str()))
+    if (a && IsHelicopterType(a->ICAOAircraftType.c_str()))
     {
         if (type_ptr)
-            *type_ptr = a->Fields[AC_DB_ICAOAircraftType].c_str();
+            *type_ptr = a->ICAOAircraftType.c_str();
         return (true);
     }
     return (false);
