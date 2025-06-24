@@ -1,9 +1,9 @@
 #include <iostream>
-#include<curl/curl.h>
+
 #include <curl/curl.h>
 #define CURL_STATICLIB
 
-#pragma comment(lib, "libcurl-bcc.lib")
+#pragma comment(lib, "libcurl-bcc-x64.lib")
 class TestCurl
 {
 
