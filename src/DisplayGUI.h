@@ -211,6 +211,16 @@ class TForm1 : public TForm
     TMenuItem *UseSBSLocal;
     TMenuItem *UseSBSRemote;
     TMenuItem *LoadARTCCBoundaries1;
+    TLabel *Label20;
+    TLabel *RegNumLabel;
+    TLabel *Label21;
+    TLabel *ManufactureLabel;
+    TLabel *Label22;
+    TLabel *ModelLabel;
+    TLabel *Label24;
+    TLabel *OperatorLabel;
+    TLabel *Label26;
+    TLabel *CountryLabel;
     void __fastcall ObjectDisplayInit(TObject *Sender);
     void __fastcall ObjectDisplayResize(TObject *Sender);
     void __fastcall ObjectDisplayPaint(TObject *Sender);

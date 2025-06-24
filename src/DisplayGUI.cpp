@@ -2112,3 +2112,4 @@ void __fastcall TForm1::HideUnregisteredCheckBoxClick(TObject *Sender)
     ObjectDisplay->Repaint();
 }
 //---------------------------------------------------------------------------
+
