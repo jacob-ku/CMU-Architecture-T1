@@ -8,8 +8,10 @@ src/Win32/
 src/ADS-B-Group.groupproj.local
 src/HashTable/Lib/__history
 
-*.local
+**.local
+**.local.**
 *.res
+**__history**
 
 # Created by https://www.toptal.com/developers/gitignore/api/c++,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=c++,visualstudiocode
@@ -49,12 +51,13 @@ src/HashTable/Lib/__history
 *.app
 
 ### VisualStudioCode ###
+.vscode
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
+#!.vscode/settings.json
+#!.vscode/tasks.json
+#!.vscode/launch.json
+#!.vscode/extensions.json
+#!.vscode/*.code-snippets
 
 # Local History for Visual Studio Code
 .history/
