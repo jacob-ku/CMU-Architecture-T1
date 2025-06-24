@@ -4,16 +4,14 @@
 
 #include "AircraftDB.h"
 #include "csv.h"
+#include <thread>
 
 #define DIM(array) (sizeof(array) / sizeof(array[0]))
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
-const char *aircraft_get_country(uint32_t addr, bool get_short);
-bool aircraft_is_helicopter(uint32_t addr, const char **type_ptr);
-const char *aircraft_get_military(uint32_t addr);
-bool aircraft_is_military(uint32_t addr, const char **country);
 
-ght_hash_table_t *AircraftDBHashTable = NULL;
+TAircraftDB *AircraftDB = NULL;
+
 //---------------------------------------------------------------------------
 static unsigned char mg_unhex_nimble(unsigned char c)
 {
@@ -41,7 +39,7 @@ static void mg_unhex(const char *buf, size_t len, unsigned char *to)
 }
 
 //---------------------------------------------------------------------------
-static int CSV_callback(struct CSV_context *ctx, const char *value)
+int TAircraftDB::CSV_callback(struct CSV_context *ctx, const char *value)
 {
     int rc = 1;
     static bool Init = true;
@@ -67,7 +65,7 @@ static int CSV_callback(struct CSV_context *ctx, const char *value)
         TAircraftData *Data;
         if (Record.ICAO24 != 0)
         {
-            Data = (TAircraftData *)ght_get(AircraftDBHashTable, sizeof(Record.ICAO24), &Record.ICAO24);
+            Data = (TAircraftData *)ght_get(AircraftDB->FAircraftDBHashTable, sizeof(Record.ICAO24), &Record.ICAO24);
             if (Data)
             {
                 printf("Duplicate Aircraft Record %s %x\n", Data->Fields[0].c_str(), Record.ICAO24);
@@ -79,9 +77,9 @@ static int CSV_callback(struct CSV_context *ctx, const char *value)
 
                 for (int i = 0; i < AC_DB_NUM_FIELDS; i++)
                     Data->Fields[i] = Record.Fields[i];
-                if (ght_insert(AircraftDBHashTable, Data, sizeof(Data->ICAO24), &Data->ICAO24) < 0)
+                if (ght_insert(AircraftDB->FAircraftDBHashTable, Data, sizeof(Data->ICAO24), &Data->ICAO24) < 0)
                 {
-                    printf("ght_insert Error-Should Not Happen");
+                    printf("ght_insert Error-Should Not Happen\n");
                 }
                 // printf("Record Added %s\n",Data->Fields[0].c_str());
             }
@@ -92,49 +90,97 @@ static int CSV_callback(struct CSV_context *ctx, const char *value)
     return (rc);
 }
 //---------------------------------------------------------------------------
-bool InitAircraftDB(AnsiString FileName)
+void TAircraftDB::LoadDatabase()
 {
+    auto start = std::chrono::system_clock::now();
+    std::time_t start_time = std::chrono::system_clock::to_time_t(start);
+    printf("[AircraftDB] Start loading at %s", std::ctime(&start_time));
+
+    std::lock_guard<std::mutex> lock(FMutex);
+    FLoading = true;
+    FInitialized = false;
+
     CSV_context csv_ctx;
 
-    AircraftDBHashTable = ght_create(600000);
-    ght_set_rehash(AircraftDBHashTable, TRUE);
+    // Increase the hash table bucket count for better performance with large datasets
+    FAircraftDBHashTable = ght_create(600000);
+    ght_set_rehash(FAircraftDBHashTable, TRUE);
 
-    if (!AircraftDBHashTable)
+    if (!FAircraftDBHashTable)
     {
+        FLoading = false;
         throw Sysutils::Exception("Create Hash Failed");
     }
-    ght_set_rehash(AircraftDBHashTable, TRUE);
+    ght_set_rehash(FAircraftDBHashTable, TRUE);
 
     memset(&csv_ctx, 0, sizeof(csv_ctx));
-    csv_ctx.file_name = FileName.c_str();
+    csv_ctx.file_name = FFileName.c_str();
     csv_ctx.delimiter = ',';
     csv_ctx.callback = CSV_callback;
     csv_ctx.line_size = 2000;
     printf("Reading Aircraft DB\n");
     if (!CSV_open_and_parse_file(&csv_ctx))
     {
-        printf("Parsing of \"%s\" failed: %s\n", FileName.c_str(), strerror(errno));
-        return (false);
+        printf("Parsing of \"%s\" failed: %s\n", FFileName.c_str(), strerror(errno));
+    }
+    else
+    {
+        FInitialized = true;
     }
 
     printf("Done Reading Aircraft DB\n");
-    return (true);
+    FLoading = false;
+
+    auto end = std::chrono::system_clock::now();
+    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+    printf("[AircraftDB] Finished loading at %s", std::ctime(&end_time));
 }
 //---------------------------------------------------------------------------
-const char *GetAircraftDBInfo(uint32_t addr)
+void TAircraftDB::LoadDatabaseAsync(AnsiString FileName)
+{
+    if (FLoading)
+        return;
+
+    FFileName = FileName;
+    std::thread([this]() {
+        this->LoadDatabase();
+    }).detach();
+}
+//---------------------------------------------------------------------------
+TAircraftDB::TAircraftDB()
+{
+    FAircraftDBHashTable = NULL;
+    FLoading = false;
+    FInitialized = false;
+}
+//---------------------------------------------------------------------------
+TAircraftDB::~TAircraftDB()
+{
+    if (FAircraftDBHashTable)
+    {
+        ght_finalize(FAircraftDBHashTable);
+    }
+}
+//---------------------------------------------------------------------------
+const char *TAircraftDB::GetAircraftDBInfo(uint32_t addr)
 {
     static char buf[2048];
+    std::lock_guard<std::mutex> lock(FMutex);
+
+    if (!FInitialized)
+    {
+        snprintf(buf, sizeof(buf), "addr: 0x%06X, Database not initialized", addr);
+        return (buf);
+    }
+
     const TAircraftData *a;
-    a = (TAircraftData *)ght_get(AircraftDBHashTable, sizeof(addr), &addr);
+    a = (TAircraftData *)ght_get(FAircraftDBHashTable, sizeof(addr), &addr);
 
     if (a)
     {
-
         const char *type2 = NULL;
-        bool isHelo = false;
-        ;
+        bool isHelo = IsHelicopter(addr, &type2);
         type2 = NULL;
-        isHelo = aircraft_is_helicopter(addr, &type2);
         snprintf(buf, sizeof(buf), "addr:0x%06X, Reg:%s, Manufact-ICAO:%s, Manufact-Name:%s, Model:%s\n"
                                    "Type:%s, Serial:%s, Line:%s, ICAO-Air-Type:%s, Op:%s, Op-CallSign:%s\n"
                                    "Op-ICAO %s, OP-IATA:%s, Owner:%s, TestReg:%s, Reg:%s, Reg-Until: %s\n"
@@ -150,8 +196,8 @@ const char *GetAircraftDBInfo(uint32_t addr)
                  a->Fields[17].c_str(), a->Fields[18].c_str(), a->Fields[19].c_str(),
                  a->Fields[20].c_str(), a->Fields[21].c_str(), a->Fields[22].c_str(),
                  a->Fields[23].c_str(), a->Fields[24].c_str(), a->Fields[25].c_str(),
-                 a->Fields[26].c_str(), aircraft_get_country(addr, false),
-                 aircraft_is_military(addr, NULL) ? "Military " : "",
+                 a->Fields[26].c_str(), GetCountry(addr, false),
+                 IsMilitary(addr, NULL) ? "Military " : "",
                  isHelo ? "Helo-" : " ", isHelo ? type2 : " ");
     }
     else
@@ -386,7 +432,7 @@ static const ICAO_range ICAO_ranges[] = {
     {0xE90000, 0xE90FFF, "UY", "Uruguay"},
     {0xE94000, 0xE94FFF, "BO", "Bolivia"}};
 //---------------------------------------------------------------------------
-const char *aircraft_get_country(uint32_t addr, bool get_short)
+const char *TAircraftDB::GetCountry(uint32_t addr, bool get_short)
 {
     const ICAO_range *r = ICAO_ranges + 0;
     uint16_t i;
@@ -440,7 +486,7 @@ static const ICAO_range military_range[] = {
     {0xC87F00, 0xC87FFF, "NZ"},
     {0xE40000, 0xE41FFF, NULL}};
 //---------------------------------------------------------------------------
-bool aircraft_is_military(uint32_t addr, const char **country)
+bool TAircraftDB::IsMilitary(uint32_t addr, const char **country)
 {
     const ICAO_range *r = military_range + 0;
     uint16_t i;
@@ -458,7 +504,7 @@ bool aircraft_is_military(uint32_t addr, const char **country)
 /**
  * The types of a helicopter (incomplete).
  */
-static bool is_helicopter_type(const char *type)
+bool TAircraftDB::IsHelicopterType(const char *type)
 {
     const char *helli_types[] = {"H1P", "H2P", "H1T", "H2T"};
     uint16_t i;
@@ -475,15 +521,15 @@ static bool is_helicopter_type(const char *type)
 /**
  * Figure out if an ICAO-address belongs to a helicopter.
  */
-bool aircraft_is_helicopter(uint32_t addr, const char **type_ptr)
+bool TAircraftDB::IsHelicopter(uint32_t addr, const char **type_ptr)
 {
     const TAircraftData *a;
 
     if (type_ptr)
         *type_ptr = NULL;
 
-    a = (TAircraftData *)ght_get(AircraftDBHashTable, sizeof(addr), &addr);
-    if (a && is_helicopter_type(a->Fields[AC_DB_ICAOAircraftType].c_str()))
+    a = (TAircraftData *)ght_get(FAircraftDBHashTable, sizeof(addr), &addr);
+    if (a && IsHelicopterType(a->Fields[AC_DB_ICAOAircraftType].c_str()))
     {
         if (type_ptr)
             *type_ptr = a->Fields[AC_DB_ICAOAircraftType].c_str();
@@ -493,11 +539,11 @@ bool aircraft_is_helicopter(uint32_t addr, const char **type_ptr)
 }
 
 //---------------------------------------------------------------------------
-const char *aircraft_get_military(uint32_t addr)
+const char *TAircraftDB::GetMilitary(uint32_t addr)
 {
     static char buf[20];
     const char *cntry;
-    bool mil = aircraft_is_military(addr, &cntry);
+    bool mil = IsMilitary(addr, &cntry);
     int sz;
 
     if (!mil)
@@ -513,10 +559,10 @@ const char *aircraft_get_military(uint32_t addr)
  * Check if an aircraft is registered in the AircraftDB.
  * Returns true if the aircraft is found in the database.
  */
-bool aircraft_is_registered(uint32_t addr)
+bool TAircraftDB::aircraft_is_registered(uint32_t addr)
 {
     const TAircraftData *a;
-    a = (TAircraftData *)ght_get(AircraftDBHashTable, sizeof(addr), &addr);
+    a = (TAircraftData *)ght_get(FAircraftDBHashTable, sizeof(addr), &addr);
     return (a != NULL);
 }
 //---------------------------------------------------------------------------

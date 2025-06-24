@@ -2,7 +2,7 @@ object Form1: TForm1
   Left = 0
   Top = 0
   Caption = 'ADS-B Viewer'
-  ClientHeight = 603
+  ClientHeight = 662
   ClientWidth = 1228
   Color = clBtnFace
   Constraints.MinHeight = 740
@@ -46,11 +46,12 @@ object Form1: TForm1
     Left = 978
     Top = 0
     Width = 250
-    Height = 603
+    Height = 662
     Align = alRight
     Color = clWindow
     Constraints.MaxWidth = 250
     TabOrder = 0
+    ExplicitHeight = 603
     object Panel1: TPanel
       Left = 1
       Top = 520
@@ -806,7 +807,7 @@ object Form1: TForm1
         Width = 150
         Height = 17
         Caption = 'Update map tiles'
-        TabOrder = 1
+        TabOrder = 2
         OnClick = CheckBoxUpdateMapTilesClick
       end
       object BigQueryCheckBox: TCheckBox
@@ -833,7 +834,7 @@ object Form1: TForm1
     Left = 0
     Top = 0
     Width = 978
-    Height = 603
+    Height = 662
     Cursor = crCross
     Align = alClient
     TabOrder = 1
@@ -861,6 +862,7 @@ object Form1: TForm1
     OnInit = ObjectDisplayInit
     OnResize = ObjectDisplayResize
     OnPaint = ObjectDisplayPaint
+    ExplicitHeight = 603
   end
   object MainMenu1: TMainMenu
     Left = 24
