@@ -509,3 +509,14 @@ const char *aircraft_get_military(uint32_t addr)
     return (buf);
 }
 //---------------------------------------------------------------------------
+/**
+ * Check if an aircraft is registered in the AircraftDB.
+ * Returns true if the aircraft is found in the database.
+ */
+bool aircraft_is_registered(uint32_t addr)
+{
+    const TAircraftData *a;
+    a = (TAircraftData *)ght_get(AircraftDBHashTable, sizeof(addr), &addr);
+    return (a != NULL);
+}
+//---------------------------------------------------------------------------
