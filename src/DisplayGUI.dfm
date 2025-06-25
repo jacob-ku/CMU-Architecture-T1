@@ -764,6 +764,26 @@ object Form1: TForm1
       Height = 9
       Align = alClient
       TabOrder = 2
+      object UnregisteredSeparator: TBevel
+        Left = 5
+        Top = 55
+        Width = 238
+        Height = 2
+        Shape = bsTopLine
+      end
+      object UnregisteredCountLabel: TLabel
+        Left = 5
+        Top = 62
+        Width = 87
+        Height = 13
+        Caption = 'Unregistered: 0'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = [fsBold]
+        ParentFont = False
+      end
       object MapComboBox: TComboBox
         Left = 5
         Top = 6
@@ -795,6 +815,15 @@ object Form1: TForm1
         Caption = 'BigQuery Upload'
         TabOrder = 1
         OnClick = BigQueryCheckBoxClick
+      end
+      object HideUnregisteredCheckBox: TCheckBox
+        Left = 120
+        Top = 60
+        Width = 120
+        Height = 17
+        Caption = 'Hide unregistered'
+        TabOrder = 3
+        OnClick = HideUnregisteredCheckBoxClick
       end
     end
   end
