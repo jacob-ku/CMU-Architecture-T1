@@ -81,22 +81,6 @@ bool AirportDB::loadFromFile(const std::string& filePath) {
         std::cout << "Error: Unknown exception occurred while parsing CSV file" << std::endl;
         return false;
     }
-
-    
-
-#if 0    
-    CSV_context csv_ctx;
-    memset(&csv_ctx, 0, sizeof(csv_ctx));
-    csv_ctx.file_name = filePath.c_str();
-    csv_ctx.delimiter = ',';
-    csv_ctx.callback = CSV_callback;
-    csv_ctx.line_size = 2000;
-    if (!CSV_open_and_parse_file(&csv_ctx))
-    {
-        printf("Parsing of \"%s\" failed: %s\n", filePath.c_str(), strerror(errno));
-        return (false);
-    }
-#endif
     return true;
 }
 

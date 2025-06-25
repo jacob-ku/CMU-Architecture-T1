@@ -12,7 +12,7 @@ interface RouteManagerInterface
     virtual bool LoadRouteFromFile(const std::string& filename) = 0;
   
     // Method to get the current route as a string
-    virtual Route& GetRoute(std::string& callsign) = 0;
+    virtual Route GetRoute(std::string& callsign) = 0;
 
 };
 

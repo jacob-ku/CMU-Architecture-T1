@@ -28,6 +28,9 @@
 #include "csv.h"
 #include "Map/Providers/MapProviderFactory.h"
 
+#include "MetadataManager/RouteManager.h"
+#include "MetadataManager/AirportManager.h"
+
 #define AIRCRAFT_DATABASE_URL "https://opensky-network.org/datasets/metadata/aircraftDatabase.zip"
 #define AIRCRAFT_DATABASE_FILE "aircraftDatabase.csv"
 #define ARTCC_BOUNDARY_FILE "Ground_Level_ARTCC_Boundary_Data_2025-05-15.csv"
@@ -231,7 +234,15 @@ __fastcall TForm1::TForm1(TComponent *Owner)
     BigQueryCSV = NULL;
     BigQueryRowCount = 0;
     BigQueryFileCount = 0;
+
     InitAircraftDB(AircraftDBPathFileName);
+
+    RouteManager RouteMgr;
+    RouteMgr.LoadRouteFromFile();
+    
+    AirportManager AirportMgr;
+    AirportMgr.LoadAirport();
+
     printf("init complete\n");
 }
 //---------------------------------------------------------------------------
