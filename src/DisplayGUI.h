@@ -26,6 +26,7 @@
 #include "cspin.h"
 #include "Map/Providers/MapProviderFactory.h"
 #include <queue>
+#include "ErrorHandling/PIErrorMonitor.h"
 
 // Define message types for the central processor
 enum class MessageType {
@@ -275,6 +276,7 @@ public:  // User declarations
     void __fastcall CreateBigQueryCSV(void);
     void __fastcall CloseBigQueryCSV(void);
     bool __fastcall LoadARTCCBoundaries(AnsiString FileName);
+    void __fastcall HandlePIErrorState(const int &code);
 
     int MouseDownX, MouseDownY;
     bool MouseDown;
@@ -291,6 +293,7 @@ public:  // User declarations
     ght_hash_table_t *HashTable;
     TTCPClientRawHandleThread *TCPClientRawHandleThread;
     TTCPClientSBSHandleThread *TCPClientSBSHandleThread;
+    PIErrorMonitor *mPIErrorMonitorThread;
     TStreamWriter *RecordRawStream;
     TStreamReader *PlayBackRawStream;
     TStreamWriter *RecordSBSStream;
