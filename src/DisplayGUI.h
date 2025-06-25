@@ -273,6 +273,8 @@ private: // User declarations
     bool LoadMapFromInternet;
     void ReloadMapProvider();
 
+    void __fastcall FormClose(TObject *Sender, TCloseAction &Action);
+
 public:  // User declarations
     __fastcall TForm1(TComponent *Owner);
     __fastcall ~TForm1();
@@ -290,6 +292,8 @@ public:  // User declarations
     void __fastcall CloseBigQueryCSV(void);
     bool __fastcall LoadARTCCBoundaries(AnsiString FileName);
     void __fastcall UpdateUnregisteredCount(void);
+    void __fastcall RawThreadTerminated(TObject *Sender);
+    void __fastcall SBSThreadTerminated(TObject *Sender);
 
     int MouseDownX, MouseDownY;
     bool MouseDown;
@@ -331,3 +335,4 @@ extern PACKAGE TForm1 *Form1;
 //---------------------------------------------------------------------------
 
 #endif
+

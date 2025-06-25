@@ -187,6 +187,7 @@ static char *stristr(const char *String, const char *Pattern)
 __fastcall TForm1::TForm1(TComponent *Owner)
     : TForm(Owner)
 {
+    this->OnClose = FormClose;
     AircraftDBPathFileName = ExtractFilePath(ExtractFileDir(Application->ExeName)) + AnsiString("..\\AircraftDB\\") + AIRCRAFT_DATABASE_FILE;
     ARTCCBoundaryDataPathFileName = ExtractFilePath(ExtractFileDir(Application->ExeName)) + AnsiString("..\\ARTCC_Boundary_Data\\") + ARTCC_BOUNDARY_FILE;
     BigQueryPath = ExtractFilePath(ExtractFileDir(Application->ExeName)) + AnsiString("..\\BigQuery\\");
@@ -241,13 +242,21 @@ __fastcall TForm1::TForm1(TComponent *Owner)
 //---------------------------------------------------------------------------
 __fastcall TForm1::~TForm1()
 {
+    printf("[Form] TForm1 destructor called.\n");
     Timer1->Enabled = false;
     Timer2->Enabled = false;
     if (currentMapProvider) {
         delete currentMapProvider;
         currentMapProvider = nullptr;
     }
-    delete AircraftDB;
+
+    if (AircraftDB) {
+        printf("[Form] Deleting AircraftDB...\n");
+        delete AircraftDB;
+        AircraftDB = nullptr;
+        printf("[Form] AircraftDB deleted.\n");
+    }
+    printf("[Form] TForm1 destructor completed.\n");
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::SetMapCenter(double &x, double &y)
@@ -1147,6 +1156,7 @@ void __fastcall TForm1::RawConnectButtonClick(TObject *Sender)
             TCPClientRawHandleThread = new TTCPClientRawHandleThread(true);
             TCPClientRawHandleThread->UseFileInsteadOfNetwork = false;
             TCPClientRawHandleThread->FreeOnTerminate = TRUE;
+            TCPClientRawHandleThread->OnTerminate = RawThreadTerminated;
             TCPClientRawHandleThread->Resume();
         }
         catch (const EIdException &e)
@@ -1230,6 +1240,7 @@ void __fastcall TForm1::RawPlaybackButtonClick(TObject *Sender)
                     TCPClientRawHandleThread->UseFileInsteadOfNetwork = true;
                     TCPClientRawHandleThread->First = true;
                     TCPClientRawHandleThread->FreeOnTerminate = TRUE;
+                    TCPClientRawHandleThread->OnTerminate = RawThreadTerminated;
                     TCPClientRawHandleThread->Resume();
                     RawPlaybackButton->Caption = "Stop Raw Playback";
                     RawConnectButton->Enabled = false;
@@ -1250,7 +1261,8 @@ void __fastcall TForm1::RawPlaybackButtonClick(TObject *Sender)
 // Constructor for the thread class
 __fastcall TTCPClientRawHandleThread::TTCPClientRawHandleThread(bool value) : TThread(value)
 {
-    FreeOnTerminate = true; // Automatically free the thread object after execution
+	printf("[Thread] TTCPClientRawHandleThread created.\n");
+	FreeOnTerminate = true; // Automatically free the thread object after execution
     processorThread = new TMessageProcessorThread(true);
     processorThread->Start();
 }
@@ -1258,7 +1270,8 @@ __fastcall TTCPClientRawHandleThread::TTCPClientRawHandleThread(bool value) : TT
 // Destructor for the thread class
 __fastcall TTCPClientRawHandleThread::~TTCPClientRawHandleThread()
 {
-    // Clean up resources if needed
+	printf("[Thread] TTCPClientRawHandleThread destroyed.\n");
+	// Clean up resources if needed
     if (processorThread) {
         processorThread->Terminate();
         processorThread->WaitFor();
@@ -1363,6 +1376,7 @@ void __fastcall TForm1::SBSConnectButtonClick(TObject *Sender)
             TCPClientSBSHandleThread = new TTCPClientSBSHandleThread(true);
             TCPClientSBSHandleThread->UseFileInsteadOfNetwork = false;
             TCPClientSBSHandleThread->FreeOnTerminate = TRUE;
+            TCPClientSBSHandleThread->OnTerminate = SBSThreadTerminated;
             TCPClientSBSHandleThread->Resume();
         }
         catch (const EIdException &e)
@@ -1384,7 +1398,8 @@ void __fastcall TForm1::SBSConnectButtonClick(TObject *Sender)
 // Constructor for the thread class
 __fastcall TTCPClientSBSHandleThread::TTCPClientSBSHandleThread(bool value) : TThread(value)
 {
-    FreeOnTerminate = true; // Automatically free the thread object after execution
+	printf("[Thread] TTCPClientSBSHandleThread created.\n");
+	FreeOnTerminate = true; // Automatically free the thread object after execution
     processorThread = new TMessageProcessorThread(true);
     processorThread->Start();
 }
@@ -1392,7 +1407,8 @@ __fastcall TTCPClientSBSHandleThread::TTCPClientSBSHandleThread(bool value) : TT
 // Destructor for the thread class
 __fastcall TTCPClientSBSHandleThread::~TTCPClientSBSHandleThread()
 {
-    // Clean up resources if needed
+	printf("[Thread] TTCPClientSBSHandleThread destroyed.\n");
+	// Clean up resources if needed
     if (processorThread) {
         processorThread->Terminate();
         processorThread->WaitFor();
@@ -1489,13 +1505,15 @@ void __fastcall TTCPClientSBSHandleThread::StopTCPClient(void)
 //---------------------------------------------------------------------------
 __fastcall TMessageProcessorThread::TMessageProcessorThread(bool value) : TThread(value)
 {
-    queueLock = new TCriticalSection();
-    messageEvent = new TEvent(nullptr, false, false, "", false);
-    isProcessing = false;
+	printf("[Thread] TMessageProcessorThread created.\n");
+	queueLock = new TCriticalSection();
+	messageEvent = new TEvent(nullptr, false, false, "", false);
+	isProcessing = false;
 }
 //---------------------------------------------------------------------------
 TMessageProcessorThread::~TMessageProcessorThread()
 {
+	printf("[Thread] TMessageProcessorThread destroyed.\n");
     if (messageEvent) {
         delete messageEvent;
         messageEvent = NULL;
@@ -1673,6 +1691,7 @@ void __fastcall TForm1::SBSPlaybackButtonClick(TObject *Sender)
                     TCPClientSBSHandleThread->UseFileInsteadOfNetwork = true;
                     TCPClientSBSHandleThread->First = true;
                     TCPClientSBSHandleThread->FreeOnTerminate = TRUE;
+                    TCPClientSBSHandleThread->OnTerminate = SBSThreadTerminated;
                     TCPClientSBSHandleThread->Resume();
                     SBSPlaybackButton->Caption = "Stop SBS Playback";
                     SBSConnectButton->Enabled = false;
@@ -2133,4 +2152,51 @@ void __fastcall TForm1::HideUnregisteredCheckBoxClick(TObject *Sender)
     ObjectDisplay->Repaint();
 }
 //---------------------------------------------------------------------------
+
+void __fastcall TForm1::FormClose(TObject *Sender, TCloseAction &Action)
+{
+    printf("[FormClose] Starting application shutdown...\n");
+
+    int result = MessageDlg("Confirm exit: are you sure you want to close the program?",
+                        mtConfirmation,
+                        TMsgDlgButtons() << mbYes << mbNo, 0);
+    if (result == mrNo)
+    {
+        Action = caNone;
+        return;
+    }
+
+    // Also ensure the aircraft database loading thread is terminated.
+    if (AircraftDB)
+    {
+        AircraftDB->CancelAndJoin();
+    }
+
+    if (TCPClientRawHandleThread)
+    {
+        TCPClientRawHandleThread->Terminate();
+    }
+    if (TCPClientSBSHandleThread)
+    {
+        TCPClientSBSHandleThread->Terminate();
+    }
+
+    // Wait for threads to terminate
+    while (TCPClientRawHandleThread || TCPClientSBSHandleThread)
+    {
+        Application->ProcessMessages(); // Allow OnTerminate to be processed
+        Sleep(50);
+    }
+    printf("[FormClose] All threads terminated.\n");
+}
+
+void __fastcall TForm1::RawThreadTerminated(TObject *Sender)
+{
+    TCPClientRawHandleThread = NULL;
+}
+
+void __fastcall TForm1::SBSThreadTerminated(TObject *Sender)
+{
+    TCPClientSBSHandleThread = NULL;
+}
 

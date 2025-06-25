@@ -326,7 +326,7 @@ object Form1: TForm1
         object CLatLabel: TLabel
           Left = 35
           Top = 153
-          Width = 30
+          Width = 21
           Height = 13
           Caption = 'N/A'
           Font.Charset = DEFAULT_CHARSET
@@ -339,8 +339,8 @@ object Form1: TForm1
         object CLonLabel: TLabel
           Left = 35
           Top = 172
-          Width = 30
-          Height = 11
+          Width = 21
+          Height = 13
           Caption = 'N/A'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -353,7 +353,7 @@ object Form1: TForm1
         object SpdLabel: TLabel
           Left = 35
           Top = 189
-          Width = 22
+          Width = 21
           Height = 13
           Caption = 'N/A'
           Font.Charset = DEFAULT_CHARSET
@@ -366,7 +366,7 @@ object Form1: TForm1
         object HdgLabel: TLabel
           Left = 35
           Top = 208
-          Width = 22
+          Width = 21
           Height = 13
           Caption = 'N/A'
           Font.Charset = DEFAULT_CHARSET
@@ -379,7 +379,7 @@ object Form1: TForm1
         object AltLabel: TLabel
           Left = 35
           Top = 227
-          Width = 25
+          Width = 21
           Height = 13
           Caption = 'N/A'
           Font.Charset = DEFAULT_CHARSET

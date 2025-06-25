@@ -41,7 +41,10 @@ static void mg_unhex(const char *buf, size_t len, unsigned char *to)
 //---------------------------------------------------------------------------
 int TAircraftDB::CSV_callback(struct CSV_context *ctx, const char *value)
 {
-    int rc = 1;
+	if (AircraftDB->FCancelLoading)
+		return 0; // Stop parsing if cancellation is requested
+
+	int rc = 1;
     static bool Init = true;
     static TAircraftData Record;
 
@@ -112,8 +115,6 @@ void TAircraftDB::LoadDatabase()
     std::time_t start_time = std::chrono::system_clock::to_time_t(start);
     printf("[AircraftDB] Start loading at %s", std::ctime(&start_time));
 
-    std::lock_guard<std::mutex> lock(FMutex);
-    FLoading = true;
     FInitialized = false;
 
     CSV_context csv_ctx;
@@ -124,7 +125,10 @@ void TAircraftDB::LoadDatabase()
 
     if (!FAircraftDBHashTable)
     {
-        FLoading = false;
+        {
+            std::lock_guard<std::mutex> lock(FMutex);
+            FLoading = false;
+        }
         throw Sysutils::Exception("Create Hash Failed");
     }
     ght_set_rehash(FAircraftDBHashTable, TRUE);
@@ -137,7 +141,10 @@ void TAircraftDB::LoadDatabase()
     printf("Reading Aircraft DB\n");
     if (!CSV_open_and_parse_file(&csv_ctx))
     {
-        printf("Parsing of \"%s\" failed: %s\n", FFileName.c_str(), strerror(errno));
+        if (!FCancelLoading)
+        {
+            printf("Parsing of \"%s\" failed: %s\n", FFileName.c_str(), strerror(errno));
+        }
     }
     else
     {
@@ -145,7 +152,10 @@ void TAircraftDB::LoadDatabase()
     }
 
     printf("Done Reading Aircraft DB\n");
-    FLoading = false;
+    {
+        std::lock_guard<std::mutex> lock(FMutex);
+        FLoading = false;
+    }
 
     auto end = std::chrono::system_clock::now();
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
@@ -154,28 +164,38 @@ void TAircraftDB::LoadDatabase()
 //---------------------------------------------------------------------------
 void TAircraftDB::LoadDatabaseAsync(AnsiString FileName)
 {
-    if (FLoading)
-        return;
-
-    FFileName = FileName;
-    std::thread([this]() {
-        this->LoadDatabase();
-    }).detach();
+    // Ensure any previous load thread has been canceled and joined
+    CancelAndJoin();
+    {
+        std::lock_guard<std::mutex> lock(FMutex);
+        if (FLoading)
+            return;
+        FFileName = FileName;
+        FCancelLoading = false;
+        FLoading = true;
+        FLoadThread = new std::thread(&TAircraftDB::LoadDatabase, this);
+    }
 }
 //---------------------------------------------------------------------------
 TAircraftDB::TAircraftDB()
 {
+    printf("[Thread] TAircraftDB created.\n");
     FAircraftDBHashTable = NULL;
     FLoading = false;
     FInitialized = false;
+    FLoadThread = nullptr;
+    FCancelLoading = false;
 }
 //---------------------------------------------------------------------------
 TAircraftDB::~TAircraftDB()
 {
+    printf("[Thread] TAircraftDB destructor called.\n");
+    CancelAndJoin();
     if (FAircraftDBHashTable)
     {
         ght_finalize(FAircraftDBHashTable);
     }
+    printf("[Thread] TAircraftDB destroyed.\n");
 }
 //---------------------------------------------------------------------------
 const TAircraftData *TAircraftDB::GetAircraftDBInfo(uint32_t addr)
@@ -184,6 +204,21 @@ const TAircraftData *TAircraftDB::GetAircraftDBInfo(uint32_t addr)
     if (!FInitialized)
         return nullptr;
     return (const TAircraftData *)ght_get(FAircraftDBHashTable, sizeof(addr), &addr);
+}
+
+void TAircraftDB::CancelAndJoin()
+{
+    {
+        std::lock_guard<std::mutex> lock(FMutex);
+        FCancelLoading = true;
+    }
+    if (FLoadThread && FLoadThread->joinable()) {
+        printf("[Thread] Try to Join and Delete FLoadThread\n");
+        FLoadThread->join();
+        delete FLoadThread;
+        FLoadThread = nullptr;
+        printf("[Thread] Success to delete FLoadThread\n");
+    }
 }
 //---------------------------------------------------------------------------
 /*
