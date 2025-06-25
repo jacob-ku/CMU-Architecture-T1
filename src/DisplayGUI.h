@@ -28,6 +28,7 @@
 #include "MetadataManager/AirportManager.h"
 #include "MetadataManager/RouteManager.h"
 #include <queue>
+#include "ErrorHandling/PIErrorMonitor.h"
 
 // Define message types for the central processor
 enum class MessageType {
@@ -304,6 +305,7 @@ public:  // User declarations
     void DrawTowerImage(float x, float y, float scale);
     float getCurrentZoomLevel(void);
     void getScreenLatLonBounds(double &minLat, double &maxLat, double &minLon, double &maxLon);
+    void __fastcall HandlePIErrorState(const int &code);
 
     int MouseDownX, MouseDownY;
     bool MouseDown;
@@ -320,6 +322,7 @@ public:  // User declarations
     ght_hash_table_t *HashTable;
     TTCPClientRawHandleThread *TCPClientRawHandleThread;
     TTCPClientSBSHandleThread *TCPClientSBSHandleThread;
+    PIErrorMonitor *mPIErrorMonitorThread;
     TStreamWriter *RecordRawStream;
     TStreamReader *PlayBackRawStream;
     TStreamWriter *RecordSBSStream;
