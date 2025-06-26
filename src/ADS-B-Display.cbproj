@@ -93,8 +93,8 @@
         <Icon_MainIcon>$(BDS)\bin\cbuilder_PROJECTICON.ico</Icon_MainIcon>
         <UWP_CppLogo44>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_44.png</UWP_CppLogo44>
         <UWP_CppLogo150>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_150.png</UWP_CppLogo150>
-        <IncludePath>Map\Providers\;OSC\include;OSC\testsrc\curl\;Map\MapSrc\;..\..\..\..\..\Desktop\ADS-B-2025\ADS-B-Display\;$(IncludePath)</IncludePath>
-        <ILINK_LibraryPath>Map\Providers\;OSC\testsrc\curl\;Map\MapSrc\;..\..\..\..\..\Desktop\ADS-B-2025\ADS-B-Display\;OSC\bin\bcclib;$(ILINK_LibraryPath)</ILINK_LibraryPath>
+        <IncludePath>ManifestManager\;Map\Providers\;OSC\include;OSC\testsrc\curl\;Map\MapSrc\;..\..\..\..\..\Desktop\ADS-B-2025\ADS-B-Display\;$(IncludePath)</IncludePath>
+        <ILINK_LibraryPath>ManifestManager\;Map\Providers\;OSC\testsrc\curl\;Map\MapSrc\;..\..\..\..\..\Desktop\ADS-B-2025\ADS-B-Display\;OSC\bin\bcclib;$(ILINK_LibraryPath)</ILINK_LibraryPath>
         <SanitizedProjectName>ADS-B-Display</SanitizedProjectName>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
@@ -238,6 +238,24 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <CppCompile Include="LatLonConv.cpp">
             <DependentOn>LatLonConv.h</DependentOn>
             <BuildOrder>33</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="ManifestManager\Airport.cpp">
+            <BuildOrder>57</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="ManifestManager\AirportDB.cpp">
+            <BuildOrder>58</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="ManifestManager\AirportManager.cpp">
+            <BuildOrder>58</BuildOrder>
+        </CppCompile>
+        <None Include="ManifestManager\csv.h">
+            <BuildOrder>57</BuildOrder>
+        </None>
+        <CppCompile Include="ManifestManager\Route.cpp">
+            <BuildOrder>59</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="ManifestManager\RouteManager.cpp">
+            <BuildOrder>60</BuildOrder>
         </CppCompile>
         <CppCompile Include="Map\MapSrc\EarthView.cpp">
             <DependentOn>Map\MapSrc\EarthView.h</DependentOn>

@@ -206,6 +206,9 @@ class TForm1 : public TForm
     TComboBox *MapComboBox;
     TCheckBox *CheckBoxUpdateMapTiles;
     TCheckBox *BigQueryCheckBox;
+    TBevel *UnregisteredSeparator;
+    TLabel *UnregisteredCountLabel;
+    TCheckBox *HideUnregisteredCheckBox;
     TMenuItem *UseSBSLocal;
     TMenuItem *UseSBSRemote;
     TMenuItem *LoadARTCCBoundaries1;
@@ -251,6 +254,7 @@ class TForm1 : public TForm
     void __fastcall MapComboBoxChange(TObject *Sender);
     void __fastcall CheckBoxUpdateMapTilesClick(TObject *Sender);
     void __fastcall BigQueryCheckBoxClick(TObject *Sender);
+    void __fastcall HideUnregisteredCheckBoxClick(TObject *Sender);
     void __fastcall UseSBSRemoteClick(TObject *Sender);
     void __fastcall UseSBSLocalClick(TObject *Sender);
     void __fastcall LoadARTCCBoundaries1Click(TObject *Sender);
@@ -277,6 +281,7 @@ public:  // User declarations
     void __fastcall CloseBigQueryCSV(void);
     bool __fastcall LoadARTCCBoundaries(AnsiString FileName);
     void __fastcall HandlePIErrorState(const int &code);
+    void __fastcall UpdateUnregisteredCount(void);
 
     int MouseDownX, MouseDownY;
     bool MouseDown;
@@ -309,8 +314,10 @@ public:  // User declarations
     int CurrentSpriteImage;
     AnsiString AircraftDBPathFileName;
     AnsiString ARTCCBoundaryDataPathFileName;
+    int UnregisteredAircraftCount;
     FlatEarthView* GetEarthView() const;
     TileManager* GetTileManager() const;
+    int GetUnregisteredAircraftCount(void);
 };
 //---------------------------------------------------------------------------
 extern PACKAGE TForm1 *Form1;

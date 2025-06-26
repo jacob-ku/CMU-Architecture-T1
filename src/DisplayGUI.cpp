@@ -231,6 +231,7 @@ __fastcall TForm1::TForm1(TComponent *Owner)
     BigQueryCSV = NULL;
     BigQueryRowCount = 0;
     BigQueryFileCount = 0;
+    UnregisteredAircraftCount = 0;
     InitAircraftDB(AircraftDBPathFileName);
     printf("init complete\n");
 }
@@ -318,6 +319,8 @@ void __fastcall TForm1::Timer1Timer(TObject *Sender)
 
     CurrentTime = GetCurrentTimeInMsec();
     SystemTime->Caption = TimeToChar(CurrentTime);
+
+    UpdateUnregisteredCount();
 
     ObjectDisplay->Repaint();
 }
@@ -441,12 +444,18 @@ void __fastcall TForm1::DrawObjects(void)
     {
         if (Data->HaveLatLon)
         {
+            if (HideUnregisteredCheckBox->Checked && !aircraft_is_registered(Data->ICAO)) {
+                continue;
+            }
+
             ViewableAircraft++;
             glColor4f(1.0, 1.0, 1.0, 1.0);  // white color - is this necessary?
 
             LatLon2XY(Data->Latitude, Data->Longitude, ScrX, ScrY);
             // DrawPoint(ScrX,ScrY);
-            if (Data->HaveSpeedAndHeading) {
+            if (!aircraft_is_registered(Data->ICAO)) {
+                glColor4f(0.5, 0.5, 0.5, 1.0);  // unregistered - gray color
+            } else if (Data->HaveSpeedAndHeading) {
                 glColor4f(1.0, 0.0, 1.0, 1.0);  // with speed & heading - magenta color
             } else {
                 Data->Heading = 0.0;
@@ -2076,6 +2085,52 @@ TileManager* TForm1::GetTileManager() const {
     return currentMapProvider ? currentMapProvider->GetTileManager() : nullptr;
 }
 
+int TForm1::GetUnregisteredAircraftCount(void)
+{
+    int count = 0;
+    ght_iterator_t iterator;
+    uint32_t *Key;
+    TADS_B_Aircraft *Data;
+    for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
+         Data; Data = (TADS_B_Aircraft *)ght_next(HashTable, &iterator, (const void **)&Key))
+    {
+        if (!aircraft_is_registered(Data->ICAO))
+            count++;
+    }
+    return count;
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::UpdateUnregisteredCount(void)
+{
+    UnregisteredAircraftCount = GetUnregisteredAircraftCount();
+    UnregisteredCountLabel->Caption = "Unregistered: " + IntToStr(UnregisteredAircraftCount);
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::HideUnregisteredCheckBoxClick(TObject *Sender)
+{
+    if (HideUnregisteredCheckBox->Checked && TrackHook.Valid_CC)
+    {
+        TADS_B_Aircraft *Data = (TADS_B_Aircraft *)ght_get(HashTable, sizeof(TrackHook.ICAO_CC), (void *)&TrackHook.ICAO_CC);
+        if (Data && !aircraft_is_registered(Data->ICAO))
+        {
+            TrackHook.Valid_CC = false;
+            TrackHook.Valid_CPA = false;
+
+            ICAOLabel->Caption = "N/A";
+            FlightNumLabel->Caption = "N/A";
+            CLatLabel->Caption = "N/A";
+            CLonLabel->Caption = "N/A";
+            SpdLabel->Caption = "N/A";
+            HdgLabel->Caption = "N/A";
+            AltLabel->Caption = "N/A";
+            MsgCntLabel->Caption = "N/A";
+            TrkLastUpdateTimeLabel->Caption = "N/A";
+        }
+    }
+
+    ObjectDisplay->Repaint();
+}
+//---------------------------------------------------------------------------
 void __fastcall TForm1::HandlePIErrorState(const int &code) {
     std::cout << "Error to UI: " << code << std::endl;
     AnsiString errorMessages;
