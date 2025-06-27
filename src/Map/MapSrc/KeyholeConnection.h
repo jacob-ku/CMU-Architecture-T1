@@ -6,11 +6,13 @@
 
 #include "SimpleTileStorage.h"
 
-#define GoogleMaps             0
-#define SkyVector_VFR          1
-#define SkyVector_IFR_Low      2
-#define SkyVector_IFR_High     3
-#define SkyVector              4
+#define GoogleMaps               0
+#define GoogleMaps_Street        1
+#define GoogleMaps_TerrainLabels 2
+#define SkyVector_VFR            3
+#define SkyVector_IFR_Low        4
+#define SkyVector_IFR_High       5
+#define SkyVector                6
 
 /**
  * Connection to Google server.

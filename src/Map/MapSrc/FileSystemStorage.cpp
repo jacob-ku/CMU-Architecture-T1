@@ -106,8 +106,11 @@ std::string FilesystemStorage::PathFromCoordsGE(int x, int y, int level, int typ
 
 	char *ext = (char *)"";
 
-	if (type == TILETYPE_TEXTURE)
-		ext =(char *) ".jpg";
+	if (type == TILETYPE_TEXTURE) {
+		// For texture tiles, we'll use .jpg as default but the actual format
+		// will be determined when loading the tile
+		ext = (char *) ".jpg";
+	}
 
 	int deepness = 0;
 	for (; level >= 0; level--) {
@@ -144,8 +147,13 @@ std::string FilesystemStorage::PathFromCoordsNASA(int x, int y, int level, int t
 	std::string name;
 
 	int i;
-	char *ext =(char *) "";
-	ext = (char *)".jpg";
+	char *ext = (char *) "";
+
+	if (type == TILETYPE_TEXTURE) {
+		// For texture tiles, we'll use .jpg as default but the actual format
+		// will be determined when loading the tile
+		ext = (char *) ".jpg";
+	}
 
 	for (i = 0; i <= level; i++) {
 		int bit = 1 << (level-i);
