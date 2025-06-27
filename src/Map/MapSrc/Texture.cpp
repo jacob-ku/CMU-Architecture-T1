@@ -65,6 +65,29 @@ void Texture::SetTexture() {
 }
 
 /********************************************************************\
+ * Image format detection                                            *
+\********************************************************************/
+
+ImageFormat Texture::DetectFormat(const void* data, size_t size) {
+	if (size < 8) return IMAGE_FORMAT_UNKNOWN;
+
+	const unsigned char* bytes = (const unsigned char*)data;
+
+	// Check PNG signature
+	if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47 &&
+		bytes[4] == 0x0D && bytes[5] == 0x0A && bytes[6] == 0x1A && bytes[7] == 0x0A) {
+		return IMAGE_FORMAT_PNG;
+	}
+
+	// Check JPEG signature
+	if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) {
+		return IMAGE_FORMAT_JPEG;
+	}
+
+	return IMAGE_FORMAT_UNKNOWN;
+}
+
+/********************************************************************\
  * JPEG loading stuff                                               *
 \********************************************************************/
 
@@ -225,6 +248,19 @@ void Texture::my_png_read_fn(png_structp png_ptr, png_bytep data, png_size_t len
 	fread(data, length, 1, f);
 }
 
+void Texture::my_png_mem_read_fn(png_structp png_ptr, png_bytep data, png_size_t length) {
+	// Memory source structure
+	png_mem_source* mem_source = (png_mem_source*)png_get_io_ptr(png_ptr);
+
+	if (mem_source->offset + length > mem_source->size) {
+		png_error(png_ptr, "Read beyond end of memory buffer");
+		return;
+	}
+
+	memcpy(data, mem_source->data + mem_source->offset, length);
+	mem_source->offset += length;
+}
+
 void Texture::my_png_error_fn(png_structp png_ptr, png_const_charp error_msg) {
 	/* on internal PNG error, we'll find ourselves here */
 	my_png_error_ptr *myerr = (my_png_error_ptr*)png_get_error_ptr(png_ptr);
@@ -246,6 +282,11 @@ void Texture::LoadPNG(int source, ...) {
 	png_bytep	*row_pointers = 0;
 
 	FILE		*infile = 0;
+	const unsigned char* mem_data = 0;
+	size_t mem_size = 0;
+
+	// Memory source structure for PNG
+	png_mem_source mem_source = {0, 0, 0};
 
 	/* variable arguments stuff */
 	va_start(va, source);
@@ -260,14 +301,26 @@ void Texture::LoadPNG(int source, ...) {
 		if (source == TEXTURE_SOURCE_FILE) {
 			if ((infile = fopen(va_arg(va, char*), "rb")) == 0)
 				throw SysException("fopen() failed", errno);
+		} else if (source == TEXTURE_SOURCE_MEM) {
+			mem_data = (const unsigned char*)va_arg(va, void*);
+			mem_size = va_arg(va, size_t);
+			mem_source.data = mem_data;
+			mem_source.size = mem_size;
+			mem_source.offset = 0;
 		} else {
-			throw Exception("bad source in png loaging");
+			throw Exception("bad source in png loading");
 		}
 	
 		/* read signature */
 		png_byte sig[8] = {0};
 
-		fread(sig, 8, 1, infile);
+		if (source == TEXTURE_SOURCE_FILE) {
+			fread(sig, 8, 1, infile);
+		} else {
+			if (mem_size < 8) throw Exception("PNG data too small");
+			memcpy(sig, mem_data, 8);
+			mem_source.offset = 8;
+		}
 
 		if (!png_check_sig(sig, 8))
 			throw Exception("bad PNG signature");
@@ -280,7 +333,11 @@ void Texture::LoadPNG(int source, ...) {
 			throw Exception("cannot create PNG info struct");
 
 		/* init read function */
-		png_set_read_fn(png_ptr, (void*)infile, my_png_read_fn);
+		if (source == TEXTURE_SOURCE_FILE) {
+			png_set_read_fn(png_ptr, (void*)infile, my_png_read_fn);
+		} else {
+			png_set_read_fn(png_ptr, (void*)&mem_source, my_png_mem_read_fn);
+		}
 
 		/* read header */
 		png_set_sig_bytes(png_ptr, 8);

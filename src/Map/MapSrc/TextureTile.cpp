@@ -57,7 +57,21 @@ void TextureTile::Load(RawBuffer *data, int keep) {
 	Texture *tex = new Texture;
 
 	try {
-		tex->LoadJPEG(TEXTURE_SOURCE_MEM, data->Data(), data->Size());
+		// Detect image format and load accordingly
+		ImageFormat format = Texture::DetectFormat(data->Data(), data->Size());
+
+		switch (format) {
+		case IMAGE_FORMAT_JPEG:
+			tex->LoadJPEG(TEXTURE_SOURCE_MEM, data->Data(), data->Size());
+			break;
+		case IMAGE_FORMAT_PNG:
+			tex->LoadPNG(TEXTURE_SOURCE_MEM, data->Data(), data->Size());
+			break;
+		default:
+			// Fallback to JPEG for unknown formats
+			tex->LoadJPEG(TEXTURE_SOURCE_MEM, data->Data(), data->Size());
+			break;
+		}
 	} catch (...) {
 		delete tex;
 		delete data;

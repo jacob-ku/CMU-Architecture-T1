@@ -382,6 +382,18 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <None Include="Map\Providers\VFRMapProvider.h">
             <BuildOrder>52</BuildOrder>
         </None>
+        <CppCompile Include="Map\Providers\GoogleStreetViewMapProvider.cpp">
+            <BuildOrder>61</BuildOrder>
+        </CppCompile>
+        <None Include="Map\Providers\GoogleStreetViewMapProvider.h">
+            <BuildOrder>62</BuildOrder>
+        </None>
+        <CppCompile Include="Map\Providers\GoogleTerrainWithLabelsMapProvider.cpp">
+            <BuildOrder>63</BuildOrder>
+        </CppCompile>
+        <None Include="Map\Providers\GoogleTerrainWithLabelsMapProvider.h">
+            <BuildOrder>64</BuildOrder>
+        </None>
         <CppCompile Include="ntds2d.cpp">
             <DependentOn>ntds2d.h</DependentOn>
             <BuildOrder>30</BuildOrder>
