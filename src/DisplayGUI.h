@@ -211,6 +211,16 @@ class TForm1 : public TForm
     TMenuItem *UseSBSLocal;
     TMenuItem *UseSBSRemote;
     TMenuItem *LoadARTCCBoundaries1;
+    TLabel *Label20;
+    TLabel *RegNumLabel;
+    TLabel *Label21;
+    TLabel *ManufactureLabel;
+    TLabel *Label22;
+    TLabel *ModelLabel;
+    TLabel *Label24;
+    TLabel *OperatorLabel;
+    TLabel *Label26;
+    TLabel *CountryLabel;
     void __fastcall ObjectDisplayInit(TObject *Sender);
     void __fastcall ObjectDisplayResize(TObject *Sender);
     void __fastcall ObjectDisplayPaint(TObject *Sender);
@@ -263,6 +273,8 @@ private: // User declarations
     bool LoadMapFromInternet;
     void ReloadMapProvider();
 
+    void __fastcall FormClose(TObject *Sender, TCloseAction &Action);
+
 public:  // User declarations
     __fastcall TForm1(TComponent *Owner);
     __fastcall ~TForm1();
@@ -280,6 +292,8 @@ public:  // User declarations
     void __fastcall CloseBigQueryCSV(void);
     bool __fastcall LoadARTCCBoundaries(AnsiString FileName);
     void __fastcall UpdateUnregisteredCount(void);
+    void __fastcall RawThreadTerminated(TObject *Sender);
+    void __fastcall SBSThreadTerminated(TObject *Sender);
 
     int MouseDownX, MouseDownY;
     bool MouseDown;
@@ -321,3 +335,4 @@ extern PACKAGE TForm1 *Form1;
 //---------------------------------------------------------------------------
 
 #endif
+
