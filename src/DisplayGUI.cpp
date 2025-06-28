@@ -1,4 +1,4 @@
-//---------------------------------------------------------------------------
+﻿//---------------------------------------------------------------------------
 
 #include <vcl.h>
 #include <new>
@@ -2331,7 +2331,7 @@ bool __fastcall TForm1::LoadTowerTexture(void)
         return true;
     }
     
-    const char *filename = "Symbols\\tower-64.png";
+    const char *filename = "..\\..\\Symbols\\tower-64.png";
     int width, height, nrChannels;
     
     unsigned char *imageData = stbi_load(filename, &width, &height, &nrChannels, 0);
