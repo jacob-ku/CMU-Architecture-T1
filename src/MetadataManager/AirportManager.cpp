@@ -14,7 +14,9 @@ bool AirportManager::LoadAirport(const std::string& sourcefile) {
     {
         srcfile = "airports.csv";   
     }
-    return airportDB->loadFromFile(srcfile);
+    airportDB->loadFromFileByLine(srcfile);
+    airportDB->parseLineDataToAirportMap();
+    return true;
 }
 
 std::unordered_map<std::string, Airport>& AirportManager::getAirportCodeMap() {
