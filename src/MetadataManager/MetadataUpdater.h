@@ -13,7 +13,6 @@
 #include "DataUpdaterInterface.h"
 
 
-// 다운로드 상태 추적 구조체
 struct DownloadStatus {
     std::string url;
     std::string outputPath;

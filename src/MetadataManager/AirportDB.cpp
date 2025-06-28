@@ -46,28 +46,8 @@ bool AirportDB::loadFromFile(const std::string& filePath) {
                 float latitude, longitude;
                 int altitude;
                 
-                // csv2 올바른 사용법: row의 각 셀에 접근
                 for (auto cell : row) {
                     std::string value;
-                    // if (cell.index() == 0) {
-                    //     code = std::get<0>(cell);
-                    // } else if (cell.index() == 1) {
-                    //     name = std::get<1>(cell);
-                    // } else if (cell.index() == 2) {
-                    //     icao = std::get<2>(cell);
-                    // } else if (cell.index() == 3) {
-                    //     iata = std::get<3>(cell);
-                    // } else if (cell.index() == 4) {
-                    //     location = std::get<4>(cell);
-                    // } else if (cell.index() == 5) {
-                    //     countryISO2 = std::get<5>(cell);
-                    // } else if (cell.index() == 6) {
-                    //     latitude = std::stof(std::get<6>(cell));
-                    // } else if (cell.index() == 7) {
-                    //     longitude = std::stof(std::get<7>(cell));
-                    // } else if (cell.index() == 8) {
-                    //     altitude = std::stoi(std::get<8>(cell));
-                    // }
                 }
             }
             catch (const std::exception& e) {

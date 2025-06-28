@@ -16,7 +16,7 @@ class AirportDB {
     AirportDB();
 
     std::unordered_map<std::string, Airport> airportCodeMap;
-    std::unordered_map<std::string, std::string> lineDataMap; // 한줄씩 읽은 데이터 저장용
+    std::unordered_map<std::string, std::string> lineDataMap;
     bool isloaded;
     
     static std::unique_ptr<AirportDB> instance;

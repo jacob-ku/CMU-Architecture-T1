@@ -2266,7 +2266,7 @@ void __fastcall TForm1::DrawAirportsBatch(void)
                   << std::endl;
     }
     
-    int loopCount = 0; // for �� ���� Ƚ�� ī����
+    int loopCount = 0;
     for(const auto &airportPair : airportCodeMap) {
         const Airport &airport = airportPair.second;
         double airportLat = airport.getLatitude();
@@ -2286,7 +2286,6 @@ void __fastcall TForm1::DrawAirportsBatch(void)
         DrawTowerImage(pos.first, pos.second, getCurrentZoomLevel());
     }
     
-    // ���� ���� ���� �� ��� ���
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
     
