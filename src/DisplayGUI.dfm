@@ -898,16 +898,9 @@ object Form1: TForm1
       Align = alClient
       TabOrder = 2
       ExplicitHeight = 233
-      object UnregisteredSeparator: TBevel
-        Left = 5
-        Top = 78
-        Width = 238
-        Height = 2
-        Shape = bsTopLine
-      end
       object UnregisteredCountLabel: TLabel
         Left = 5
-        Top = 85
+        Top = 53
         Width = 87
         Height = 13
         Caption = 'Unregistered: 0'
@@ -921,23 +914,23 @@ object Form1: TForm1
       object MapComboBox: TComboBox
         Left = 5
         Top = 6
-        Width = 180
+        Width = 100
         Height = 20
         Style = csDropDownList
         TabOrder = 0
         OnChange = MapComboBoxChange
         Items.Strings = (
           'Google Maps'
-          'Google Street View'
-          'Google Terrain with Labels'
+          'Google Street'
+          'Google Terrain'
           'VFR'
           'IFS Low'
           'IFS High')
       end
       object CheckBoxUpdateMapTiles: TCheckBox
-        Left = 5
-        Top = 32
-        Width = 150
+        Left = 118
+        Top = 6
+        Width = 133
         Height = 17
         Caption = 'Update map tiles'
         TabOrder = 2
@@ -945,17 +938,24 @@ object Form1: TForm1
       end
       object BigQueryCheckBox: TCheckBox
         Left = 5
-        Top = 55
+        Top = 29
         Width = 124
         Height = 17
         Caption = 'BigQuery Upload'
         TabOrder = 2
         OnClick = BigQueryCheckBoxClick
       end
+      object BigQuerySeparatorBottom: TBevel
+        Left = 5
+        Top = 48
+        Width = 238
+        Height = 2
+        Shape = bsTopLine
+      end
       object HideUnregisteredCheckBox: TCheckBox
-        Left = 120
-        Top = 83
-        Width = 120
+        Left = 118
+        Top = 52
+        Width = 133
         Height = 17
         Caption = 'Hide unregistered'
         TabOrder = 3
