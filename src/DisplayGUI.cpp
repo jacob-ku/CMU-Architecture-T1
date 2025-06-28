@@ -1180,15 +1180,13 @@ void __fastcall TForm1::RawConnectButtonClick(TObject *Sender)
     {
         #ifdef ERROR_HANDLING_ENABLED
         try {
-            if (mPIErrorMonitorThread != NULL)
-            {
+            if (mPIErrorMonitorThread != NULL) {
                 mPIErrorMonitorThread->Terminate(); 
                 // delete mPIErrorMonitorThread;
                 // mPIErrorMonitorThread = NULL;
             }
         }
-        catch (const EIdException &e)
-        {
+        catch (const EIdException &e) {
             std::cout << "Error while setting up ssh connection: " << e.Message.c_str() << std::endl;
         }
         try {
@@ -2484,6 +2482,7 @@ void __fastcall TForm1::HandlePIErrorState(const int &code) {
         LabelErrorMessage->Font->Color = clRed;
         std::cout << "Disconnected RPI" << std::endl;
         RawConnectButtonClick(RawConnectButton); // disconnect via the actual button
+        needReconnectRaw = true; // set flag to reconnect raw
     }
     if (code & BITMAKS_SDRUSB_DISCONNECTED) {
         errorMessages += "SDR Disconnected. Exited dump1090\n";

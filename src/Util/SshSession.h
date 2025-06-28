@@ -16,12 +16,13 @@ class SSHPersistentSession {
 private:
     ssh_session mSession;
     bool mIsConnected = false;
-
+    
 public:
+    std::string mHost;
     SSHPersistentSession(const char* host, const char* user, const char* pass) : mSession(nullptr) {
         mSession = ssh_new();
         if (!mSession) throw std::runtime_error("Failed to create mSession");
-
+        mHost = host;
         ssh_options_set(mSession, SSH_OPTIONS_HOST, host);
         ssh_options_set(mSession, SSH_OPTIONS_USER, user);
         int timeoutSecs = 1;

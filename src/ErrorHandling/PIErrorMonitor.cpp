@@ -3,6 +3,7 @@
 #include <thread>
 #include "SdrUsbErrorMonitor.h"
 #include "Dump1090ErrorMonitor.h"
+#include "NetworkErrorMonitor.h"
 
 std::shared_ptr<int> G_ErrorMask = std::make_shared<int>(0); // Shared error mask //TODO: use a better way to share error mask
 
@@ -10,6 +11,7 @@ __fastcall PIErrorMonitor::PIErrorMonitor(bool value) : TThread(value) {
 	FreeOnTerminate = true; // Automatically free the thread object after execution
   addErrorMonitor(std::make_shared<SdrUsbErrorMonitor>(mOnErrorCbk));
   addErrorMonitor(std::make_shared<Dump1090ErrorMonitor>(mOnErrorCbk));
+  addErrorMonitor(std::make_shared<NetworkErrorMonitor>(mOnErrorCbk));
 }
 __fastcall PIErrorMonitor::~PIErrorMonitor() { }
 
