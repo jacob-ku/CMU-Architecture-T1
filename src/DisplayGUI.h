@@ -25,6 +25,8 @@
 #include <IdTCPConnection.hpp>
 #include "cspin.h"
 #include "Map/Providers/MapProviderFactory.h"
+#include "MetadataManager/AirportManager.h"
+#include "MetadataManager/RouteManager.h"
 #include <queue>
 
 // Define message types for the central processor
@@ -274,7 +276,8 @@ private: // User declarations
     void ReloadMapProvider();
 
     void __fastcall FormClose(TObject *Sender, TCloseAction &Action);
-
+    AirportManager AirportMgr;
+    RouteManager RouteMgr;
 public:  // User declarations
     __fastcall TForm1(TComponent *Owner);
     __fastcall ~TForm1();
@@ -294,6 +297,13 @@ public:  // User declarations
     void __fastcall UpdateUnregisteredCount(void);
     void __fastcall RawThreadTerminated(TObject *Sender);
     void __fastcall SBSThreadTerminated(TObject *Sender);
+
+    void __fastcall DrawBlackDot(double lat, double lot);
+    void __fastcall DrawAirportsBatch(void);
+    bool LoadTowerTexture(void);
+    void DrawTowerImage(float x, float y, float scale);
+    float getCurrentZoomLevel(void);
+    void getScreenLatLonBounds(double &minLat, double &maxLat, double &minLon, double &maxLon);
 
     int MouseDownX, MouseDownY;
     bool MouseDown;
@@ -329,6 +339,8 @@ public:  // User declarations
     FlatEarthView* GetEarthView() const;
     TileManager* GetTileManager() const;
     int GetUnregisteredAircraftCount(void);
+    GLuint towerTextureID;
+    bool towerTextureLoaded;
 };
 //---------------------------------------------------------------------------
 extern PACKAGE TForm1 *Form1;

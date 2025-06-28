@@ -9,31 +9,14 @@ using namespace std;
 
 #define AIRPORT_MAX_NUM 40000
 
-// Static 멤버 정의 및 초기화
 std::unique_ptr<AirportDB> AirportDB::instance = nullptr;
 std::mutex AirportDB::mtx;
 
-//static int CSV_callback(struct CSV_context *ctx, const char *value)
-//{
-//    int rc = 1;
-//    std::cout << "CSV callback called for field: " << ctx->field_num << ", value: " << value << std::endl;
-//
-//    return (rc);
-//}
-
-// Private 생성자
 AirportDB::AirportDB() {
-    // 해시테이블 초기화 등 필요한 초기화 작업
 
     isloaded = false;
     std::cout << "AirportDB instance created" << std::endl;
 }
-
-// Private 소멸자
-//AirportDB::~AirportDB() {
-//    std::cout << "AirportDB instance destroyed" << std::endl;
-//}
-
 
 
 bool AirportDB::loadFromFile(const std::string& filePath) {
@@ -47,8 +30,6 @@ bool AirportDB::loadFromFile(const std::string& filePath) {
         int altitude;
 
         while(in.read_row(code, name, icao, iata, location, countryISO2, latitude, longitude, altitude)) {
-
-            
             airportCodeMap[code] = Airport(code, name, icao, iata, countryISO2, latitude, longitude, altitude);
         }
         std::cout << "Finished reading airport data from file." << std::endl;
@@ -81,41 +62,27 @@ bool AirportDB::loadFromFile(const std::string& filePath) {
         std::cout << "Error: Unknown exception occurred while parsing CSV file" << std::endl;
         return false;
     }
-
-    
-
-#if 0    
-    CSV_context csv_ctx;
-    memset(&csv_ctx, 0, sizeof(csv_ctx));
-    csv_ctx.file_name = filePath.c_str();
-    csv_ctx.delimiter = ',';
-    csv_ctx.callback = CSV_callback;
-    csv_ctx.line_size = 2000;
-    if (!CSV_open_and_parse_file(&csv_ctx))
-    {
-        printf("Parsing of \"%s\" failed: %s\n", filePath.c_str(), strerror(errno));
-        return (false);
-    }
-#endif
     return true;
 }
 
-Airport& AirportDB::getAirportByCode(const std::string& code) {
+Airport AirportDB::getAirportByCode(const std::string& code) {
     std::cout << "Searching for airport with code: " << code << std::endl;
-    
-    // TODO: 해시테이블에서 검색
-    // 임시 구현 - 실제로는 해시테이블에서 검색해야 함
+
+    if (airportCodeMap.find(code) == airportCodeMap.end()) {
+        throw std::runtime_error("Airport not found with code: " + code);
+
+    }
     return airportCodeMap[code];
-    // 찾지 못한 경우 예외 발생 (참조 반환이므로 nullptr 불가)
+   
     
 }
 
-Airport& AirportDB::getAirportByICAO(const std::string& icao) {
+Airport AirportDB::getAirportByICAO(const std::string& icao) {
     std::cout << "Searching for airport with ICAO: " << icao << std::endl;
-    
-    // TODO: 해시테이블에서 ICAO로 검색
-    // 임시 구현 - 실제로는 해시테이블에서 검색해야 함
-    
-    // 찾지 못한 경우 예외 발생 (참조 반환이므로 nullptr 불가)
+    for (const auto& pair : airportCodeMap) {
+        if (pair.second.getICAO() == icao) {
+            return pair.second;
+        }
+    }
     throw std::runtime_error("Airport not found with ICAO: " + icao);
 }

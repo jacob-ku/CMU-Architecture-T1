@@ -24,7 +24,7 @@ class AirportDB {
     public:
     static AirportDB* getInstance() {
    
-        std::lock_guard<std::mutex> lock(mtx); // 멀티스레드 안전성 확보
+        std::lock_guard<std::mutex> lock(mtx);
         if (instance == nullptr) {
             instance = std::unique_ptr<AirportDB>(new AirportDB());
         }
@@ -33,14 +33,13 @@ class AirportDB {
     }
 
     static void destroyInstance() {
-        // Singleton instance will be destroyed automatically when the program exits
     }
 
     bool loadFromFile (const std::string& filePath);
-    
-    Airport& getAirportByCode(const std::string& code);
-    Airport& getAirportByICAO(const std::string& icao);
-    
+
+    Airport getAirportByCode(const std::string& code);
+    Airport getAirportByICAO(const std::string& icao);
+
     std::unordered_map<std::string, Airport>& getAirportCodeMap() {
         return airportCodeMap;
     }
