@@ -33,6 +33,16 @@ KeyholeConnection::KeyholeConnection(int type)
 	 ServerType= GoogleMaps;
 	 url=GOOGLE_URL;
     }
+    else if (type == GoogleMaps_Street)
+    {
+        ServerType = GoogleMaps_Street;
+        url=GOOGLE_URL;
+    }
+    else if (type == GoogleMaps_TerrainLabels)
+    {
+        ServerType = GoogleMaps_TerrainLabels;
+        url=GOOGLE_URL;
+    }
 	else if (type== SkyVector_VFR)
 	{
 	  ServerType= SkyVector;
@@ -71,6 +81,14 @@ void KeyholeConnection::Process(TilePtr tile) {
     if (ServerType== GoogleMaps)
     {
       res = gefetch_fetch_image_googlemaps(m_GEFetch, tile->GetX(), tile->GetY(), tile->GetLevel());
+    }
+    else if (ServerType == GoogleMaps_Street)
+    {
+        res = gefetch_fetch_image_googlemaps_with_type(m_GEFetch, tile->GetX(), tile->GetY(), tile->GetLevel(), "m");
+    }
+    else if (ServerType == GoogleMaps_TerrainLabels)
+    {
+        res = gefetch_fetch_image_googlemaps_with_type(m_GEFetch, tile->GetX(), tile->GetY(), tile->GetLevel(), "p");
     }
     else if (ServerType== SkyVector)
 	{

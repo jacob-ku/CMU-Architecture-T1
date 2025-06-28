@@ -21,6 +21,15 @@
 #endif
 
 /**
+ * Image format types
+ */
+enum ImageFormat {
+    IMAGE_FORMAT_UNKNOWN,
+    IMAGE_FORMAT_JPEG,
+    IMAGE_FORMAT_PNG
+};
+
+/**
  * Data sources for texture loading
  */
 enum {
@@ -37,6 +46,12 @@ struct my_jpeg_error_ptr {
 struct my_png_error_ptr {
 	jmp_buf		jmpbuf;
 	std::exception	err;
+};
+
+struct png_mem_source {
+	const unsigned char* data;
+	size_t size;
+	size_t offset;
 };
 
 /**
@@ -65,6 +80,11 @@ public:
 	void Unload();
 
 	/**
+	 * Detects image format from memory buffer
+	 */
+	static ImageFormat DetectFormat(const void* data, size_t size);
+
+	/**
 	 * Loads texture from JPEG file
 	 *
 	 * Usage:
@@ -89,6 +109,7 @@ private:
 	static void my_jpeg_error_exit(j_common_ptr cinfo);
 
 	static void my_png_read_fn(png_structp png_ptr, png_bytep data, png_size_t length);
+	static void my_png_mem_read_fn(png_structp png_ptr, png_bytep data, png_size_t length);
 	static void my_png_error_fn(png_structp png_ptr, png_const_charp error_msg);
 
 protected:

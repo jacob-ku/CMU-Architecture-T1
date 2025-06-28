@@ -240,6 +240,24 @@ $(PostBuildEvent)]]></PostBuildEvent>
             <DependentOn>LatLonConv.h</DependentOn>
             <BuildOrder>33</BuildOrder>
         </CppCompile>
+        <CppCompile Include="ManifestManager\Airport.cpp">
+            <BuildOrder>57</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="ManifestManager\AirportDB.cpp">
+            <BuildOrder>58</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="ManifestManager\AirportManager.cpp">
+            <BuildOrder>58</BuildOrder>
+        </CppCompile>
+        <None Include="ManifestManager\csv.h">
+            <BuildOrder>57</BuildOrder>
+        </None>
+        <CppCompile Include="ManifestManager\Route.cpp">
+            <BuildOrder>59</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="ManifestManager\RouteManager.cpp">
+            <BuildOrder>60</BuildOrder>
+        </CppCompile>
         <CppCompile Include="Map\MapSrc\EarthView.cpp">
             <DependentOn>Map\MapSrc\EarthView.h</DependentOn>
             <BuildOrder>23</BuildOrder>
@@ -364,6 +382,18 @@ $(PostBuildEvent)]]></PostBuildEvent>
         </CppCompile>
         <None Include="Map\Providers\VFRMapProvider.h">
             <BuildOrder>52</BuildOrder>
+        </None>
+        <CppCompile Include="Map\Providers\GoogleStreetViewMapProvider.cpp">
+            <BuildOrder>61</BuildOrder>
+        </CppCompile>
+        <None Include="Map\Providers\GoogleStreetViewMapProvider.h">
+            <BuildOrder>62</BuildOrder>
+        </None>
+        <CppCompile Include="Map\Providers\GoogleTerrainWithLabelsMapProvider.cpp">
+            <BuildOrder>63</BuildOrder>
+        </CppCompile>
+        <None Include="Map\Providers\GoogleTerrainWithLabelsMapProvider.h">
+            <BuildOrder>64</BuildOrder>
         </None>
         <CppCompile Include="ntds2d.cpp">
             <DependentOn>ntds2d.h</DependentOn>
