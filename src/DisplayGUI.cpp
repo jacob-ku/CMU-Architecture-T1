@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <filesystem>
 #include <fileapi.h>
+#include <chrono>
+#include <vector>
+#include <algorithm>
 
 #pragma hdrstop
 
@@ -27,6 +30,11 @@
 #include "AircraftDB.h"
 #include "csv.h"
 #include "Map/Providers/MapProviderFactory.h"
+#include "stb_image.h"
+
+#include "MetadataManager/RouteManager.h"
+#include "MetadataManager/AirportManager.h"
+#include "Util/WebDownloadManager.h"
 
 #define AIRCRAFT_DATABASE_URL "https://opensky-network.org/datasets/metadata/aircraftDatabase.zip"
 #define AIRCRAFT_DATABASE_FILE "aircraftDatabase.csv"
@@ -233,10 +241,22 @@ __fastcall TForm1::TForm1(TComponent *Owner)
     BigQueryRowCount = 0;
     BigQueryFileCount = 0;
     UnregisteredAircraftCount = 0;
+    AirportMgr.LoadAirport();
+    RouteMgr.LoadRouteFromFile();
+    RouteMgr.StartUpdateMonitor();
 
     AircraftDB = new TAircraftDB();
     AircraftDB->LoadDatabaseAsync(AircraftDBPathFileName);
 
+//    RouteMgr.LoadRouteFromFile();
+
+    std::string tmpsign = "KAL123";
+
+//    RouteMgr.StartUpdateMonitor();
+    
+    // Initialize tower texture
+    towerTextureID = 0;
+    towerTextureLoaded = false;
     printf("init complete\n");
 }
 //---------------------------------------------------------------------------
@@ -377,6 +397,7 @@ void __fastcall TForm1::DrawObjects(void)
     DWORD i, j, Count;
 
     // --- drawing area of interest (polygon) ---
+    DrawAirportsBatch();
     if (AreaTemp)
     {
         glPointSize(3.0);
@@ -2199,4 +2220,201 @@ void __fastcall TForm1::SBSThreadTerminated(TObject *Sender)
 {
     TCPClientSBSHandleThread = NULL;
 }
+//---------------------------------------------------------------------------
 
+void __fastcall TForm1::DrawBlackDot(double lat, double lot)
+{
+    double ScrX, ScrY;
+    
+    LatLon2XY(lat, lot, ScrX, ScrY);
+    
+    glEnable(GL_POINT_SMOOTH);
+    glEnable(GL_BLEND);      
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+    
+    glPointSize(20.0);
+    glColor4f(0.0, 0.0, 0.0, 1.0);
+    
+    glBegin(GL_POINTS);
+    glVertex2f(ScrX, ScrY);
+    glEnd();
+    
+    glDisable(GL_POINT_SMOOTH);
+    glDisable(GL_BLEND);
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::DrawAirportsBatch(void)
+{
+    auto start_time = std::chrono::high_resolution_clock::now();
+    
+    std::vector<std::pair<double, double>> airportPositions;
+    
+    std::unordered_map<std::string, Airport> &airportCodeMap = AirportMgr.getAirportCodeMap();
+    airportPositions.reserve(airportCodeMap.size());
+    
+    double maxLatFromCorners, minLatFromCorners, maxLonFromCorners, minLonFromCorners;
+    getScreenLatLonBounds(minLatFromCorners, maxLatFromCorners, minLonFromCorners, maxLonFromCorners);
+
+    static int boundaryLogCount = 0;
+    boundaryLogCount++;
+    if (boundaryLogCount % 500 == 0) {
+        std::cout << "Screen Boundary Log (#" << boundaryLogCount << "): " 
+                  << "Lat[" << minLatFromCorners << ", " << maxLatFromCorners << "] "
+                  << "Lon[" << minLonFromCorners << ", " << maxLonFromCorners << "]" 
+                  << std::endl;
+    }
+    
+    int loopCount = 0;
+    for(const auto &airportPair : airportCodeMap) {
+        const Airport &airport = airportPair.second;
+        double airportLat = airport.getLatitude();
+        double airportLon = airport.getLongitude();
+        
+        if (airportLat >= minLatFromCorners && airportLat <= maxLatFromCorners && 
+            airportLon >= minLonFromCorners && airportLon <= maxLonFromCorners) {
+            double ScrX, ScrY;
+            LatLon2XY(airportLat, airportLon, ScrX, ScrY);
+            airportPositions.push_back({ScrX, ScrY});
+        }
+    }
+    
+    int i = 0;
+
+    for(const auto& pos : airportPositions) {
+        DrawTowerImage(pos.first, pos.second, getCurrentZoomLevel());
+    }
+    
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    
+
+    static int call_count = 0;
+    call_count++;
+    if (call_count % 100 == 0) {
+        char time_str[256];
+        sprintf(time_str, "Airport tower drawing took %lld milliseconds for %zu airports (call #%d)", 
+                duration.count(), airportPositions.size(), call_count);
+        std::cout << time_str << std::endl;
+    }
+}
+//---------------------------------------------------------------------------
+
+float __fastcall TForm1::getCurrentZoomLevel(void)
+{
+
+    double currentZoom = GetEarthView() ? GetEarthView()->m_Eye.h : 1.0;
+    double baseZoom = pow(1.3, 18);
+    double zoomRatio = baseZoom / currentZoom;
+    
+
+    float scale = static_cast<float>(std::min(2.0, zoomRatio * 0.00008));
+    
+    static int scaleLogCount = 0;
+    scaleLogCount++;
+    // if (scaleLogCount % 5000 == 0) {
+    //     std::cout << "Scale Log (#" << scaleLogCount << "): " 
+    //               <<  scale 
+    //               << " (currentZoom: "  << GetEarthView()->m_Eye.h 
+    //               << ", zoomRatio: " <<  zoomRatio << ")" 
+    //               << std::endl;
+    // }
+
+    return scale;
+}
+//---------------------------------------------------------------------------
+
+bool __fastcall TForm1::LoadTowerTexture(void)
+{
+    if (towerTextureLoaded) {
+        return true;
+    }
+    
+    const char *filename = "Symbols\\tower-64.png";
+    int width, height, nrChannels;
+    
+    unsigned char *imageData = stbi_load(filename, &width, &height, &nrChannels, 0);
+    if (!imageData) {
+        std::cout << "Failed to load tower texture: " << filename << std::endl;
+        return false;
+    }
+    
+    glGenTextures(1, &towerTextureID);
+    glBindTexture(GL_TEXTURE_2D, towerTextureID);
+    
+    GLenum format = (nrChannels == 4) ? GL_RGBA : GL_RGB;
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, imageData);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
+    stbi_image_free(imageData);
+    
+    towerTextureLoaded = true;
+    std::cout << "Tower texture loaded successfully: " << width << "x" << height << " (" << nrChannels << " channels)" << std::endl;
+    
+    return true;
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::DrawTowerImage(float x, float y, float scale)
+{
+    if (!LoadTowerTexture()) {
+        return; 
+    }
+    
+    glPushMatrix();
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    glBindTexture(GL_TEXTURE_2D, towerTextureID);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f); 
+    
+    glTranslatef(x, y, 0.0f);
+    
+    
+    float size = 32.0f * scale;
+    
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 1.0f); glVertex2f(-size/2, size/2); 
+    glTexCoord2f(1.0f, 1.0f); glVertex2f(size/2, size/2);  
+    glTexCoord2f(1.0f, 0.0f); glVertex2f(size/2, -size/2); 
+    glTexCoord2f(0.0f, 0.0f); glVertex2f(-size/2, -size/2);
+    glEnd();
+    
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+    glPopMatrix();
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::getScreenLatLonBounds(double &minLat, double &maxLat, double &minLon, double &maxLon)
+{
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    
+    int screenX = viewport[0];
+    int screenY = viewport[1];
+    int screenWidth = viewport[2];
+    int screenHeight = viewport[3];
+    
+    double topLeftLat, topLeftLon, topRightLat, topRightLon;
+    double bottomLeftLat, bottomLeftLon, bottomRightLat, bottomRightLon;
+    
+    XY2LatLon2(screenX, (ObjectDisplay->Height - 1) - screenY, bottomLeftLat, bottomLeftLon);                    // ����
+    XY2LatLon2(screenWidth, (ObjectDisplay->Height - 1) - screenY, bottomRightLat, bottomRightLon);             // ����  
+    XY2LatLon2(screenX, (ObjectDisplay->Height - 1) - screenHeight, topLeftLat, topLeftLon);                    // �»�
+    XY2LatLon2(screenWidth, (ObjectDisplay->Height - 1) - screenHeight, topRightLat, topRightLon);              // ���
+    
+    maxLat = std::max({topLeftLat, topRightLat, bottomLeftLat, bottomRightLat});
+    minLat = std::min({topLeftLat, topRightLat, bottomLeftLat, bottomRightLat});
+    maxLon = std::max({topLeftLon, topRightLon, bottomLeftLon, bottomRightLon});
+    minLon = std::min({topLeftLon, topRightLon, bottomLeftLon, bottomRightLon});
+}
+//---------------------------------------------------------------------------

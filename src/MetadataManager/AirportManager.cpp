@@ -2,7 +2,6 @@
 
 AirportManager::AirportManager() {
     airportDB = AirportDB::getInstance();
-    //airportDB->loadFromFile("airports.csv"); // Load dummy data or specify a real file
 }
 
 AirportManager::~AirportManager() {
@@ -15,14 +14,16 @@ bool AirportManager::LoadAirport(const std::string& sourcefile) {
     {
         srcfile = "airports.csv";   
     }
-    return airportDB->loadFromFile(srcfile);
+    airportDB->loadFromFileByLine(srcfile);
+    airportDB->parseLineDataToAirportMap();
+    return true;
 }
 
 std::unordered_map<std::string, Airport>& AirportManager::getAirportCodeMap() {
     return airportDB->getAirportCodeMap();
 }
 
-Airport& AirportManager::getAirportByCode(const std::string& code) {
+Airport AirportManager::getAirportByCode(const std::string& code) {
     return airportDB->getAirportByCode(code);
 }
 

@@ -93,8 +93,8 @@
         <Icon_MainIcon>$(BDS)\bin\cbuilder_PROJECTICON.ico</Icon_MainIcon>
         <UWP_CppLogo44>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_44.png</UWP_CppLogo44>
         <UWP_CppLogo150>$(BDS)\bin\Artwork\Windows\UWP\cppreg_UwpDefault_150.png</UWP_CppLogo150>
-        <IncludePath>ManifestManager\;Map\Providers\;OSC\include;OSC\testsrc\curl\;Map\MapSrc\;..\..\..\..\..\Desktop\ADS-B-2025\ADS-B-Display\;$(IncludePath)</IncludePath>
-        <ILINK_LibraryPath>ManifestManager\;Map\Providers\;OSC\testsrc\curl\;Map\MapSrc\;..\..\..\..\..\Desktop\ADS-B-2025\ADS-B-Display\;OSC\bin\bcclib;$(ILINK_LibraryPath)</ILINK_LibraryPath>
+        <IncludePath>Util\;MetadataManager\;MetadatatManager\;Map\Providers\;OSC\include;OSC\testsrc\curl\;Map\MapSrc\;..\..\..\..\..\Desktop\ADS-B-2025\ADS-B-Display\;$(IncludePath)</IncludePath>
+        <ILINK_LibraryPath>Util\;MetadataManager\;MetadatatManager\;Map\Providers\;OSC\testsrc\curl\;Map\MapSrc\;..\..\..\..\..\Desktop\ADS-B-2025\ADS-B-Display\;OSC\bin\bcclib;$(ILINK_LibraryPath)</ILINK_LibraryPath>
         <SanitizedProjectName>ADS-B-Display</SanitizedProjectName>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
@@ -187,6 +187,7 @@
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DynamicRTL>false</DynamicRTL>
         <PostBuildEvent><![CDATA[copy "$(PROJECTDIR)\OSC\bin\bcclib\*.*" "$(OUTPUTDIR)" /Y
+copy "$(PROJECTDIR)\Metadata\*.*" "$(OUTPUTDIR)" /Y
 $(PostBuildEvent)]]></PostBuildEvent>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64x)'!=''">
@@ -238,24 +239,6 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <CppCompile Include="LatLonConv.cpp">
             <DependentOn>LatLonConv.h</DependentOn>
             <BuildOrder>33</BuildOrder>
-        </CppCompile>
-        <CppCompile Include="ManifestManager\Airport.cpp">
-            <BuildOrder>57</BuildOrder>
-        </CppCompile>
-        <CppCompile Include="ManifestManager\AirportDB.cpp">
-            <BuildOrder>58</BuildOrder>
-        </CppCompile>
-        <CppCompile Include="ManifestManager\AirportManager.cpp">
-            <BuildOrder>58</BuildOrder>
-        </CppCompile>
-        <None Include="ManifestManager\csv.h">
-            <BuildOrder>57</BuildOrder>
-        </None>
-        <CppCompile Include="ManifestManager\Route.cpp">
-            <BuildOrder>59</BuildOrder>
-        </CppCompile>
-        <CppCompile Include="ManifestManager\RouteManager.cpp">
-            <BuildOrder>60</BuildOrder>
         </CppCompile>
         <CppCompile Include="Map\MapSrc\EarthView.cpp">
             <DependentOn>Map\MapSrc\EarthView.h</DependentOn>
@@ -394,6 +377,60 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <None Include="Map\Providers\GoogleTerrainWithLabelsMapProvider.h">
             <BuildOrder>64</BuildOrder>
         </None>
+        <CppCompile Include="MetadataManager\Airport.cpp">
+            <BuildOrder>71</BuildOrder>
+        </CppCompile>
+        <None Include="MetadataManager\Airport.h">
+            <BuildOrder>71</BuildOrder>
+        </None>
+        <CppCompile Include="MetadataManager\AirportDB.cpp">
+            <BuildOrder>71</BuildOrder>
+        </CppCompile>
+        <None Include="MetadataManager\AirportDB.h">
+            <BuildOrder>71</BuildOrder>
+        </None>
+        <CppCompile Include="MetadataManager\AirportManager.cpp">
+            <BuildOrder>71</BuildOrder>
+        </CppCompile>
+        <None Include="MetadataManager\AirportManager.h">
+            <BuildOrder>71</BuildOrder>
+        </None>
+        <None Include="MetadataManager\AirportManagerInterface.h">
+            <BuildOrder>71</BuildOrder>
+        </None>
+        <None Include="MetadataManager\csv.h">
+            <BuildOrder>71</BuildOrder>
+        </None>
+        <None Include="MetadataManager\DataUpdaterInterface.h">
+            <BuildOrder>72</BuildOrder>
+        </None>
+        <CppCompile Include="MetadataManager\MetadataUpdater.cpp">
+            <BuildOrder>73</BuildOrder>
+        </CppCompile>
+        <None Include="MetadataManager\MetadataUpdater.h">
+            <BuildOrder>74</BuildOrder>
+        </None>
+        <CppCompile Include="MetadataManager\Route.cpp">
+            <BuildOrder>74</BuildOrder>
+        </CppCompile>
+        <None Include="MetadataManager\Route.h">
+            <BuildOrder>74</BuildOrder>
+        </None>
+        <CppCompile Include="MetadataManager\RouteDB.cpp">
+            <BuildOrder>73</BuildOrder>
+        </CppCompile>
+        <None Include="MetadataManager\RouteDB.h">
+            <BuildOrder>74</BuildOrder>
+        </None>
+        <CppCompile Include="MetadataManager\RouteManager.cpp">
+            <BuildOrder>73</BuildOrder>
+        </CppCompile>
+        <None Include="MetadataManager\RouteManager.h">
+            <BuildOrder>74</BuildOrder>
+        </None>
+        <None Include="MetadataManager\RouteManagerInterface.h">
+            <BuildOrder>74</BuildOrder>
+        </None>
         <CppCompile Include="ntds2d.cpp">
             <DependentOn>ntds2d.h</DependentOn>
             <BuildOrder>30</BuildOrder>
@@ -423,6 +460,12 @@ $(PostBuildEvent)]]></PostBuildEvent>
             <DependentOn>TriangulatPoly.h</DependentOn>
             <BuildOrder>32</BuildOrder>
         </CppCompile>
+        <CppCompile Include="Util\WebDownloadManager.cpp">
+            <BuildOrder>70</BuildOrder>
+        </CppCompile>
+        <None Include="Util\WebDownloadManager.h">
+            <BuildOrder>71</BuildOrder>
+        </None>
         <FormResources Include="DisplayGUI.dfm"/>
         <FormResources Include="AreaDialog.dfm"/>
         <BuildConfiguration Include="Base">
@@ -1494,7 +1537,7 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
         <PreLinkEvent/>
         <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
-        <PostBuildEvent>copy &quot;$(PROJECTDIR)\OSC\bin\bcclib\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y</PostBuildEvent>
+        <PostBuildEvent>copy &quot;$(PROJECTDIR)\OSC\bin\bcclib\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y&amp;&amp;copy &quot;$(PROJECTDIR)\Metadata\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y</PostBuildEvent>
         <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Release' And '$(FileToCompile)'=='Map\MapSrc\VMath.h'">
