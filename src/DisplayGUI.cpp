@@ -50,6 +50,7 @@
 #define MIDDLE_MOUSE_DOWN 4
 
 #define BG_INTENSITY 0.37
+#define ERROR_HANDLING_ENABLED
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma link "OpenGLPanel"
@@ -1179,6 +1180,20 @@ void __fastcall TForm1::RawConnectButtonClick(TObject *Sender)
     {
         #ifdef ERROR_HANDLING_ENABLED
         try {
+            if (mPIErrorMonitorThread != NULL)
+            {
+                mPIErrorMonitorThread->Terminate(); 
+                // delete mPIErrorMonitorThread;
+                // mPIErrorMonitorThread = NULL;
+            }
+        }
+        catch (const EIdException &e)
+        {
+            // ShowMessage("Error while setting up ssh connection: " + e.Message);
+            std::cout << "Error while setting up ssh connection: " << e.Message.c_str() << std::endl;
+        }
+        try {
+           
             mPIErrorMonitorThread = new PIErrorMonitor(true);
             mPIErrorMonitorThread->registerErrorHandler(HandlePIErrorState);
             AnsiString hostAnsi = RawIpAddress->Text;
@@ -1212,15 +1227,15 @@ void __fastcall TForm1::RawConnectButtonClick(TObject *Sender)
         IdTCPClientRaw->IOHandler->InputBuffer->Clear();
         RawConnectButton->Caption = "Raw Connect";
         RawPlaybackButton->Enabled = true;
-        #ifdef ERROR_HANDLING_ENABLED
-        try {
-            mPIErrorMonitorThread->Terminate();
-            // delete mPIErrorMonitorThread;
-            // mPIErrorMonitorThread = NULL;
-        } catch (const EIdException &e) {
-            ShowMessage("Error while connecting: " + e.Message);
-        }
-        #endif    
+        // #ifdef ERROR_HANDLING_ENABLED
+        // try {
+        //     mPIErrorMonitorThread->Terminate();
+        //     // delete mPIErrorMonitorThread;
+        //     // mPIErrorMonitorThread = NULL;
+        // } catch (const EIdException &e) {
+        //     ShowMessage("Error while connecting: " + e.Message);
+        // }
+        // #endif    
     }
 }
 //---------------------------------------------------------------------------
@@ -2463,32 +2478,35 @@ void __fastcall TForm1::HandlePIErrorState(const int &code) {
     std::cout << "Error to UI: " << code << std::endl;
     AnsiString errorMessages;
 
-    // // Check each error bit and append the corresponding message
-    // if (code & BITMASK_SSH_DISCONNECTED) {
-    //     errorMessages += "SSH Disconnected. ";
-    //     // show error message dialog if this is first ssh disconnection error
-    //     // find if "SSH Disconnected" is in the ErrorMessage->Caption
-    //     if (ErrorMessage->Caption.Pos("SSH Disconnected") == 0) {
-    //         ShowMessage("Disconnected PI. Please check your connection and reconnect the PI");
-    //     }
-    //     ErrorMessage->Font->Color = clRed;
-    // }
-    // if (code & BITMAKS_SDRUSB_DISCONNECTED) {
-    //     errorMessages += "SDR USB Disconnected. ";
-    //     if (ErrorMessage->Caption.Pos("SDR USB Disconnected. ") == 0) {
-    //         ShowMessage("SDR USB Disconnected. Please check and RESTART dump1090.");
-    //     }        
-    //     ErrorMessage->Font->Color = clRed;
-    // }
-    // if (code & BITMASK_DUMP1090_NOT_RUNNING) {
-    //     errorMessages += "Dump1090 Not Running. ";
-    //     ErrorMessage->Font->Color = clRed;
-    // }
-    // if (code == 0) {
-    //     errorMessages = "PI connection OK";
-    //     ErrorMessage->Font->Color = clGreen;
-    // }
-    
-    // // Update the UI element with the concatenated error messages
-    // ErrorMessage->Caption = errorMessages;
+    // Check each error bit and append the corresponding message
+    if (code & BITMASK_SSH_DISCONNECTED) {
+        AnsiString prevCaption = LabelErrorMessage->Caption; // remember previous text so we can show the message once
+        errorMessages += "Disconnected RPI\n";
+        LabelErrorMessage->Caption = errorMessages;
+        LabelErrorMessage->Font->Color = clRed;
+        // click RawConnectButtonClick to disconnect PI connection
+        RawConnectButtonClick(nullptr);
+
+        // if (prevCaption.Pos("SSH Disconnected") == 0) {
+        //     ShowMessage("Disconnected PI. Please check your connection and reconnect the PI");
+        // }
+    }
+    if (code & BITMAKS_SDRUSB_DISCONNECTED) {
+        AnsiString prevCaption = LabelErrorMessage->Caption; // remember previous text so we can show the message once
+        errorMessages += "SDR Disconnected. Exited dump1090\n";
+        LabelErrorMessage->Caption = errorMessages;
+        LabelErrorMessage->Font->Color = clRed;
+        // if (prevCaption.Pos("SDR USB Disconnected") == 0) {
+        //     ShowMessage("SDR USB Disconnected. Please check and RESTART dump1090.");
+        // }
+    }
+    if (code & BITMASK_DUMP1090_NOT_RUNNING) {
+        errorMessages += "dump1090 is N/A.\n";
+        LabelErrorMessage->Caption = errorMessages;
+        LabelErrorMessage->Font->Color = clRed;
+    }
+    if (code == 0) {
+        LabelErrorMessage->Caption = "";
+        LabelErrorMessage->Font->Color = clGreen;
+    }
 }
