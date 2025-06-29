@@ -1,0 +1,5 @@
+"icao24","registration","manufacturericao","manufacturername","model","typecode","serialnumber","linenumber","icaoaircrafttype","operator","operatorcallsign","operatoricao","operatoriata","owner","testreg","registered","reguntil","status","built","firstflightdate","seatconfiguration","engines","modes","adsb","acars","notes","categoryDescription"
+"","","","","","","","","","","","","","","","","","","","","","","false","false","false","",""
+"aa3487","N757F","RAYTHEON","Raytheon Aircraft Company","A36","BE36","E-3121","","L1P","","","","","Vintage Aircraft Llc","","","2027-01-31","","","","","","false","false","false","",""
+"a4fa61","N42MH","PIPER","Piper","PA-31-350","PA31","31-7852015","","L2P","","","","","Tvpx Aircraft Solutions Inc Trustee","","","2029-08-31","","1977-01-01","","","LYCOMING TI0-540 SER","false","false","false","",""
+"aa3487","DUPLICATE","RAYTHEON","Raytheon Aircraft Company","A36","BE36","DUP","","L1P","","","","","Duplicate Row","","","2027-12-31","","","","","","false","false","false","",""

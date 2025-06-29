@@ -21,6 +21,9 @@
         <Projects Include="ADS-B-Display.cbproj">
             <Dependencies>HashTable\Lib\HashTableLib.cbproj;Map\zlib\zlib.cbproj;Map\png\png.cbproj;Map\libgefetch\libgefetch.cbproj;Map\jpeg\jpeg.cbproj</Dependencies>
         </Projects>
+        <Projects Include="Tests\Test.cbproj">
+            <Dependencies/>
+        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -83,14 +86,23 @@
     <Target Name="ADS-B-Display:Make" DependsOnTargets="HashTableLib:Make;zlib:Make;png:Make;libgefetch:Make;jpeg:Make">
         <MSBuild Projects="ADS-B-Display.cbproj" Targets="Make"/>
     </Target>
+    <Target Name="Test">
+        <MSBuild Projects="Tests\Test.cbproj"/>
+    </Target>
+    <Target Name="Test:Clean">
+        <MSBuild Projects="Tests\Test.cbproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Test:Make">
+        <MSBuild Projects="Tests\Test.cbproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="jpeg;libgefetch;png;zlib;HashTableLib;ADS-B-Display"/>
+        <CallTarget Targets="jpeg;libgefetch;png;zlib;HashTableLib;ADS-B-Display;Test"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="jpeg:Clean;libgefetch:Clean;png:Clean;zlib:Clean;HashTableLib:Clean;ADS-B-Display:Clean"/>
+        <CallTarget Targets="jpeg:Clean;libgefetch:Clean;png:Clean;zlib:Clean;HashTableLib:Clean;ADS-B-Display:Clean;Test:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="jpeg:Make;libgefetch:Make;png:Make;zlib:Make;HashTableLib:Make;ADS-B-Display:Make"/>
+        <CallTarget Targets="jpeg:Make;libgefetch:Make;png:Make;zlib:Make;HashTableLib:Make;ADS-B-Display:Make;Test:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>
