@@ -32,6 +32,8 @@ typedef struct
     double Speed;
     double VerticalRate;
     int SpriteImage;
+    bool IsHelicopter;
+    bool IsMilitary;
 } TADS_B_Aircraft;
 
 void RawToAircraft(modeS_message *mm, TADS_B_Aircraft *ADS_B_Aircraft);
