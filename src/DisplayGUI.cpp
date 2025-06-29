@@ -50,6 +50,7 @@
 #define MIDDLE_MOUSE_DOWN 4
 
 #define BG_INTENSITY 0.37
+#define ERROR_HANDLING_ENABLED
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma link "OpenGLPanel"
@@ -1177,6 +1178,30 @@ void __fastcall TForm1::RawConnectButtonClick(TObject *Sender)
 
     if ((RawConnectButton->Caption == "Raw Connect") && (Sender != NULL))
     {
+        #ifdef ERROR_HANDLING_ENABLED
+        try {
+            if (mPIErrorMonitorThread != NULL) {
+                mPIErrorMonitorThread->Terminate(); 
+                // delete mPIErrorMonitorThread;
+                // mPIErrorMonitorThread = NULL;
+            }
+        }
+        catch (const EIdException &e) {
+            std::cout << "Error while setting up ssh connection: " << e.Message.c_str() << std::endl;
+        }
+        try {
+           
+            mPIErrorMonitorThread = new PIErrorMonitor(true);
+            mPIErrorMonitorThread->registerErrorHandler(HandlePIErrorState);
+            AnsiString hostAnsi = RawIpAddress->Text;
+            mPIErrorMonitorThread->initSshConnection(hostAnsi.c_str(), "lg", "lg");  // FIXME: what if I forget this invokation?
+            mPIErrorMonitorThread->Resume();
+        }
+        catch (const EIdException &e)
+        {
+            ShowMessage("Error while setting up ssh connection: " + e.Message);
+        }
+        #endif
         try
         {
             IdTCPClientRaw->Connect();
@@ -1198,6 +1223,15 @@ void __fastcall TForm1::RawConnectButtonClick(TObject *Sender)
         IdTCPClientRaw->IOHandler->InputBuffer->Clear();
         RawConnectButton->Caption = "Raw Connect";
         RawPlaybackButton->Enabled = true;
+        // #ifdef ERROR_HANDLING_ENABLED
+        // try {
+        //     mPIErrorMonitorThread->Terminate();
+        //     // delete mPIErrorMonitorThread;
+        //     // mPIErrorMonitorThread = NULL;
+        // } catch (const EIdException &e) {
+        //     ShowMessage("Error while connecting: " + e.Message);
+        // }
+        // #endif    
     }
 }
 //---------------------------------------------------------------------------
@@ -2435,3 +2469,39 @@ void __fastcall TForm1::getScreenLatLonBounds(double &minLat, double &maxLat, do
     minLon = std::min({topLeftLon, topRightLon, bottomLeftLon, bottomRightLon});
 }
 //---------------------------------------------------------------------------
+void __fastcall TForm1::HandlePIErrorState(const int &code) {
+    static bool needReconnectRaw = false;
+    std::cout << "Error to UI: " << code << std::endl;
+    AnsiString errorMessages;
+
+    // Check each error bit and append the corresponding message
+    if (code & BITMASK_SSH_DISCONNECTED) {
+        errorMessages += "Disconnected RPI\n";
+        LabelErrorMessage->Caption = errorMessages;
+        LabelErrorMessage->Font->Color = clRed;
+        std::cout << "Disconnected RPI" << std::endl;
+        RawConnectButtonClick(RawConnectButton); // disconnect via the actual button
+        needReconnectRaw = true; // set flag to reconnect raw
+    }
+    if (code & BITMAKS_SDRUSB_DISCONNECTED) {
+        errorMessages += "SDR Disconnected. Exited dump1090\n";
+        LabelErrorMessage->Caption = errorMessages;
+        LabelErrorMessage->Font->Color = clRed;
+        needReconnectRaw = true; // set flag to reconnect raw
+    }
+    if (code & BITMASK_DUMP1090_NOT_RUNNING) {
+        errorMessages += "dump1090 is N/A.\n";
+        LabelErrorMessage->Caption = errorMessages;
+        LabelErrorMessage->Font->Color = clRed;
+        needReconnectRaw = true; // set flag to reconnect raw
+    }
+    if (code == 0) {
+        if (needReconnectRaw == true) {
+            needReconnectRaw = false; // reset flag
+            std::cout << "Auto reconnect RPI" << std::endl;
+            RawConnectButtonClick(RawConnectButton); // reconnect via the actual button
+        }
+        LabelErrorMessage->Caption = "";
+        LabelErrorMessage->Font->Color = clGreen;
+    }
+}
