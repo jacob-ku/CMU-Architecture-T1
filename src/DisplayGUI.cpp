@@ -34,7 +34,16 @@
 
 #include "MetadataManager/RouteManager.h"
 #include "MetadataManager/AirportManager.h"
+#include "Util/Logger.h"
 #include "Util/WebDownloadManager.h"
+
+/*  소요시간 측정용
+    측정 시작:   EXECUTION_TIMER("SomeName");
+    측정 종료:   int64_t elapsedTime = EXECUTION_TIMER_ELAPSED("SomeName");
+*/
+#define ELAPSED_TIME_CHK    // NOTE: 사용 시 Enable 할 것
+#include "Util/ExecutionTimer.h"
+
 
 #define AIRCRAFT_DATABASE_URL "https://opensky-network.org/datasets/metadata/aircraftDatabase.zip"
 #define AIRCRAFT_DATABASE_FILE "aircraftDatabase.csv"
@@ -361,6 +370,9 @@ void __fastcall TForm1::Timer1Timer(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm1::DrawObjects(void)
 {
+    // ExecutionTimer timer("drawingTime");
+    EXECUTION_TIMER(drawingTime);
+
     double ScrX, ScrY;
     int ViewableAircraft = 0;
 
@@ -650,6 +662,8 @@ void __fastcall TForm1::DrawObjects(void)
             CpaDistanceValue->Caption = "None";
         }
     }
+    EXECUTION_TIMER_ELAPSED(elapsed, drawingTime);
+    LOG("Elapsed: " + to_string(elapsed) + "ms");
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ObjectDisplayMouseDown(TObject *Sender,
