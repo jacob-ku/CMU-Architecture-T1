@@ -9,16 +9,22 @@
 #include <string>
 #include <memory>
 
-std::unique_ptr<RouteDB> RouteDB::instance;
-std::mutex RouteDB::mtx;
-
 RouteDB::RouteDB() {
     updater = std::make_unique<MetaDataUpdater>(SOURCE_URL, TARGET_FILE);
+    std::cout << "[MetadataManager] RouteDB instance created with default updater" << std::endl;
 }
 
-// 의존성 주입 생성자
 RouteDB::RouteDB(std::unique_ptr<DataUpdaterInterface> injectedUpdater) 
     : updater(std::move(injectedUpdater)) {
+    std::cout << "[MetadataManager] RouteDB instance created with injected updater" << std::endl;
+}
+
+RouteDB::~RouteDB() {
+    std::cout << "[MetadataManager] RouteDB destructor called" << std::endl;
+    routeMap.clear();
+    lineDataMap.clear();
+    isLoaded = false;
+    std::cout << "[MetadataManager] RouteDB destructor completed" << std::endl;
 }
 
 bool RouteDB::loadFromFile(const std::string& filePath) {
@@ -26,7 +32,7 @@ bool RouteDB::loadFromFile(const std::string& filePath) {
     if (filePath.empty()) {
         csvpath = "routes.csv";
     }
-    std::cout << "Loading route data from file: " << csvpath << std::endl;
+    std::cout << "[MetadataManager] Loading route data from file: " << csvpath << std::endl;
     
     try {
         io::CSVReader<5, io::trim_chars<>, io::double_quote_escape<',','\"'>> in(csvpath);
@@ -40,51 +46,51 @@ bool RouteDB::loadFromFile(const std::string& filePath) {
         }
         
         isLoaded = true;
-        std::cout << "Finished reading route data from file. Total routes: " << routeMap.size() << std::endl;
+        std::cout << "[MetadataManager] Finished reading route data from file. Total routes: " << routeMap.size() << std::endl;
         return true;
     }
     catch (const io::error::can_not_open_file& e) {
-        std::cerr << "Error: Cannot open file - " << e.what() << std::endl;
+        std::cerr << "[MetadataManager] Error: Cannot open file - " << e.what() << std::endl;
         return false;
     }
     catch (const io::error::line_length_limit_exceeded& e) {
-        std::cerr << "Error: Line too long - " << e.what() << std::endl;
+        std::cerr << "[MetadataManager] Error: Line too long - " << e.what() << std::endl;
         return false;
     }
     catch (const io::error::missing_column_in_header& e) {
-        std::cerr << "Error: Missing column in header - " << e.what() << std::endl;
+        std::cerr << "[MetadataManager] Error: Missing column in header - " << e.what() << std::endl;
         return false;
     }
     catch (const io::error::extra_column_in_header& e) {
-        std::cerr << "Error: Extra column in header - " << e.what() << std::endl;
+        std::cerr << "[MetadataManager] Error: Extra column in header - " << e.what() << std::endl;
         return false;
     }
     catch (const io::error::duplicated_column_in_header& e) {
-        std::cerr << "Error: Duplicated column in header - " << e.what() << std::endl;
+        std::cerr << "[MetadataManager] Error: Duplicated column in header - " << e.what() << std::endl;
         return false;
     }
     catch (const std::exception& e) {
-        std::cerr << "Error: Unexpected exception - " << e.what() << std::endl;
+        std::cerr << "[MetadataManager] Error: Unexpected exception - " << e.what() << std::endl;
         return false;
     }
     catch (...) {
-        std::cerr << "Error: Unknown exception occurred while parsing CSV file" << std::endl;
+        std::cerr << "[MetadataManager] Error: Unknown exception occurred while parsing CSV file" << std::endl;
         return false;
     }
 }
 
 Route RouteDB::getRouteByCallsign(std::string& callsign) {
     if (isLoaded == false) {
-        std::cout << "Error: RouteDB is not loaded. Please load the data first." << std::endl;
+        std::cout << "[MetadataManager] Error: RouteDB is not loaded. Please load the data first." << std::endl;
         return getRouteInfoOnWeb(callsign);
     }
 
-    std::cout << "Searching for route with callsign: " << callsign << std::endl;
+    std::cout << "[MetadataManager] Searching for route with callsign: " << callsign << std::endl;
     if (lineDataMap.find(callsign) == lineDataMap.end()) {
-        std::cerr << "Error: Route with callsign '" << callsign << "' not found." << std::endl;
+        std::cerr << "[MetadataManager] Error: Route with callsign '" << callsign << "' not found." << std::endl;
         return Route();
     }
-    std::cout << "Found route data for callsign: " << callsign << std::endl;
+    std::cout << "[MetadataManager] Found route data for callsign: " << callsign << std::endl;
 
     std::string routedata = lineDataMap[callsign];
     
@@ -114,8 +120,8 @@ Route RouteDB::getRouteByCallsign(std::string& callsign) {
 #endif
         return parsedRoute;
     } else {
-        std::cerr << "Error: Insufficient fields in route data for " << callsign << std::endl;
-        std::cerr << "Expected 5 fields, got " << fields.size() << std::endl;
+        std::cerr << "[MetadataManager] Error: Insufficient fields in route data for " << callsign << std::endl;
+        std::cerr << "[MetadataManager] Expected 5 fields, got " << fields.size() << std::endl;
         return Route();
     }
 }
@@ -128,15 +134,15 @@ bool RouteDB::loadFromFileByLine(const std::string& filePath) {
         csvpath = "routes.csv";
     }
     
-    std::cout << "Loading route data line by line from file: " << csvpath << std::endl;
+    std::cout << "[MetadataManager] Loading route data line by line from file: " << csvpath << std::endl;
     
     std::ifstream file(csvpath);
     if (!file.is_open()) {
         auto end_time = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
         
-        std::cerr << "Error: Cannot open file " << csvpath << std::endl;
-        std::cerr << "Failed to open file after " << duration.count() << " milliseconds" << std::endl;
+        std::cerr << "[MetadataManager] Error: Cannot open file " << csvpath << std::endl;
+        std::cerr << "[MetadataManager] Failed to open file after " << duration.count() << " milliseconds" << std::endl;
         return false;
     }
     
@@ -149,7 +155,7 @@ bool RouteDB::loadFromFileByLine(const std::string& filePath) {
         while (std::getline(file, line)) {
             if (isFirstLine) {
                 isFirstLine = false;
-                std::cout << "Skipping header line: " << line << std::endl;
+                std::cout << "[MetadataManager] Skipping header line: " << line << std::endl;
                 continue;
             }
 
@@ -167,7 +173,7 @@ bool RouteDB::loadFromFileByLine(const std::string& filePath) {
                 lineDataMap[key] = line;
                 
             } else {
-                std::cout << "Warning: No comma found in line: " << line << std::endl;
+                std::cout << "[MetadataManager] Warning: No comma found in line: " << line << std::endl;
             }
         }
         
@@ -175,13 +181,13 @@ bool RouteDB::loadFromFileByLine(const std::string& filePath) {
         isLoaded = true;
         
   
-        std::cout << "Finished reading file line by line. Total lines stored: " << lineDataMap.size() << std::endl;
+        std::cout << "[MetadataManager] Finished reading file line by line. Total lines stored: " << lineDataMap.size() << std::endl;
         return true;
         
     } catch (const std::exception& e) {
 
         
-        std::cerr << "Error while reading file: " << e.what() << std::endl;
+        std::cerr << "[MetadataManager] Error while reading file: " << e.what() << std::endl;
         file.close();
         return false;
     }
@@ -218,7 +224,7 @@ Route RouteDB::getRouteInfoOnWeb(std::string& callsign) {
     return Route("", "", "", "", "");
 }
 
-bool RouteDB::nowloading() {
+bool RouteDB::LodingStatus() {
     return isLoaded;
 }
 
@@ -226,15 +232,14 @@ void RouteDB::onUpdateComplete(bool updateStatus) {
     if (!isLoaded && updateStatus) {
         loadFromFileByLine(TARGET_FILE);
         std::cout << "RouteDB data reloaded after update." << std::endl;
-    }
-    std::cout << "Route file update check completed!" << std::endl;
-    std::cout << "Checking for route database updates... : " << updateStatus << std::endl;
-    if(isLoaded && !updateStatus) {
+    } else if(isLoaded && !updateStatus) {
         isLoaded = false;
         std::cout << "File Updated...." << std::endl;
     } else {
-        std::cout << "RouteDB is not loaded yet." << std::endl;
+        
     }
+    std::cout << "Route file update check completed!" << std::endl;
+    std::cout << "Checking for route database updates... : " << updateStatus << std::endl;
 }
 
 

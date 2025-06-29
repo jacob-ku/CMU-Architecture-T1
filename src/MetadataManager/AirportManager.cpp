@@ -1,11 +1,17 @@
 #include "AirportManager.h"
 
 AirportManager::AirportManager() {
-    airportDB = AirportDB::getInstance();
+    airportDB = new AirportDB();  // 직접 객체 생성
+    std::cout << "AirportManager created with new AirportDB instance" << std::endl;
 }
 
 AirportManager::~AirportManager() {
-    AirportDB::destroyInstance();
+    std::cout << "AirportManager destructor called" << std::endl;
+    if (airportDB) {
+        delete airportDB;  // 직접 객체 삭제
+        airportDB = nullptr;
+        std::cout << "AirportDB instance deleted" << std::endl;
+    }
 }
 
 bool AirportManager::LoadAirport(const std::string& sourcefile) {

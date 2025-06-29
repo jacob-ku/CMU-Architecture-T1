@@ -7,10 +7,16 @@
 #include <chrono>
 
 RouteManager::RouteManager() {
-    routeDB = RouteDB::getInstance();
+    routeDB = new RouteDB();  // 직접 객체 생성
+    std::cout << "RouteManager created with new RouteDB instance" << std::endl;
 }
 RouteManager::~RouteManager() {
-    RouteDB::destroyInstance();
+    std::cout << "RouteManager destructor called" << std::endl;
+    if (routeDB) {
+        delete routeDB;  // 직접 객체 삭제
+        routeDB = nullptr;
+        std::cout << "RouteDB instance deleted" << std::endl;
+    }
 }
 
 bool RouteManager::StartUpdateMonitor()
