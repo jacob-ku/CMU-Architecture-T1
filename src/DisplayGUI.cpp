@@ -34,6 +34,7 @@
 
 #include "MetadataManager/RouteManager.h"
 #include "MetadataManager/AirportManager.h"
+#include "Util/Logger.h"
 #include "Util/WebDownloadManager.h"
 
 /*  소요시간 측정용
@@ -662,7 +663,7 @@ void __fastcall TForm1::DrawObjects(void)
         }
     }
     EXECUTION_TIMER_ELAPSED(elapsed, drawingTime);
-    cout << "Elapsed: " + to_string(elapsed) + "ms" << endl;
+    LOG("Elapsed: " + to_string(elapsed) + "ms");
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ObjectDisplayMouseDown(TObject *Sender,
