@@ -319,13 +319,13 @@ object Form1: TForm1
         Left = 5
         Top = 85
         Width = 240
-        Height = 284
+        Height = 276
         BevelInner = bvLowered
         BevelKind = bkFlat
         TabOrder = 12
         object CLatLabel: TLabel
-          Left = 35
-          Top = 153
+          Left = 36
+          Top = 193
           Width = 21
           Height = 13
           Caption = 'N/A'
@@ -337,8 +337,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object CLonLabel: TLabel
-          Left = 35
-          Top = 172
+          Left = 148
+          Top = 193
           Width = 21
           Height = 13
           Caption = 'N/A'
@@ -351,8 +351,8 @@ object Form1: TForm1
           Transparent = False
         end
         object SpdLabel: TLabel
-          Left = 35
-          Top = 189
+          Left = 36
+          Top = 212
           Width = 21
           Height = 13
           Caption = 'N/A'
@@ -364,8 +364,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object HdgLabel: TLabel
-          Left = 35
-          Top = 208
+          Left = 148
+          Top = 212
           Width = 21
           Height = 13
           Caption = 'N/A'
@@ -377,8 +377,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object AltLabel: TLabel
-          Left = 35
-          Top = 227
+          Left = 36
+          Top = 231
           Width = 21
           Height = 13
           Caption = 'N/A'
@@ -390,8 +390,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object MsgCntLabel: TLabel
-          Left = 66
-          Top = 245
+          Left = 179
+          Top = 231
           Width = 21
           Height = 13
           Caption = 'N/A'
@@ -403,8 +403,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object TrkLastUpdateTimeLabel: TLabel
-          Left = 120
-          Top = 264
+          Left = 121
+          Top = 251
           Width = 72
           Height = 13
           Caption = '00:00:00:000'
@@ -416,8 +416,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object Label14: TLabel
-          Left = 5
-          Top = 264
+          Left = 6
+          Top = 251
           Width = 109
           Height = 13
           Caption = 'LAST UPDATE TIME:'
@@ -429,8 +429,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object Label13: TLabel
-          Left = 5
-          Top = 246
+          Left = 118
+          Top = 232
           Width = 52
           Height = 13
           Caption = 'MSG CNT:'
@@ -442,8 +442,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object Label10: TLabel
-          Left = 5
-          Top = 227
+          Left = 6
+          Top = 231
           Width = 24
           Height = 13
           Caption = 'ALT:'
@@ -455,8 +455,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object Label9: TLabel
-          Left = 5
-          Top = 208
+          Left = 118
+          Top = 212
           Width = 27
           Height = 13
           Caption = 'HDG:'
@@ -468,8 +468,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object Label8: TLabel
-          Left = 4
-          Top = 189
+          Left = 5
+          Top = 212
           Width = 25
           Height = 13
           Caption = 'SPD:'
@@ -481,8 +481,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object Label7: TLabel
-          Left = 5
-          Top = 172
+          Left = 118
+          Top = 193
           Width = 24
           Height = 13
           Caption = 'LON:'
@@ -494,8 +494,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object Label6: TLabel
-          Left = 5
-          Top = 153
+          Left = 6
+          Top = 193
           Width = 24
           Height = 13
           Caption = 'LAT:'
@@ -694,6 +694,58 @@ object Form1: TForm1
           Width = 21
           Height = 13
           Caption = 'N/A'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object TypeLabel: TLabel
+          Left = 45
+          Top = 152
+          Width = 28
+          Height = 13
+          Caption = 'N/A'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object Label25: TLabel
+          Left = 5
+          Top = 152
+          Width = 34
+          Height = 13
+          Caption = 'Type :'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object RouteLabel: TLabel
+          Left = 51
+          Top = 171
+          Width = 30
+          Height = 16
+          Caption = 'N/A'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object Label27: TLabel
+          Left = 5
+          Top = 171
+          Width = 40
+          Height = 13
+          Caption = 'Route :'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11

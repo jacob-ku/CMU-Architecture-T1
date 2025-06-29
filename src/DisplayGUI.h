@@ -225,6 +225,10 @@ class TForm1 : public TForm
     TLabel *Label26;
     TLabel *CountryLabel;
 	TLabel *LabelErrorMessage;
+	TLabel *TypeLabel;
+	TLabel *Label25;
+	TLabel *RouteLabel;
+	TLabel *Label27;
     void __fastcall ObjectDisplayInit(TObject *Sender);
     void __fastcall ObjectDisplayResize(TObject *Sender);
     void __fastcall ObjectDisplayPaint(TObject *Sender);
