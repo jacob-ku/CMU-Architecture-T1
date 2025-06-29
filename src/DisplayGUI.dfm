@@ -2,8 +2,8 @@ object Form1: TForm1
   Left = 0
   Top = 0
   Caption = 'ADS-B Viewer'
-  ClientHeight = 842
-  ClientWidth = 1229
+  ClientHeight = 1110
+  ClientWidth = 1666
   Color = clBtnFace
   Constraints.MinHeight = 740
   Font.Charset = DEFAULT_CHARSET
@@ -43,24 +43,24 @@ object Form1: TForm1
     ParentFont = False
   end
   object RightPanel: TPanel
-    Left = 979
+    Left = 1416
     Top = 0
     Width = 250
-    Height = 842
+    Height = 1110
     Align = alRight
     Color = clWindow
     Constraints.MaxWidth = 250
     TabOrder = 0
-    ExplicitLeft = 978
-    ExplicitHeight = 681
+    ExplicitLeft = 1406
+    ExplicitHeight = 1078
     object Panel1: TPanel
       Left = 1
-      Top = 694
+      Top = 962
       Width = 248
       Height = 147
       Align = alBottom
       TabOrder = 0
-      ExplicitTop = 533
+      ExplicitTop = 930
       object Label12: TLabel
         Left = 8
         Top = 8
@@ -154,13 +154,13 @@ object Form1: TForm1
       Left = 1
       Top = 1
       Width = 248
-      Height = 576
+      Height = 696
       Align = alTop
       Constraints.MinHeight = 70
       TabOrder = 1
       object Label15: TLabel
         Left = 72
-        Top = 422
+        Top = 542
         Width = 98
         Height = 13
         Caption = 'Areas Of Interest'
@@ -173,7 +173,7 @@ object Form1: TForm1
       end
       object DrawMap: TCheckBox
         Left = 5
-        Top = 278
+        Top = 390
         Width = 96
         Height = 17
         Caption = 'Display Map'
@@ -189,7 +189,7 @@ object Form1: TForm1
       end
       object PurgeStale: TCheckBox
         Left = 5
-        Top = 301
+        Top = 413
         Width = 96
         Height = 19
         Caption = 'Purge Stale'
@@ -205,7 +205,7 @@ object Form1: TForm1
       end
       object CSpinStaleTime: TCSpinEdit
         Left = 107
-        Top = 280
+        Top = 392
         Width = 62
         Height = 21
         Increment = 5
@@ -216,7 +216,7 @@ object Form1: TForm1
       end
       object PurgeButton: TButton
         Left = 186
-        Top = 283
+        Top = 395
         Width = 51
         Height = 16
         Caption = 'Purge'
@@ -225,8 +225,8 @@ object Form1: TForm1
       end
       object AreaListView: TListView
         Left = 5
-        Top = 441
-        Width = 235
+        Top = 561
+        Width = 240
         Height = 97
         Columns = <
           item
@@ -246,7 +246,7 @@ object Form1: TForm1
       end
       object Insert: TButton
         Left = 5
-        Top = 544
+        Top = 664
         Width = 36
         Height = 18
         Caption = 'Insert'
@@ -255,7 +255,7 @@ object Form1: TForm1
       end
       object Delete: TButton
         Left = 158
-        Top = 544
+        Top = 664
         Width = 44
         Height = 18
         Caption = 'Delete'
@@ -265,7 +265,7 @@ object Form1: TForm1
       end
       object Complete: TButton
         Left = 45
-        Top = 544
+        Top = 664
         Width = 57
         Height = 18
         Caption = 'Complete'
@@ -275,7 +275,7 @@ object Form1: TForm1
       end
       object Cancel: TButton
         Left = 107
-        Top = 544
+        Top = 664
         Width = 41
         Height = 18
         Caption = 'Cancel'
@@ -285,7 +285,7 @@ object Form1: TForm1
       end
       object RawConnectButton: TButton
         Left = 5
-        Top = 326
+        Top = 438
         Width = 104
         Height = 18
         Caption = 'Raw Connect'
@@ -294,7 +294,7 @@ object Form1: TForm1
       end
       object RawIpAddress: TEdit
         Left = 115
-        Top = 326
+        Top = 438
         Width = 110
         Height = 20
         TabOrder = 10
@@ -302,7 +302,7 @@ object Form1: TForm1
       end
       object CycleImages: TCheckBox
         Left = 107
-        Top = 301
+        Top = 413
         Width = 96
         Height = 19
         Caption = 'Cycle Images'
@@ -317,15 +317,15 @@ object Form1: TForm1
       end
       object Panel4: TPanel
         Left = 5
-        Top = 76
-        Width = 244
-        Height = 198
+        Top = 85
+        Width = 240
+        Height = 284
         BevelInner = bvLowered
         BevelKind = bkFlat
         TabOrder = 12
         object CLatLabel: TLabel
-          Left = 66
-          Top = 57
+          Left = 35
+          Top = 153
           Width = 21
           Height = 13
           Caption = 'N/A'
@@ -337,8 +337,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object CLonLabel: TLabel
-          Left = 66
-          Top = 76
+          Left = 35
+          Top = 172
           Width = 21
           Height = 13
           Caption = 'N/A'
@@ -351,8 +351,8 @@ object Form1: TForm1
           Transparent = False
         end
         object SpdLabel: TLabel
-          Left = 66
-          Top = 92
+          Left = 35
+          Top = 189
           Width = 21
           Height = 13
           Caption = 'N/A'
@@ -364,8 +364,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object HdgLabel: TLabel
-          Left = 66
-          Top = 111
+          Left = 35
+          Top = 208
           Width = 21
           Height = 13
           Caption = 'N/A'
@@ -377,8 +377,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object AltLabel: TLabel
-          Left = 66
-          Top = 130
+          Left = 35
+          Top = 227
           Width = 21
           Height = 13
           Caption = 'N/A'
@@ -391,7 +391,7 @@ object Form1: TForm1
         end
         object MsgCntLabel: TLabel
           Left = 66
-          Top = 149
+          Top = 245
           Width = 21
           Height = 13
           Caption = 'N/A'
@@ -404,7 +404,7 @@ object Form1: TForm1
         end
         object TrkLastUpdateTimeLabel: TLabel
           Left = 120
-          Top = 168
+          Top = 264
           Width = 72
           Height = 13
           Caption = '00:00:00:000'
@@ -417,7 +417,7 @@ object Form1: TForm1
         end
         object Label14: TLabel
           Left = 5
-          Top = 168
+          Top = 264
           Width = 109
           Height = 13
           Caption = 'LAST UPDATE TIME:'
@@ -430,7 +430,7 @@ object Form1: TForm1
         end
         object Label13: TLabel
           Left = 5
-          Top = 150
+          Top = 246
           Width = 52
           Height = 13
           Caption = 'MSG CNT:'
@@ -443,7 +443,7 @@ object Form1: TForm1
         end
         object Label10: TLabel
           Left = 5
-          Top = 131
+          Top = 227
           Width = 24
           Height = 13
           Caption = 'ALT:'
@@ -456,7 +456,7 @@ object Form1: TForm1
         end
         object Label9: TLabel
           Left = 5
-          Top = 112
+          Top = 208
           Width = 27
           Height = 13
           Caption = 'HDG:'
@@ -468,8 +468,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object Label8: TLabel
-          Left = 5
-          Top = 93
+          Left = 4
+          Top = 189
           Width = 25
           Height = 13
           Caption = 'SPD:'
@@ -482,7 +482,7 @@ object Form1: TForm1
         end
         object Label7: TLabel
           Left = 5
-          Top = 76
+          Top = 172
           Width = 24
           Height = 13
           Caption = 'LON:'
@@ -495,7 +495,7 @@ object Form1: TForm1
         end
         object Label6: TLabel
           Left = 5
-          Top = 57
+          Top = 153
           Width = 24
           Height = 13
           Caption = 'LAT:'
@@ -533,8 +533,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object ICAOLabel: TLabel
-          Left = 66
-          Top = 22
+          Left = 42
+          Top = 19
           Width = 46
           Height = 13
           Caption = 'No Hook'
@@ -571,11 +571,141 @@ object Form1: TForm1
           Font.Style = [fsBold, fsUnderline]
           ParentFont = False
         end
+        object Label20: TLabel
+          Left = 5
+          Top = 57
+          Width = 85
+          Height = 13
+          Caption = 'Registration #:'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object RegNumLabel: TLabel
+          Left = 96
+          Top = 57
+          Width = 21
+          Height = 13
+          Caption = 'N/A'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object Label21: TLabel
+          Left = 5
+          Top = 76
+          Width = 72
+          Height = 13
+          Caption = 'Manufature :'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object ManufactureLabel: TLabel
+          Left = 83
+          Top = 76
+          Width = 21
+          Height = 13
+          Caption = 'N/A'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object Label22: TLabel
+          Left = 5
+          Top = 95
+          Width = 40
+          Height = 13
+          Caption = 'Model :'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object ModelLabel: TLabel
+          Left = 51
+          Top = 95
+          Width = 21
+          Height = 13
+          Caption = 'N/A'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object Label24: TLabel
+          Left = 5
+          Top = 114
+          Width = 57
+          Height = 13
+          Caption = 'Operator :'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object OperatorLabel: TLabel
+          Left = 68
+          Top = 114
+          Width = 21
+          Height = 13
+          Caption = 'N/A'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object Label26: TLabel
+          Left = 5
+          Top = 133
+          Width = 51
+          Height = 13
+          Caption = 'Country :'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
+        object CountryLabel: TLabel
+          Left = 62
+          Top = 133
+          Width = 21
+          Height = 13
+          Caption = 'N/A'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
       end
       object Panel5: TPanel
         Left = 5
         Top = 2
-        Width = 244
+        Width = 240
         Height = 77
         BevelInner = bvLowered
         BevelKind = bkFlat
@@ -707,8 +837,8 @@ object Form1: TForm1
         end
       end
       object RawPlaybackButton: TButton
-        Left = 133
-        Top = 350
+        Left = 115
+        Top = 462
         Width = 96
         Height = 17
         Caption = 'Raw Playback'
@@ -717,7 +847,7 @@ object Form1: TForm1
       end
       object RawRecordButton: TButton
         Left = 5
-        Top = 350
+        Top = 462
         Width = 104
         Height = 17
         Caption = 'Raw Record'
@@ -726,7 +856,7 @@ object Form1: TForm1
       end
       object SBSConnectButton: TButton
         Left = 5
-        Top = 373
+        Top = 485
         Width = 104
         Height = 20
         Caption = 'SBS Connect'
@@ -735,7 +865,7 @@ object Form1: TForm1
       end
       object SBSIpAddress: TEdit
         Left = 115
-        Top = 373
+        Top = 485
         Width = 117
         Height = 20
         TabOrder = 17
@@ -743,7 +873,7 @@ object Form1: TForm1
       end
       object SBSRecordButton: TButton
         Left = 5
-        Top = 399
+        Top = 511
         Width = 104
         Height = 17
         Caption = 'SBS Record'
@@ -752,7 +882,7 @@ object Form1: TForm1
       end
       object SBSPlaybackButton: TButton
         Left = 115
-        Top = 399
+        Top = 511
         Width = 96
         Height = 17
         Caption = 'SBS Playback'
@@ -762,22 +892,15 @@ object Form1: TForm1
     end
     object Panel2: TPanel
       Left = 1
-      Top = 577
+      Top = 697
       Width = 248
-      Height = 117
+      Height = 265
       Align = alClient
       TabOrder = 2
-      ExplicitHeight = 9
-      object UnregisteredSeparator: TBevel
-        Left = 5
-        Top = 55
-        Width = 238
-        Height = 2
-        Shape = bsTopLine
-      end
+      ExplicitHeight = 233
       object UnregisteredCountLabel: TLabel
-        Left = 5
-        Top = 63
+        Left = 13
+        Top = 56
         Width = 87
         Height = 13
         Caption = 'Unregistered: 0'
@@ -789,10 +912,11 @@ object Form1: TForm1
         ParentFont = False
       end
       object LabelErrorMessage: TLabel
-        Left = 5
-        Top = 98
-        Width = 3
+        Left = 13
+        Top = 78
+        Width = 150
         Height = 13
+        Caption = 'Error Message Placeholder'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -800,41 +924,50 @@ object Form1: TForm1
         Font.Style = [fsBold]
         ParentFont = False
       end
+      object BigQuerySeparatorBottom: TBevel
+        Left = 5
+        Top = 48
+        Width = 238
+        Height = 2
+        Shape = bsTopLine
+      end
       object MapComboBox: TComboBox
         Left = 5
         Top = 6
-        Width = 100
+        Width = 108
         Height = 20
         Style = csDropDownList
         TabOrder = 0
         OnChange = MapComboBoxChange
         Items.Strings = (
           'Google Maps'
+          'Google Street View'
+          'Google Terrain with Labels'
           'VFR'
           'IFS Low'
           'IFS High')
       end
       object CheckBoxUpdateMapTiles: TCheckBox
-        Left = 120
+        Left = 119
         Top = 6
         Width = 150
         Height = 17
         Caption = 'Update map tiles'
-        TabOrder = 2
+        TabOrder = 1
         OnClick = CheckBoxUpdateMapTilesClick
       end
       object BigQueryCheckBox: TCheckBox
         Left = 5
-        Top = 32
+        Top = 29
         Width = 124
         Height = 17
         Caption = 'BigQuery Upload'
-        TabOrder = 1
+        TabOrder = 2
         OnClick = BigQueryCheckBoxClick
       end
       object HideUnregisteredCheckBox: TCheckBox
         Left = 120
-        Top = 63
+        Top = 55
         Width = 120
         Height = 17
         Caption = 'Hide unregistered'
@@ -846,8 +979,8 @@ object Form1: TForm1
   object ObjectDisplay: TOpenGLPanel
     Left = 0
     Top = 0
-    Width = 979
-    Height = 842
+    Width = 1416
+    Height = 1110
     Cursor = crCross
     Align = alClient
     TabOrder = 1
@@ -875,8 +1008,8 @@ object Form1: TForm1
     OnInit = ObjectDisplayInit
     OnResize = ObjectDisplayResize
     OnPaint = ObjectDisplayPaint
-    ExplicitWidth = 978
-    ExplicitHeight = 681
+    ExplicitWidth = 1406
+    ExplicitHeight = 1078
   end
   object MainMenu1: TMainMenu
     Left = 24

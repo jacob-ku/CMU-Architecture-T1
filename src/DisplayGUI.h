@@ -208,7 +208,7 @@ class TForm1 : public TForm
     TComboBox *MapComboBox;
     TCheckBox *CheckBoxUpdateMapTiles;
     TCheckBox *BigQueryCheckBox;
-    TBevel *UnregisteredSeparator;
+    TBevel *BigQuerySeparatorBottom;
     TLabel *UnregisteredCountLabel;
     TCheckBox *HideUnregisteredCheckBox;
     TMenuItem *UseSBSLocal;
