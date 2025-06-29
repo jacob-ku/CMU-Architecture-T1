@@ -74,14 +74,34 @@ int MakeAirplaneImages(void)
                     SpriteTexture[x][y][0] = SpriteImage[index];
                     SpriteTexture[x][y][1] = SpriteImage[index + 1];
                     SpriteTexture[x][y][2] = SpriteImage[index + 2];
-                    SpriteTexture[x][y][3] = SpriteImage[index + 3];
+#if 1           
+                    // �������� �����ϰ� ��ȯ
+                    GLubyte r = SpriteImage[index];
+                    GLubyte g = SpriteImage[index + 1];
+                    GLubyte b = SpriteImage[index + 2];
+                    
+                    // ������ �Ӱ谪 (������ �������� �ƴ� ���� �������� ����)
+                    int blackThreshold = 30; // 0-255 �������� 30 ���ϸ� �������� ����
+                    
+                    if (r <= blackThreshold && g <= blackThreshold && b <= blackThreshold) {
+                        // �������̸� �����ϰ� ����
+                        SpriteTexture[x][y][3] = 0; // ���� ����
+                    } else {
+                        // �������� �ƴϸ� ���� ���İ� �Ǵ� �������ϰ� ����
+                        if (hasAlpha) {
+                            SpriteTexture[x][y][3] = SpriteImage[index + 3];
+                        } else {
+                            SpriteTexture[x][y][3] = 255; // ������
+                        }
+                    }
+#endif
                 }
             }
 
             glBindTexture(GL_TEXTURE_2D, TextureSpites[NumSprites]);
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-            glTexImage2D(GL_TEXTURE_2D, 0, hasAlpha ? 4 : 3, SPRITE_WIDTH,
-                         SPRITE_HEIGHT, 0, hasAlpha ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE,
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SPRITE_WIDTH,
+                         SPRITE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE,
                          SpriteTexture);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -243,11 +263,22 @@ void MakeTrackHook(void)
 void DrawAirplaneImage(float x, float y, float scale, float heading, int imageNum)
 {
     glPushMatrix();
+    
+    // 블렌딩 활성화 (투명도 처리를 위해)
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, TextureSpites[imageNum]);
     glShadeModel(GL_FLAT);
+    
+    // 알파 테스팅 활성화 (완전 투명한 픽셀 제거)
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0.1f);
+    
     glTranslated(x, y, 0.0);
     glRotatef(-heading - 90.0, 0, 0, 1);
+    
     glBegin(GL_QUADS);
 
     glTexCoord2f(1.0, 1.0);
@@ -263,8 +294,13 @@ void DrawAirplaneImage(float x, float y, float scale, float heading, int imageNu
     glVertex2f(36.0 * scale, -36.0 * scale); // bottom right
 
     glEnd();
+    
+    // 상태 복원
+    glDisable(GL_ALPHA_TEST);
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
+    
     glPopMatrix();
 }
 //---------------------------------------------------------------------------
