@@ -1,10 +1,17 @@
 //---------------------------------------------------------------------------
-
+//
 #pragma hdrstop
 
 #include "AircraftDB.h"
 #include "csv.h"
 #include <thread>
+#include <cstring>
+#include <cerrno>
+#include <cstdlib>
+#include <chrono>
+#include <ctime>
+#include <vector>
+#include <algorithm>
 
 #define DIM(array) (sizeof(array) / sizeof(array[0]))
 //---------------------------------------------------------------------------
@@ -117,41 +124,90 @@ void TAircraftDB::LoadDatabase()
 
     FInitialized = false;
 
-    CSV_context csv_ctx;
-
-    // Increase the hash table bucket count for better performance with large datasets
+    // Create hash table large enough for expected records
     FAircraftDBHashTable = ght_create(600000);
+    if (!FAircraftDBHashTable) {
+        printf("[AircraftDB] ght_create failed\n");
+        return;
+    }
     ght_set_rehash(FAircraftDBHashTable, TRUE);
 
-    if (!FAircraftDBHashTable)
+    FILE *fp = fopen(FFileName.c_str(), "rt");
+    if (!fp)
     {
+        printf("Failed to open '%s': %s\n", FFileName.c_str(), strerror(errno));
         {
             std::lock_guard<std::mutex> lock(FMutex);
             FLoading = false;
         }
-        throw Sysutils::Exception("Create Hash Failed");
+        return;
     }
-    ght_set_rehash(FAircraftDBHashTable, TRUE);
 
-    memset(&csv_ctx, 0, sizeof(csv_ctx));
-    csv_ctx.file_name = FFileName.c_str();
-    csv_ctx.delimiter = ',';
-    csv_ctx.callback = CSV_callback;
-    csv_ctx.line_size = 2000;
-    printf("Reading Aircraft DB\n");
-    if (!CSV_open_and_parse_file(&csv_ctx))
+    char line[2048];
+    size_t count = 0;
+
+    // skip header
+    if (!fgets(line, sizeof(line), fp)) {
+        fclose(fp);
+        return;
+    }
+
+    while (fgets(line, sizeof(line), fp) && !FCancelLoading)
     {
-        if (!FCancelLoading)
+        // Make a copy of the raw line (before any modifications)
+        char raw_copy[2048];
+        strncpy(raw_copy, line, sizeof(raw_copy));
+        raw_copy[sizeof(raw_copy)-1] = '\0';
+
+        // trim CR/LF
+        size_t len = strlen(line);
+        while (len && (line[len-1] == '\n' || line[len-1] == '\r'))
+            line[--len] = '\0';
+        if (len == 0) continue;
+
+        // locate first comma
+        char *comma = strchr(line, ',');
+        if (!comma) continue; // malformed
+        *comma = '\0';
+
+        // unwrap quotes
+        char *icaoStr = line;
+        size_t icaoLen = strlen(icaoStr);
+        if (icaoLen > 1 && icaoStr[0] == '"' && icaoStr[icaoLen-1] == '"')
         {
-            printf("Parsing of \"%s\" failed: %s\n", FFileName.c_str(), strerror(errno));
+            icaoStr[icaoLen-1] = '\0';
+            ++icaoStr;
         }
-    }
-    else
-    {
-        FInitialized = true;
+
+        errno = 0;
+        char *endp;
+        unsigned long icaoVal = strtoul(icaoStr, &endp, 16);
+        if (errno || endp == icaoStr || *endp) continue; // invalid
+
+        uint32_t icao24 = static_cast<uint32_t>(icaoVal);
+        if (icao24 == 0) continue;
+
+        if (ght_get(FAircraftDBHashTable, sizeof(icao24), &icao24)) {
+            printf("Duplicate Aircraft Record %s %x\n", icaoStr, icao24);
+            continue; // duplicate
+        }
+
+        TAircraftData *rec = new TAircraftData();
+        rec->ICAO24 = icao24;
+        rec->RawLine = AnsiString(raw_copy);
+        rec->Parsed  = false;
+
+        if (ght_insert(FAircraftDBHashTable, rec, sizeof(rec->ICAO24), &rec->ICAO24) < 0)
+            delete rec;
+        else
+            ++count;
     }
 
-    printf("Done Reading Aircraft DB\n");
+    fclose(fp);
+
+    printf("Loaded %zu aircraft records\n", count);
+    FInitialized = true;
+
     {
         std::lock_guard<std::mutex> lock(FMutex);
         FLoading = false;
@@ -193,6 +249,16 @@ TAircraftDB::~TAircraftDB()
     CancelAndJoin();
     if (FAircraftDBHashTable)
     {
+        // Iterate over all entries and delete allocated TAircraftData
+        ght_iterator_t it;
+        const void *key = nullptr;
+        TAircraftData *rec = static_cast<TAircraftData *>(ght_first(FAircraftDBHashTable, &it, &key));
+        while (rec)
+        {
+            delete rec;
+            rec = static_cast<TAircraftData *>(ght_next(FAircraftDBHashTable, &it, &key));
+        }
+
         ght_finalize(FAircraftDBHashTable);
     }
     printf("[Thread] TAircraftDB destroyed.\n");
@@ -203,7 +269,10 @@ const TAircraftData *TAircraftDB::GetAircraftDBInfo(uint32_t addr)
     std::lock_guard<std::mutex> lock(FMutex);
     if (!FInitialized)
         return nullptr;
-    return (const TAircraftData *)ght_get(FAircraftDBHashTable, sizeof(addr), &addr);
+    TAircraftData *rec = (TAircraftData *)ght_get(FAircraftDBHashTable, sizeof(addr), &addr);
+    if (rec && !rec->Parsed)
+        ParseRecord(rec);
+    return rec;
 }
 
 void TAircraftDB::CancelAndJoin()
@@ -581,3 +650,125 @@ bool TAircraftDB::aircraft_is_registered(uint32_t addr)
     return (a != NULL);
 }
 //---------------------------------------------------------------------------
+
+void TAircraftDB::DisplayAllAircraftsInfo()
+{
+    std::lock_guard<std::mutex> lock(FMutex);
+    if (!FInitialized || !FAircraftDBHashTable)
+    {
+        printf("[AircraftDB] Database not initialized.\n");
+        return;
+    }
+
+    ght_iterator_t it;
+    const void *key = nullptr;
+    TAircraftData *rec = static_cast<TAircraftData *>(ght_first(FAircraftDBHashTable, &it, &key));
+
+    printf("[AircraftDB] ===== All Aircraft Records (%u items) =====\n", ght_size(FAircraftDBHashTable));
+
+    while (rec)
+    {
+        printf("%s\n", rec->toString().c_str());
+
+        rec = static_cast<TAircraftData *>(ght_next(FAircraftDBHashTable, &it, &key));
+    }
+
+    printf("[AircraftDB] ========================================\n");
+}
+
+const unsigned int TAircraftDB::GetItemNumAircraftDB()
+{
+    std::lock_guard<std::mutex> lock(FMutex);
+    if (!FAircraftDBHashTable)
+        return 0;
+    return ght_size(FAircraftDBHashTable);
+}
+
+// Helper: split a CSV line (RFC 4180 subset) into fields.
+static void SplitCSVLine(const char *line, std::vector<AnsiString> &out)
+{
+    out.clear();
+    AnsiString current;
+    bool inQuotes = false;
+
+    for (const char *p = line; *p; ++p)
+    {
+        char c = *p;
+        if (c == '"')
+        {
+            if (inQuotes && p[1] == '"')
+            {
+                // Escaped quote
+                current += '"';
+                ++p; // skip the second quote
+            }
+            else
+            {
+                inQuotes = !inQuotes; // toggle quote mode
+            }
+        }
+        else if (c == ',' && !inQuotes)
+        {
+            out.push_back(current);
+            current = "";
+        }
+        else
+        {
+            current += c;
+        }
+    }
+    out.push_back(current);
+}
+
+void TAircraftDB::ParseRecord(TAircraftData *rec)
+{
+    if (!rec || rec->Parsed || rec->RawLine.IsEmpty())
+        return;
+
+    const char *line = rec->RawLine.c_str();
+
+    std::vector<AnsiString> parsedFields;
+    SplitCSVLine(line, parsedFields);
+
+    // We expect parsedFields[0] == ICAO24 (string), others follow
+    size_t idx = 1;
+    std::vector<AnsiString*> fieldTargets = {
+        &rec->Registration,
+        &rec->ManufacturerICAO,
+        &rec->ManufacturerName,
+        &rec->Model,
+        &rec->TypeCode,
+        &rec->SerialNumber,
+        &rec->LineNumber,
+        &rec->ICAOAircraftType,
+        &rec->OperatorName,
+        &rec->OperatorCallsign,
+        &rec->OperatorICAO,
+        &rec->OperatorIata,
+        &rec->Owner,
+        &rec->TestReg,
+        &rec->Registered,
+        &rec->RegUntil,
+        &rec->Status,
+        &rec->Built,
+        &rec->FirstFlightDate,
+        &rec->SeatConfiguration,
+        &rec->Engines,
+        &rec->Modes,
+        &rec->ADSB,
+        &rec->ACARS,
+        &rec->Notes,
+        &rec->CategoryDescription
+    };
+
+    for (size_t t = 0; t < fieldTargets.size(); ++t, ++idx)
+    {
+        if (idx < parsedFields.size())
+            *fieldTargets[t] = parsedFields[idx];
+        else
+            *fieldTargets[t] = "";
+    }
+
+    rec->Parsed = true;
+    rec->RawLine = "";
+}

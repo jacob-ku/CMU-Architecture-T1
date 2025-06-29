@@ -1,4 +1,4 @@
-//---------------------------------------------------------------------------
+﻿//---------------------------------------------------------------------------
 
 #ifndef AircraftDBH
 #define AircraftDBH
@@ -41,6 +41,10 @@ typedef struct
     AnsiString ACARS;
     AnsiString Notes;
     AnsiString CategoryDescription;
+
+    // --- Lazy-parsing helpers -------------------------------------------
+    AnsiString RawLine;   // 전체 CSV 한 줄 (필드 파싱 전 보관)
+    bool Parsed;          // true = RawLine 이 이미 파싱되어 필드 채워짐
 
     AnsiString toString() const {
         AnsiString s;
@@ -90,6 +94,8 @@ private:
 
     static int CSV_callback(struct CSV_context *ctx, const char *value);    // Callback function for parsing CSV data.
 
+    void ParseRecord(TAircraftData *rec);
+
 public:
     TAircraftDB();                            // Constructor for the TAircraftDB class.
     ~TAircraftDB();                           // Destructor for the TAircraftDB class.
@@ -113,6 +119,8 @@ public:
     const char *GetMilitary(uint32_t addr);                      // Retrieves military information for a given ICAO address.
 
     bool aircraft_is_registered(uint32_t addr);
+    void DisplayAllAircraftsInfo();
+    const unsigned int GetItemNumAircraftDB();
 };
 
 extern TAircraftDB *AircraftDB;
