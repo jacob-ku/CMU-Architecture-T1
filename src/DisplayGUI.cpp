@@ -490,13 +490,19 @@ void __fastcall TForm1::DrawObjects(void)
             if (!AircraftDB->aircraft_is_registered(Data->ICAO)) {
                 glColor4f(0.5, 0.5, 0.5, 1.0);  // unregistered - gray color
             } else if (Data->HaveSpeedAndHeading) {
-                glColor4f(1.0, 0.0, 1.0, 1.0);  // with speed & heading - magenta color
+                glColor4f(0.0, 1.0, 0.0, 1.0);  // with speed & heading - basic color is Green
+                if (Data->IsHelicopter) {
+                    glColor4f(1.0, 0.41, 0.71, 1.0) ; // helicopter color is Pink
+                }
+                if (Data->IsMilitary) {
+                    glColor4f(0.0, 0.0, 1.0, 1.0) ; // military color is Blue
+                }
             } else {
                 Data->Heading = 0.0;
                 glColor4f(1.0, 0.0, 0.0, 1.0);  // no speed & heading - red
             }
 
-            DrawAirplaneImage(ScrX, ScrY, 1.5, Data->Heading, Data->SpriteImage);   // Draw airplane image
+            DrawAirplaneImage(ScrX, ScrY, 0.8, Data->Heading, Data->SpriteImage);   // Draw airplane image. scale is changed from 1.5 to 0.8
 
             // ICAO code text besides the aircraft
             glRasterPos2i(ScrX + 60, ScrY - 10);
@@ -1556,6 +1562,8 @@ void TMessageProcessorThread::AddMessage(MessageType type, const AnsiString& msg
 //---------------------------------------------------------------------------
 void __fastcall TMessageProcessorThread::Execute(void)
 {
+    const char *helicopter_type = NULL;
+    const char *cntry;
     while (!Terminated) {
         messageEvent->WaitFor(INFINITE);
 
@@ -1634,7 +1642,17 @@ void __fastcall TMessageProcessorThread::Execute(void)
                             ADS_B_Aircraft->HaveLatLon = false;
                             ADS_B_Aircraft->HaveSpeedAndHeading = false;
                             ADS_B_Aircraft->HaveFlightNum = false;
+                            ADS_B_Aircraft->IsHelicopter=false;
+                            ADS_B_Aircraft->IsMilitary=false;
                             ADS_B_Aircraft->SpriteImage = Form1->CurrentSpriteImage;
+                            if (AircraftDB->IsHelicopter(ADS_B_Aircraft->ICAO, &helicopter_type)) {
+                                ADS_B_Aircraft->IsHelicopter=true;
+                                ADS_B_Aircraft->SpriteImage = Form1->CurrentSpriteImage + 52;
+                            }
+                            if (AircraftDB->IsMilitary(ADS_B_Aircraft->ICAO, &cntry)) {
+                                ADS_B_Aircraft->IsMilitary = true;
+                                ADS_B_Aircraft->SpriteImage = Form1->CurrentSpriteImage + 76;                            
+                            }
 
                             if (Form1->CycleImages->Checked)
                                 Form1->CurrentSpriteImage = (Form1->CurrentSpriteImage + 1) % Form1->NumSpriteImages;

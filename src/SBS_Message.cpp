@@ -5,6 +5,7 @@
 #include "Aircraft.h"
 #include "SBS_Message.h"
 #include "TimeFunctions.h"
+#include "AircraftDB.h"
 #include <math.h>
 
 //---------------------------------------------------------------------------
@@ -236,6 +237,9 @@ bool SBS_Message_Decode(char *msg)
     char *SBS_Fields[22];
     char FixHex[7];
 
+    const char *helicopter_type = NULL;
+    const char *cntry;
+
     for (int i = 0; i < 22; i++)
     {
         SBS_Fields[i] = strsep(&msg, DELIMITER);
@@ -306,7 +310,17 @@ bool SBS_Message_Decode(char *msg)
         ADS_B_Aircraft->HaveLatLon = false;
         ADS_B_Aircraft->HaveSpeedAndHeading = false;
         ADS_B_Aircraft->HaveFlightNum = false;
+        ADS_B_Aircraft->IsHelicopter=false;
+        ADS_B_Aircraft->IsMilitary=false;
         ADS_B_Aircraft->SpriteImage = Form1->CurrentSpriteImage;
+        if (AircraftDB->IsHelicopter(ADS_B_Aircraft->ICAO, &helicopter_type)) {
+            ADS_B_Aircraft->IsHelicopter = true;
+            ADS_B_Aircraft->SpriteImage = Form1->CurrentSpriteImage + 52;
+        }
+        if (AircraftDB->IsMilitary(ADS_B_Aircraft->ICAO, &cntry)) {
+            ADS_B_Aircraft->IsMilitary = true;
+            ADS_B_Aircraft->SpriteImage = Form1->CurrentSpriteImage + 76;                            
+        }
         if (Form1->CycleImages->Checked)
             Form1->CurrentSpriteImage = (Form1->CurrentSpriteImage + 1) % Form1->NumSpriteImages;
         if (ght_insert(Form1->HashTable, ADS_B_Aircraft, sizeof(addr), &addr) < 0)
