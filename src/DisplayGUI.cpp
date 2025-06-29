@@ -2399,10 +2399,10 @@ void __fastcall TForm1::DrawTowerImage(float x, float y, float scale)
     float size = 32.0f * scale;
     
     glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 1.0f); glVertex2f(-size/2, size/2); 
-    glTexCoord2f(1.0f, 1.0f); glVertex2f(size/2, size/2);  
-    glTexCoord2f(1.0f, 0.0f); glVertex2f(size/2, -size/2); 
-    glTexCoord2f(0.0f, 0.0f); glVertex2f(-size/2, -size/2);
+    glTexCoord2f(0.0f, 0.0f); glVertex2f(-size/2, size/2); 
+    glTexCoord2f(1.0f, 0.0f); glVertex2f(size/2, size/2);  
+    glTexCoord2f(1.0f, 1.0f); glVertex2f(size/2, -size/2); 
+    glTexCoord2f(0.0f, 1.0f); glVertex2f(-size/2, -size/2);
     glEnd();
     
     glBindTexture(GL_TEXTURE_2D, 0);

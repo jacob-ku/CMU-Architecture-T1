@@ -75,23 +75,19 @@ int MakeAirplaneImages(void)
                     SpriteTexture[x][y][1] = SpriteImage[index + 1];
                     SpriteTexture[x][y][2] = SpriteImage[index + 2];
 #if 1           
-                    // �������� �����ϰ� ��ȯ
                     GLubyte r = SpriteImage[index];
                     GLubyte g = SpriteImage[index + 1];
                     GLubyte b = SpriteImage[index + 2];
                     
-                    // ������ �Ӱ谪 (������ �������� �ƴ� ���� �������� ����)
-                    int blackThreshold = 30; // 0-255 �������� 30 ���ϸ� �������� ����
+                    int blackThreshold = 30;
                     
                     if (r <= blackThreshold && g <= blackThreshold && b <= blackThreshold) {
-                        // �������̸� �����ϰ� ����
-                        SpriteTexture[x][y][3] = 0; // ���� ����
+                        SpriteTexture[x][y][3] = 0;
                     } else {
-                        // �������� �ƴϸ� ���� ���İ� �Ǵ� �������ϰ� ����
                         if (hasAlpha) {
                             SpriteTexture[x][y][3] = SpriteImage[index + 3];
                         } else {
-                            SpriteTexture[x][y][3] = 255; // ������
+                            SpriteTexture[x][y][3] = 255;
                         }
                     }
 #endif
@@ -264,7 +260,6 @@ void DrawAirplaneImage(float x, float y, float scale, float heading, int imageNu
 {
     glPushMatrix();
     
-    // 블렌딩 활성화 (투명도 처리를 위해)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
@@ -272,7 +267,6 @@ void DrawAirplaneImage(float x, float y, float scale, float heading, int imageNu
     glBindTexture(GL_TEXTURE_2D, TextureSpites[imageNum]);
     glShadeModel(GL_FLAT);
     
-    // 알파 테스팅 활성화 (완전 투명한 픽셀 제거)
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GREATER, 0.1f);
     
@@ -282,20 +276,19 @@ void DrawAirplaneImage(float x, float y, float scale, float heading, int imageNu
     glBegin(GL_QUADS);
 
     glTexCoord2f(1.0, 1.0);
-    glVertex2f(36.0 * scale, 36.0 * scale); // top right
+    glVertex2f(36.0 * scale, 36.0 * scale);
 
     glTexCoord2f(0.0, 1.0);
-    glVertex2f(-36.0 * scale, 36.0 * scale); // top left
+    glVertex2f(-36.0 * scale, 36.0 * scale);
 
     glTexCoord2f(0.0, 0.0);
-    glVertex2f(-36.0 * scale, -36.0 * scale); // bottom left
+    glVertex2f(-36.0 * scale, -36.0 * scale);
 
     glTexCoord2f(1.0, 0.0);
-    glVertex2f(36.0 * scale, -36.0 * scale); // bottom right
+    glVertex2f(36.0 * scale, -36.0 * scale);
 
     glEnd();
     
-    // 상태 복원
     glDisable(GL_ALPHA_TEST);
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
