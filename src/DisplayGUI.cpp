@@ -18,6 +18,7 @@
 #include "DisplayGUI.h"
 #include "AreaDialog.h"
 #include "ntds2d.h"
+#include "AircraftFilter/ZoneFilter.h"
 #include "LatLonConv.h"
 #include "PointInPolygon.h"
 #include "DecodeRawADS_B.h"
@@ -398,6 +399,14 @@ void __fastcall TForm1::DrawObjects(void)
 
     // --- drawing area of interest (polygon) ---
     DrawAirportsBatch();
+    TArea screenBoundsArea = getScreenBoundsAsArea();
+    
+    std::unique_ptr<AirplaneFilterInterface> screenfilter = std::make_unique<ZoneFilter>();
+    screenfilter->updateFilterArea(screenBoundsArea, "screen_bounds");
+    DefaultFilter.addFilter("screen_bounds", std::move(screenfilter));
+    DefaultFilter.activateFilter("screen_bounds");
+    
+
     if (AreaTemp)
     {
         glPointSize(3.0);
@@ -470,7 +479,7 @@ void __fastcall TForm1::DrawObjects(void)
             Tri = Tri->next;
         }
     }
-
+    int filtered = 0;
     // --- drawing aircrafts ---
     AircraftCountLabel->Caption = IntToStr((int)ght_size(HashTable));
     for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
@@ -478,6 +487,12 @@ void __fastcall TForm1::DrawObjects(void)
     {
         if (Data->HaveLatLon)
         {
+            if(DefaultFilter.filterAircraftPosition(Data->Latitude, Data->Longitude))
+            {
+                filtered++; // Skip aircraft if it does not match the filter criteria
+            } else {
+                continue;
+            }
             if (HideUnregisteredCheckBox->Checked && !AircraftDB->aircraft_is_registered(Data->ICAO)) {
                 continue;
             }
@@ -525,6 +540,12 @@ void __fastcall TForm1::DrawObjects(void)
                 }
             }
         }
+    }
+
+    static int logCounter = 0;
+    logCounter++;
+    if (logCounter % 200 == 0) {
+        std::cout << "filtered aircraft count: " << filtered << std::endl;
     }
 
     // --- side bar - contents for text box: Close Control which is for hooked airplane ----
@@ -2416,5 +2437,51 @@ void __fastcall TForm1::getScreenLatLonBounds(double &minLat, double &maxLat, do
     minLat = std::min({topLeftLat, topRightLat, bottomLeftLat, bottomRightLat});
     maxLon = std::max({topLeftLon, topRightLon, bottomLeftLon, bottomRightLon});
     minLon = std::min({topLeftLon, topRightLon, bottomLeftLon, bottomRightLon});
+}
+//---------------------------------------------------------------------------
+TArea __fastcall TForm1::getScreenBoundsAsArea()
+{
+    TArea screenArea;
+    
+    // Initialize the area structure
+    screenArea.Name = "Screen Bounds";
+    screenArea.Color = clRed;  // Default color
+    screenArea.NumPoints = 4;  // Rectangle has 4 corners
+    screenArea.Selected = false;
+    screenArea.Triangles = nullptr;
+    
+    // Get the current screen bounds
+    double minLat, maxLat, minLon, maxLon;
+    getScreenLatLonBounds(minLat, maxLat, minLon, maxLon);
+    
+    // Create rectangle points in clockwise order
+    // Bottom-left
+    screenArea.Points[0][0] = minLon;  // Longitude
+    screenArea.Points[0][1] = minLat;  // Latitude
+    screenArea.Points[0][2] = 0.0;     // Altitude
+    
+    // Bottom-right
+    screenArea.Points[1][0] = maxLon;  // Longitude
+    screenArea.Points[1][1] = minLat;  // Latitude
+    screenArea.Points[1][2] = 0.0;     // Altitude
+    
+    // Top-right
+    screenArea.Points[2][0] = maxLon;  // Longitude
+    screenArea.Points[2][1] = maxLat;  // Latitude
+    screenArea.Points[2][2] = 0.0;     // Altitude
+    
+    // Top-left
+    screenArea.Points[3][0] = minLon;  // Longitude
+    screenArea.Points[3][1] = maxLat;  // Latitude
+    screenArea.Points[3][2] = 0.0;     // Altitude
+    
+    // Copy Points to PointsAdj (screen coordinates will be calculated when needed)
+    for (int i = 0; i < 4; i++) {
+        screenArea.PointsAdj[i][0] = screenArea.Points[i][0];
+        screenArea.PointsAdj[i][1] = screenArea.Points[i][1];
+        screenArea.PointsAdj[i][2] = screenArea.Points[i][2];
+    }
+    
+    return screenArea;
 }
 //---------------------------------------------------------------------------

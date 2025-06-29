@@ -20,6 +20,7 @@
 #include "FlatEarthView.h"
 #include "ght_hash_table.h"
 #include "TriangulatPoly.h"
+#include "TArea.h"
 #include <Dialogs.hpp>
 #include <IdTCPClient.hpp>
 #include <IdTCPConnection.hpp>
@@ -27,6 +28,10 @@
 #include "Map/Providers/MapProviderFactory.h"
 #include "MetadataManager/AirportManager.h"
 #include "MetadataManager/RouteManager.h"
+#include "AircraftFilter/AircraftFilter.h"
+#include "AircraftFilter/AirplaneFilterInterface.h"
+#include "AircraftFilter/ZoneFilter.h"
+
 #include <queue>
 
 // Define message types for the central processor
@@ -45,25 +50,8 @@ typedef struct
     uint32_t ICAO_CPA;
 } TTrackHook;
 
-typedef struct
-{
-    double lat;
-    double lon;
-    double hae;
-} TPolyLine;
-
 #define MAX_AREA_POINTS 500
 
-typedef struct
-{
-    AnsiString Name;
-    TColor Color;
-    DWORD NumPoints;
-    pfVec3 Points[MAX_AREA_POINTS];
-    pfVec3 PointsAdj[MAX_AREA_POINTS];
-    TTriangles *Triangles;
-    bool Selected;
-} TArea;    // Target Area - area of interest
 
 //---------------------------------------------------------------------------
 class TMessageProcessorThread : public TThread
@@ -278,6 +266,7 @@ private: // User declarations
     void __fastcall FormClose(TObject *Sender, TCloseAction &Action);
     AirportManager AirportMgr;
     RouteManager RouteMgr;
+    AircraftFilter DefaultFilter;
 public:  // User declarations
     __fastcall TForm1(TComponent *Owner);
     __fastcall ~TForm1();
@@ -304,6 +293,7 @@ public:  // User declarations
     void DrawTowerImage(float x, float y, float scale);
     float getCurrentZoomLevel(void);
     void getScreenLatLonBounds(double &minLat, double &maxLat, double &minLon, double &maxLon);
+    TArea getScreenBoundsAsArea();
 
     int MouseDownX, MouseDownY;
     bool MouseDown;
