@@ -14,47 +14,24 @@
 
 class RouteDB {
 private:
-    RouteDB();
-    
-    RouteDB(std::unique_ptr<DataUpdaterInterface> updater);
-    
     std::unordered_map<std::string, Route> routeMap;
     std::unordered_map<std::string, std::string> lineDataMap;
-    static std::unique_ptr<RouteDB> instance;
-    static std::mutex mtx;
     bool isLoaded = false;
     std::unique_ptr<DataUpdaterInterface> updater;
     
     void onUpdateComplete(bool updateStatus);
 
 public:
-    static RouteDB* getInstance() {
-        std::lock_guard<std::mutex> lock(mtx);
-        if (instance == nullptr) {
-            instance = std::unique_ptr<RouteDB>(new RouteDB());
-        }
-        return instance.get();
-    }
-    
-    static RouteDB* getInstance(std::unique_ptr<DataUpdaterInterface> updater) {
-        std::lock_guard<std::mutex> lock(mtx);
-        if (instance == nullptr) {
-            instance = std::unique_ptr<RouteDB>(new RouteDB(std::move(updater)));
-        }
-        return instance.get();
-    }
-    
-    static void destroyInstance() {
-        std::lock_guard<std::mutex> lock(mtx);
-        instance.reset();
-    }
+    RouteDB();  // public 기본 생성자
+    RouteDB(std::unique_ptr<DataUpdaterInterface> updater);  // public 의존성 주입 생성자
+    ~RouteDB(); // 소멸자 추가
     
     bool loadFromFile(const std::string& filePath = "");
     bool loadFromFileByLine(const std::string& filePath = "");
     Route getRouteByCallsign(std::string& callsign);
     Route getRouteInfoOnWeb(std::string& callsign);
 
-    bool nowloading();
+    bool LodingStatus();
     bool startUpdateMonitor();
 };
         

@@ -11,33 +11,37 @@ using namespace std;
 
 #define AIRPORT_MAX_NUM 40000
 
-std::unique_ptr<AirportDB> AirportDB::instance = nullptr;
-std::mutex AirportDB::mtx;
-
 AirportDB::AirportDB() {
-
     isloaded = false;
-    std::cout << "AirportDB instance created" << std::endl;
+    std::cout << "[MetadataManager] AirportDB instance created" << std::endl;
+}
+
+AirportDB::~AirportDB() {
+    std::cout << "[MetadataManager] AirportDB destructor called" << std::endl;
+    airportCodeMap.clear();
+    lineDataMap.clear();
+    isloaded = false;
+    std::cout << "[MetadataManager] AirportDB destructor completed" << std::endl;
 }
 
 
+
 bool AirportDB::loadFromFile(const std::string& filePath) {
-    std::cout << "Loading airport data from file: " << filePath << std::endl;
+    std::cout << "[MetadataManager] Loading airport data from file: " << filePath << std::endl;
     
     try {
         csv2::Reader<csv2::delimiter<','>, csv2::quote_character<'"'>, csv2::first_row_is_header<true>> csv;
         
         if (!csv.mmap(filePath)) {
-            std::cout << "Error: Cannot open file - " << filePath << std::endl;
+            std::cout << "[MetadataManager] Error: Cannot open file - " << filePath << std::endl;
             return false;
         }
         
         const auto header = csv.header();
-        // Expected header: Code,Name,ICAO,IATA,Location,CountryISO2,Latitude,Longitude,AltitudeFeet
         
         for (const auto row : csv) {
             if (row.length() < 9) {
-                std::cout << "Warning: Skipping row with insufficient columns" << std::endl;
+                std::cout << "[MetadataManager] Warning: Skipping row with insufficient columns" << std::endl;
                 continue;
             }
             
@@ -70,12 +74,10 @@ bool AirportDB::loadFromFile(const std::string& filePath) {
     }
 }
 
-// CSV line parsing utilities using csv2
 std::vector<std::string> AirportDB::parseCSVLine(const std::string& line) {
     std::vector<std::string> fields;
     
     try {
-        // Use csv2 to parse the line
         csv2::Reader<csv2::delimiter<','>, csv2::quote_character<'"'>, csv2::first_row_is_header<false>> csv;
         csv.parse(line);
         
@@ -90,7 +92,6 @@ std::vector<std::string> AirportDB::parseCSVLine(const std::string& line) {
     }
     catch (const std::exception& e) {
         std::cout << "Error parsing CSV line: " << e.what() << std::endl;
-        // Fallback to simple split if csv2 parsing fails
         std::stringstream ss(line);
         std::string field;
         while (std::getline(ss, field, ',')) {
@@ -104,7 +105,6 @@ std::vector<std::string> AirportDB::parseCSVLine(const std::string& line) {
 bool AirportDB::parseAirportFromCSVLine(const std::string& csvLine, Airport& airport) {
     auto fields = parseCSVLine(csvLine);
     
-    // Expected format: Code,Name,ICAO,IATA,Location,CountryISO2,Latitude,Longitude,AltitudeFeet
     if (fields.size() < 9) {
         std::cout << "Error: CSV line has insufficient fields (" << fields.size() << " < 9)" << std::endl;
         return false;
@@ -189,13 +189,10 @@ bool AirportDB::loadFromFileByLine(const std::string& filePath) {
                 continue;
             }
 
-            // Airport CSV format: Code,Name,ICAO,IATA,Location,CountryISO2,Latitude,Longitude,AltitudeFeet
-            // Extract the first field (Code) as the key
             size_t firstCommaPos = line.find(',');
             if (firstCommaPos != std::string::npos) {
                 std::string key = line.substr(0, firstCommaPos);
                 
-                // Remove leading/trailing whitespace from key
                 key.erase(0, key.find_first_not_of(" \t\r\n\""));
                 key.erase(key.find_last_not_of(" \t\r\n\"") + 1);
                 

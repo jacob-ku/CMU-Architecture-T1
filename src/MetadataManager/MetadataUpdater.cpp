@@ -50,6 +50,15 @@ bool MetaDataUpdater::update(const string& src, const std::function<void(bool)>&
             
             std::cout << "[UPDATE_THREAD] Performing 10-minute check..." << std::endl;
             std::time_t fileUpdatedTime = webDownloadManager.getLastModifiedTime(src);
+            if (fileUpdatedTime == 0) {
+                std::cout << "[UPDATE_THREAD] Failed to get last modified time for: " << src << std::endl;
+                fileUnavailableCallback(true);
+                std::cout << "[UPDATE_THREAD] Retrying after 600 seconds..." << std::endl;
+                for(int i = 0; i < 600 && !shouldStop; ++i) {
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                }
+                continue;
+            }
             std::time_t currentDBFileTime = FileLastWriteTimeToTimeT("routes.csv");
             std::cout << "[UPDATE_THREAD] File updated time: " << std::ctime(&fileUpdatedTime) 
                       << "Current DB file time: " << std::ctime(&currentDBFileTime) << std::endl;
@@ -70,8 +79,8 @@ bool MetaDataUpdater::update(const string& src, const std::function<void(bool)>&
                 std::cout << "[UPDATE_THREAD] No new data available" << std::endl;
             }
             
-            for (int i = 0; i < 2 && !shouldStop; ++i) {
-                std::this_thread::sleep_for(std::chrono::seconds(20));
+            for (int i = 0; i < 600 && !shouldStop; ++i) {
+                std::this_thread::sleep_for(std::chrono::seconds(1));
             }
         }
         
