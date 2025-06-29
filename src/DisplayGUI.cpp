@@ -983,8 +983,6 @@ void __fastcall TForm1::HookTrack(int X, int Y, bool CPA_Hook)  // handle track 
                 if (acData) {
                     printf("%s\n\n", acData->toString().c_str());
                     RegNumLabel->Caption = acData->Registration.IsEmpty() ? "Unknown" : acData->Registration;
-                    ManufactureLabel->Caption = acData->ManufacturerName.IsEmpty() ? "Unknown" : acData->ManufacturerName;
-                    ModelLabel->Caption = acData->Model.IsEmpty() ? "Unknown" : acData->Model;
                     OperatorLabel->Caption = acData->OperatorName.IsEmpty() ? "Unknown" : acData->OperatorName;
 
                     // Get country information using ICAO address
@@ -996,8 +994,6 @@ void __fastcall TForm1::HookTrack(int X, int Y, bool CPA_Hook)  // handle track 
                 } else {
                     printf("No AircraftDB info\n\n");
                     RegNumLabel->Caption = "N/A";
-                    ManufactureLabel->Caption = "N/A";
-                    ModelLabel->Caption = "N/A";
                     OperatorLabel->Caption = "N/A";
                     CountryLabel->Caption = "N/A";
                 }
