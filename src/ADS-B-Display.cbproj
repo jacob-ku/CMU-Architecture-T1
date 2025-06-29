@@ -469,6 +469,9 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <None Include="Util\ExecutionTimer.h">
             <BuildOrder>81</BuildOrder>
         </None>
+        <None Include="Util\Logger.h">
+            <BuildOrder>83</BuildOrder>
+        </None>
         <CppCompile Include="Util\WebDownloadManager.cpp">
             <BuildOrder>70</BuildOrder>
         </CppCompile>
