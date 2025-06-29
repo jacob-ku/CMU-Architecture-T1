@@ -517,16 +517,6 @@ void __fastcall TForm1::DrawObjects(void)
 
             DrawAirplaneImage(ScrX, ScrY, 0.8, Data->Heading, Data->SpriteImage);   // Draw airplane image. scale is changed from 1.5 to 0.8
 
-            // ICAO code text besides the aircraft
-            glRasterPos2i(ScrX + 60, ScrY - 10);
-            ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
-
-            // track age information below the ICAO code
-            glColor4f(1.0, 0.0, 0.0, 1.0);  // red
-            glRasterPos2i(ScrX + 60, ScrY - 25);    // TODO: location should be adjusted based on font size setting from the dfm file
-            TimeDifferenceInSecToChar(Data->LastSeen, Data->TimeElapsedInSec, sizeof(Data->TimeElapsedInSec));
-            ObjectDisplay->Draw2DTextAdditional(Data->TimeElapsedInSec + AnsiString(" seconds ago"));
-
             // heading line
             if ((Data->HaveSpeedAndHeading) && (TimeToGoCheckBox->State == cbChecked))
             {
@@ -543,6 +533,74 @@ void __fastcall TForm1::DrawObjects(void)
                     glEnd();
                 }
             }
+
+            // ICAO code text besides the aircraft with yellow color and black outline for better readability
+            // Draw black outline for ICAO text
+            glColor4f(0.0, 0.0, 0.0, 1.0);  // black outline
+            glRasterPos2i(ScrX + 40 - 1, ScrY - 10);
+            ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
+            glRasterPos2i(ScrX + 40 + 1, ScrY - 10);
+            ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
+            glRasterPos2i(ScrX + 40, ScrY - 10 - 1);
+            ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
+            glRasterPos2i(ScrX + 40, ScrY - 10 + 1);
+            ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
+            
+            // Draw main ICAO text in bright yellow
+            glColor4f(1.0, 1.0, 0.0, 1.0);  // bright yellow color for ICAO code            
+            glRasterPos2i(ScrX + 40, ScrY - 10);
+            ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
+            
+            AnsiString callsignHeadAltSpeedText = "";
+            
+            // Add callsign if available
+            if (Data->HaveFlightNum && strlen(Data->FlightNum) > 0) {
+                AnsiString flightNum = AnsiString(Data->FlightNum).Trim();
+                if (!flightNum.IsEmpty()) {
+                    callsignHeadAltSpeedText += flightNum;
+                } else {
+                    callsignHeadAltSpeedText += "--";
+                }
+            } else {
+                callsignHeadAltSpeedText += "--";  // placeholder if no callsign is available
+            }
+            callsignHeadAltSpeedText += "/";
+            
+            // Add heading if available
+            if (Data->Heading > 0) {
+                callsignHeadAltSpeedText += FloatToStrF((double)Data->Heading, ffFixed, 6, 0);
+            } else {
+                callsignHeadAltSpeedText += "--";
+            }
+            callsignHeadAltSpeedText += "/";
+            
+            if (Data->Altitude > 0) {
+                int altitudeInThousands = (int)(Data->Altitude / 1000);
+                callsignHeadAltSpeedText += IntToStr(altitudeInThousands);
+            } else {
+                callsignHeadAltSpeedText += "--";
+            }
+            callsignHeadAltSpeedText += "k/";
+
+            if (Data->Speed > 0) {
+                callsignHeadAltSpeedText += FloatToStrF((double)Data->Speed, ffFixed, 6, 0);
+            } else {
+                callsignHeadAltSpeedText += "--";
+            }
+            callsignHeadAltSpeedText += "kts";
+
+            // Display the callsign, heading, altitude and speed text            
+            // Draw main text in bright orange
+            glColor4f(1.0, 0.6, 0.0, 1.0);  // bright orange for high visibility
+            glRasterPos2i(ScrX + 40, ScrY - 25);
+            ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
+
+            // track age information below the ICAO code
+            glColor4f(1.0, 0.0, 0.0, 1.0);  // red
+            glRasterPos2i(ScrX + 40, ScrY - 40);    // TODO: location should be adjusted based on font size setting from the dfm file
+            TimeDifferenceInSecToChar(Data->LastSeen, Data->TimeElapsedInSec, sizeof(Data->TimeElapsedInSec));
+            ObjectDisplay->Draw2DTextAdditional(Data->TimeElapsedInSec + AnsiString(" seconds ago"));
+
         }
     }
 
@@ -2338,7 +2396,10 @@ void __fastcall TForm1::DrawAirportsBatch(void)
         double airportLat = airport.getLatitude();
         double airportLon = airport.getLongitude();
         
-        if (airportLat >= minLatFromCorners && airportLat <= maxLatFromCorners && 
+        // Only draw tower if airport has IATA code
+        std::string iataCode = airport.getIATA();
+        if (!iataCode.empty() && 
+            airportLat >= minLatFromCorners && airportLat <= maxLatFromCorners && 
             airportLon >= minLonFromCorners && airportLon <= maxLonFromCorners) {
             double ScrX, ScrY;
             LatLon2XY(airportLat, airportLon, ScrX, ScrY);
