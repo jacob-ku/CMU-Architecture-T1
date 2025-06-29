@@ -704,7 +704,7 @@ object Form1: TForm1
         object TypeLabel: TLabel
           Left = 45
           Top = 152
-          Width = 28
+          Width = 21
           Height = 13
           Caption = 'N/A'
           Font.Charset = DEFAULT_CHARSET
@@ -730,8 +730,8 @@ object Form1: TForm1
         object RouteLabel: TLabel
           Left = 51
           Top = 171
-          Width = 30
-          Height = 16
+          Width = 21
+          Height = 13
           Caption = 'N/A'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
