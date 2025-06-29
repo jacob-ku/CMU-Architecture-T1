@@ -2252,7 +2252,7 @@ void __fastcall TForm1::DrawBlackDot(double lat, double lot)
     glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
     
     glPointSize(20.0);
-    glColor4f(0.0, 0.0, 0.0, 1.0);
+    // glColor4f(0.0, 0.0, 0.0, 1.0);
     
     glBegin(GL_POINTS);
     glVertex2f(ScrX, ScrY);
@@ -2392,7 +2392,6 @@ void __fastcall TForm1::DrawTowerImage(float x, float y, float scale)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     glBindTexture(GL_TEXTURE_2D, towerTextureID);
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f); 
     
     glTranslatef(x, y, 0.0f);
     
@@ -2400,10 +2399,10 @@ void __fastcall TForm1::DrawTowerImage(float x, float y, float scale)
     float size = 32.0f * scale;
     
     glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 1.0f); glVertex2f(-size/2, size/2); 
-    glTexCoord2f(1.0f, 1.0f); glVertex2f(size/2, size/2);  
-    glTexCoord2f(1.0f, 0.0f); glVertex2f(size/2, -size/2); 
-    glTexCoord2f(0.0f, 0.0f); glVertex2f(-size/2, -size/2);
+    glTexCoord2f(0.0f, 0.0f); glVertex2f(-size/2, size/2); 
+    glTexCoord2f(1.0f, 0.0f); glVertex2f(size/2, size/2);  
+    glTexCoord2f(1.0f, 1.0f); glVertex2f(size/2, -size/2); 
+    glTexCoord2f(0.0f, 1.0f); glVertex2f(-size/2, -size/2);
     glEnd();
     
     glBindTexture(GL_TEXTURE_2D, 0);

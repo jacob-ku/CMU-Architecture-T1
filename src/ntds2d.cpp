@@ -74,14 +74,30 @@ int MakeAirplaneImages(void)
                     SpriteTexture[x][y][0] = SpriteImage[index];
                     SpriteTexture[x][y][1] = SpriteImage[index + 1];
                     SpriteTexture[x][y][2] = SpriteImage[index + 2];
-                    SpriteTexture[x][y][3] = SpriteImage[index + 3];
+#if 1           
+                    GLubyte r = SpriteImage[index];
+                    GLubyte g = SpriteImage[index + 1];
+                    GLubyte b = SpriteImage[index + 2];
+                    
+                    int blackThreshold = 30;
+                    
+                    if (r <= blackThreshold && g <= blackThreshold && b <= blackThreshold) {
+                        SpriteTexture[x][y][3] = 0;
+                    } else {
+                        if (hasAlpha) {
+                            SpriteTexture[x][y][3] = SpriteImage[index + 3];
+                        } else {
+                            SpriteTexture[x][y][3] = 255;
+                        }
+                    }
+#endif
                 }
             }
 
             glBindTexture(GL_TEXTURE_2D, TextureSpites[NumSprites]);
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-            glTexImage2D(GL_TEXTURE_2D, 0, hasAlpha ? 4 : 3, SPRITE_WIDTH,
-                         SPRITE_HEIGHT, 0, hasAlpha ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE,
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SPRITE_WIDTH,
+                         SPRITE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE,
                          SpriteTexture);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -243,28 +259,41 @@ void MakeTrackHook(void)
 void DrawAirplaneImage(float x, float y, float scale, float heading, int imageNum)
 {
     glPushMatrix();
+    
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, TextureSpites[imageNum]);
     glShadeModel(GL_FLAT);
+    
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0.1f);
+    
     glTranslated(x, y, 0.0);
     glRotatef(-heading - 90.0, 0, 0, 1);
+    
     glBegin(GL_QUADS);
 
     glTexCoord2f(1.0, 1.0);
-    glVertex2f(36.0 * scale, 36.0 * scale); // top right
+    glVertex2f(36.0 * scale, 36.0 * scale);
 
     glTexCoord2f(0.0, 1.0);
-    glVertex2f(-36.0 * scale, 36.0 * scale); // top left
+    glVertex2f(-36.0 * scale, 36.0 * scale);
 
     glTexCoord2f(0.0, 0.0);
-    glVertex2f(-36.0 * scale, -36.0 * scale); // bottom left
+    glVertex2f(-36.0 * scale, -36.0 * scale);
 
     glTexCoord2f(1.0, 0.0);
-    glVertex2f(36.0 * scale, -36.0 * scale); // bottom right
+    glVertex2f(36.0 * scale, -36.0 * scale);
 
     glEnd();
+    
+    glDisable(GL_ALPHA_TEST);
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
+    
     glPopMatrix();
 }
 //---------------------------------------------------------------------------
