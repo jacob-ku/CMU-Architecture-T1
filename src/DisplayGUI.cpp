@@ -383,6 +383,14 @@ void __fastcall TForm1::Timer1Timer(TObject *Sender)
     ObjectDisplay->Repaint();
 }
 //---------------------------------------------------------------------------
+static void SetGLColor4f(float r, float g, float b, float a, float colorEps = 1e-3f) {
+    static float lastR = -1.0f, lastG = -1.0f, lastB = -1.0f, lastA = -1.0f;
+    if (fabs(r - lastR) > colorEps || fabs(g - lastG) > colorEps || fabs(b - lastB) > colorEps || fabs(a - lastA) > colorEps) {
+        glColor4f(r, g, b, a);
+        lastR = r; lastG = g; lastB = b; lastA = a;
+    }
+}
+
 void __fastcall TForm1::DrawObjects(void)
 {
     // ExecutionTimer timer("drawingTime");
@@ -518,8 +526,7 @@ void __fastcall TForm1::DrawObjects(void)
     // Get zoom level and Define zoom threshold constants for better performance
     float zoomLevel = getCurrentZoomLevel();
     const float ZOOM_THRESHOLD_FOR_DETAILED_VIEW = 0.5f;
-    float lastR = -1, lastG = -1, lastB = -1, lastA = -1;
-    const float colorEps = 1e-5f;
+    const float colorEps = 1e-3f;
     for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
          Data; Data = (TADS_B_Aircraft *)ght_next(HashTable, &iterator, (const void **)&Key))
     {
@@ -567,11 +574,7 @@ void __fastcall TForm1::DrawObjects(void)
                 Data->Heading = 0.0;
                 r = 1.0f; g = 0.0f; b = 0.0f; // red
             }
-            // float 비교 시 epsilon 사용
-            if (fabs(r - lastR) > colorEps || fabs(g - lastG) > colorEps || fabs(b - lastB) > colorEps || fabs(a - lastA) > colorEps) {
-                glColor4f(r, g, b, a);
-                lastR = r; lastG = g; lastB = b; lastA = a;
-            }
+            SetGLColor4f(r, g, b, a, colorEps);
 
             if (zoomLevel > ZOOM_THRESHOLD_FOR_DETAILED_VIEW) {
                 DrawAirplaneImage(ScrX, ScrY, 0.8, Data->Heading, Data->SpriteImage);   // Draw airplane image. scale is changed from 1.5 to 0.8
@@ -589,10 +592,7 @@ void __fastcall TForm1::DrawObjects(void)
                 {
                     double ScrX2, ScrY2;
                     LatLon2XY(lat, lon, ScrX2, ScrY2);
-                    if (fabs(1.0f - lastR) > colorEps || fabs(1.0f - lastG) > colorEps || fabs(0.0f - lastB) > colorEps || fabs(1.0f - lastA) > colorEps) {
-                        glColor4f(1.0f, 1.0f, 0.0f, 1.0f); // yellow
-                        lastR = 1.0f; lastG = 1.0f; lastB = 0.0f; lastA = 1.0f;
-                    }
+                    SetGLColor4f(1.0f, 1.0f, 0.0f, 1.0f, colorEps); // yellow
                     glBegin(GL_LINE_STRIP);
                     glVertex2f(ScrX, ScrY);
                     glVertex2f(ScrX2, ScrY2);
@@ -603,7 +603,7 @@ void __fastcall TForm1::DrawObjects(void)
             if (zoomLevel > ZOOM_THRESHOLD_FOR_DETAILED_VIEW) {
                 // ICAO code text besides the aircraft with yellow color and black outline for better readability
                 // Draw black outline for ICAO text
-                glColor4f(0.0, 0.0, 0.0, 1.0);  // black outline
+                SetGLColor4f(0.0, 0.0, 0.0, 1.0, colorEps);  // black outline
                 glRasterPos2i(ScrX + 39, ScrY - 10);
                 ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
                 glRasterPos2i(ScrX + 41, ScrY - 10);
@@ -612,15 +612,14 @@ void __fastcall TForm1::DrawObjects(void)
                 ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
                 glRasterPos2i(ScrX + 40, ScrY - 9);
                 ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
-                
                 // Draw main ICAO text in bright yellow
-                glColor4f(1.0, 1.0, 0.0, 1.0);  // bright yellow color for ICAO code
+                SetGLColor4f(1.0, 1.0, 0.0, 1.0, colorEps);  // bright yellow color for ICAO code
                 glRasterPos2i(ScrX + 40, ScrY - 10);
                 ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
             } else {
                 // ICAO code text besides the aircraft with yellow color and black outline for better readability
                 // Draw black outline for ICAO text
-                glColor4f(0.0, 0.0, 0.0, 1.0);  // black outline
+                SetGLColor4f(0.0, 0.0, 0.0, 1.0, colorEps);  // black outline
                 glRasterPos2i(ScrX + 39, ScrY - 10);
                 ObjectDisplay->Draw2DTextAdditional(Data->HexAddr);
                 glRasterPos2i(ScrX + 41, ScrY - 10);
@@ -629,9 +628,8 @@ void __fastcall TForm1::DrawObjects(void)
                 ObjectDisplay->Draw2DTextAdditional(Data->HexAddr);
                 glRasterPos2i(ScrX + 40, ScrY - 9);
                 ObjectDisplay->Draw2DTextAdditional(Data->HexAddr);
-                
                 // Draw main ICAO text in bright yellow
-                glColor4f(1.0, 1.0, 0.0, 1.0);  // bright yellow color for ICAO code
+                SetGLColor4f(1.0, 1.0, 0.0, 1.0, colorEps);  // bright yellow color for ICAO code
                 glRasterPos2i(ScrX + 40, ScrY - 10);
                 ObjectDisplay->Draw2DTextAdditional(Data->HexAddr);
             }
@@ -677,7 +675,7 @@ void __fastcall TForm1::DrawObjects(void)
     
                 // Draw the aircraft info text with callsign, heading, altitude and speed 
                 // Draw black outline for aircraft info text
-                glColor4f(0.0, 0.0, 0.0, 1.0);  // black outline
+                SetGLColor4f(0.0, 0.0, 0.0, 1.0, colorEps);  // black outline
                 glRasterPos2i(ScrX + 39, ScrY - 25);
                 ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
                 glRasterPos2i(ScrX + 41, ScrY - 25);
@@ -687,12 +685,12 @@ void __fastcall TForm1::DrawObjects(void)
                 glRasterPos2i(ScrX + 40, ScrY - 24);
                 ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
                 // Draw main text
-                glColor4f(0.5, 1.0, 0.0, 1.0);  // lime green for high visibility
+                SetGLColor4f(0.5, 1.0, 0.0, 1.0, colorEps);  // lime green for high visibility
                 glRasterPos2i(ScrX + 40, ScrY - 25);
                 ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
     
                 // track age information below the ICAO code
-                glColor4f(1.0, 0.0, 0.0, 1.0);  // red
+                SetGLColor4f(1.0, 0.0, 0.0, 1.0, colorEps);  // red
                 glRasterPos2i(ScrX + 40, ScrY - 40);    // TODO: location should be adjusted based on font size setting from the dfm file
                 TimeDifferenceInSecToChar(Data->LastSeen, Data->TimeElapsedInSec, sizeof(Data->TimeElapsedInSec));
                 ObjectDisplay->Draw2DTextAdditional(Data->TimeElapsedInSec + AnsiString(" seconds ago"));
@@ -840,7 +838,7 @@ void __fastcall TForm1::DrawObjects(void)
         }
     }
     EXECUTION_TIMER_ELAPSED(elapsed, drawingTime);
-    LOG("Elapsed: " + to_string(elapsed) + "ms");
+    LOG("Viewable aircraft: " + to_string(ViewableAircraft) + " Elapsed: " + to_string(elapsed) + "ms");
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ObjectDisplayMouseDown(TObject *Sender,
