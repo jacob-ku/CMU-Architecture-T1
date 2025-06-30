@@ -28,8 +28,8 @@ typedef struct
     double Latitude;  /* Coordinated obtained from CPR encoded data. */
     double Longitude; /* Coordinated obtained from CPR encoded data. */
     bool HaveSpeedAndHeading;
-    double Heading;
-    double Speed;
+    double Heading; /* Heading in degrees, 0-360 */
+    double Speed;   /* Speed in knots */
     double VerticalRate;
     int SpriteImage;
     bool IsHelicopter;

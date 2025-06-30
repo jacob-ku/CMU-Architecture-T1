@@ -200,7 +200,7 @@ Route RouteDB::getRouteInfoOnWeb(std::string& callsign) {
     try {
         WebDownloadManager webManager;
         webManager.setTimeLogging(true);
-        std::string baseUrl = "https://vrs-standing-data.adsb.lol/routes/";
+        std::string baseUrl = "https://vrs-standing-data.adsb.lol/routes";
         
         std::string airlineCode = callsign.length() >= 2 ? callsign.substr(0, 2) : callsign;
         std::string url = baseUrl + "/" + airlineCode + "/" +callsign + ".txt";

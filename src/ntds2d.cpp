@@ -229,7 +229,7 @@ void MakePoint(void)
     glEndList();
 }
 //---------------------------------------------------------------------------
-void MakeTrackHook(void)
+void MakeTrackHook(void)     // make circle for hooked trace
 {
     GLuint i;
     GLfloat cosine, sine;
@@ -329,7 +329,7 @@ void DrawPoint(float x, float y)
     glPopMatrix();
 }
 //---------------------------------------------------------------------------
-void DrawTrackHook(float x, float y)
+void DrawTrackHook(float x, float y)    // draw circle made by MakeTrackHook
 {
     glPushMatrix();
     glTranslated(x, y, 0.0);

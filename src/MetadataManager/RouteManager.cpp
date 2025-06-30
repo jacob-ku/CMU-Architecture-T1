@@ -55,7 +55,9 @@ bool RouteManager::LoadRouteFromFile(const std::string& filename) {
 Route RouteManager::GetRoute(std::string& callsign) {
     std::cout << "Getting route for callsign: " << callsign << std::endl; 
     
-    Route serchRoute = routeDB->getRouteInfoOnWeb(callsign);
+    // using local db first, and move to web if not found
+    Route serchRoute = routeDB->getRouteByCallsign(callsign);
+
     std::cout << "Route data retrieved for callsign: " << callsign << std::endl;
     std::cout << "Route: " << serchRoute.getCallsign() << ", "  
               << serchRoute.getCode() << ", " 

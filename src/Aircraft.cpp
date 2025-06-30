@@ -2,6 +2,7 @@
 
 #pragma hdrstop
 
+#include <cstring>
 #include "Aircraft.h"
 #include "TimeFunctions.h"
 
@@ -237,7 +238,8 @@ void RawToAircraft(modeS_message *mm, TADS_B_Aircraft *ADS_B_Aircraft)
     {
         if (mm->ME_type >= 1 && mm->ME_type <= 4)
         {
-            memcpy(ADS_B_Aircraft->FlightNum, mm->flight, sizeof(ADS_B_Aircraft->FlightNum));
+            // memcpy(ADS_B_Aircraft->FlightNum, mm->flight, sizeof(ADS_B_Aircraft->FlightNum));
+            strncpy(ADS_B_Aircraft->FlightNum, mm->flight, strlen(mm->flight) + 1); // including null terminator
             ADS_B_Aircraft->HaveFlightNum = true;
         }
         else if (mm->ME_type >= 9 && mm->ME_type <= 18)

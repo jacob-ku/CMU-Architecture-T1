@@ -252,18 +252,8 @@ __fastcall TForm1::TForm1(TComponent *Owner)
     BigQueryRowCount = 0;
     BigQueryFileCount = 0;
     UnregisteredAircraftCount = 0;
-    AirportMgr.LoadAirport();
-    RouteMgr.LoadRouteFromFile();
-    RouteMgr.StartUpdateMonitor();
 
-    AircraftDB = new TAircraftDB();
-    AircraftDB->LoadDatabaseAsync(AircraftDBPathFileName);
-
-//    RouteMgr.LoadRouteFromFile();
-
-    std::string tmpsign = "KAL123";
-
-//    RouteMgr.StartUpdateMonitor();
+    // std::string tmpsign = "KAL123";
     
     // Initialize tower texture
     towerTextureID = 0;
@@ -317,6 +307,30 @@ void __fastcall TForm1::ObjectDisplayInit(TObject *Sender)
     glPushAttrib(GL_LINE_BIT);
     glPopAttrib();
     printf("OpenGL Version %s\n", glGetString(GL_VERSION));
+
+    // ----- Metadata database initialization -----
+    // using local files to initialize
+    AirportMgr.LoadAirport();
+    RouteMgr.LoadRouteFromFile();
+
+    // invoke thread to handle periodic updates
+    RouteMgr.StartUpdateMonitor();
+
+    // load DB asynchronously in background
+    AircraftDB = new TAircraftDB();
+    AircraftDB->LoadDatabaseAsync(AircraftDBPathFileName);
+
+    // initialize message processor thread
+    if (!msgProcThread)
+    {
+        msgProcThread = new TMessageProcessorThread(true); // start in suspended state
+        msgProcThread->FreeOnTerminate = true; // Automatically free the thread object after execution
+        msgProcThread->Start();
+    }
+    else
+    {
+        printf("[Form] Message processor thread already exists.\n");
+    }
 }
 //---------------------------------------------------------------------------
 
@@ -608,15 +622,12 @@ void __fastcall TForm1::DrawObjects(void)
                 ObjectDisplay->Draw2DTextAdditional(Data->HexAddr);
             }
 
-
-            
-            
             if (zoomLevel > ZOOM_THRESHOLD_FOR_DETAILED_VIEW) {
                 AnsiString callsignHeadAltSpeedText = "";
                 
                 // Add callsign if available
                 if (Data->HaveFlightNum && strlen(Data->FlightNum) > 0) {
-                    AnsiString flightNum = AnsiString(Data->FlightNum).Trim();
+                    AnsiString flightNum = AnsiString(Data->FlightNum).Trim();  // can remove trim()
                     if (!flightNum.IsEmpty()) {
                         callsignHeadAltSpeedText += flightNum;
                     } else {
@@ -696,14 +707,14 @@ void __fastcall TForm1::DrawObjects(void)
         outputCounter = 0;
 	}
 
-
-    // --- side bar - contents for text box: Close Control which is for hooked airplane ----
+    // --- handle hooked aircrafts ----
     ViewableAircraftCountLabel->Caption = ViewableAircraft;
     if (TrackHook.Valid_CC)
     {
         Data = (TADS_B_Aircraft *)ght_get(HashTable, sizeof(TrackHook.ICAO_CC), (void *)&TrackHook.ICAO_CC);
         if (Data)
         {
+            // update side bar text for hooked aircraft
             ICAOLabel->Caption = Data->HexAddr;
             if (Data->HaveFlightNum)
                 FlightNumLabel->Caption = Data->FlightNum;
@@ -737,6 +748,7 @@ void __fastcall TForm1::DrawObjects(void)
             MsgCntLabel->Caption = "Raw: " + IntToStr((int)Data->NumMessagesRaw) + " SBS: " + IntToStr((int)Data->NumMessagesSBS);
             TrkLastUpdateTimeLabel->Caption = TimeToChar(Data->LastSeen);
 
+            // draw circle for hooked aircraft
             glColor4f(1.0, 0.0, 0.0, 1.0);
             LatLon2XY(Data->Latitude, Data->Longitude, ScrX, ScrY);
             DrawTrackHook(ScrX, ScrY);
@@ -757,7 +769,7 @@ void __fastcall TForm1::DrawObjects(void)
         }
     }
 
-    // --- side bar - contents for text box: CPA when two aircraft are hooked ----
+    // --- draw CPA lines ----
     if (TrackHook.Valid_CPA)
     {
         bool CpaDataIsValid = false;
@@ -869,18 +881,11 @@ void __fastcall TForm1::ObjectDisplayMouseUp(TObject *Sender,
 void __fastcall TForm1::ObjectDisplayMouseMove(TObject *Sender,
                                                TShiftState Shift, int X, int Y)
 {
-    int X1, Y1;
     double VLat, VLon;
     int i;
-    Y1 = (ObjectDisplay->Height - 1) - Y;
-    X1 = X;
-    if ((X1 >= Map_v[0].x) && (X1 <= Map_v[1].x) &&
-        (Y1 >= Map_v[0].y) && (Y1 <= Map_v[3].y))
-
+    if (XY2LatLon2(X, Y, VLat, VLon) == 0)
     {
         pfVec3 Point;
-        VLat = atan(sinh(M_PI * (2 * (Map_w[1].y - (yf * (Map_v[3].y - Y1)))))) * (180.0 / M_PI);
-        VLon = (Map_w[1].x - (xf * (Map_v[1].x - X1))) * 360.0;
         Lat->Caption = DMS::DegreesMinutesSecondsLat(VLat).c_str();
         Lon->Caption = DMS::DegreesMinutesSecondsLon(VLon).c_str();
         Point[0] = VLon;
@@ -932,10 +937,9 @@ void __fastcall TForm1::AddPoint(int X, int Y)
     }
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::HookTrack(int X, int Y, bool CPA_Hook)
+void __fastcall TForm1::HookTrack(int X, int Y, bool CPA_Hook)  // handle track hooking
 {
     double VLat, VLon, dlat, dlon, Range;
-    int X1, Y1;
     uint32_t *Key;
 
     uint32_t Current_ICAO;
@@ -943,15 +947,9 @@ void __fastcall TForm1::HookTrack(int X, int Y, bool CPA_Hook)
     ght_iterator_t iterator;
     TADS_B_Aircraft *Data;
 
-    Y1 = (ObjectDisplay->Height - 1) - Y;
-    X1 = X;
-
-    if ((X1 < Map_v[0].x) || (X1 > Map_v[1].x) ||
-        (Y1 < Map_v[0].y) || (Y1 > Map_v[3].y))
+    if (XY2LatLon2(X, Y, VLat, VLon) == -1) {
         return;
-
-    VLat = atan(sinh(M_PI * (2 * (Map_w[1].y - (yf * (Map_v[3].y - Y1)))))) * (180.0 / M_PI);
-    VLon = (Map_w[1].x - (xf * (Map_v[1].x - X1))) * 360.0;
+    }
 
     MinRange = 16.0;
 
@@ -970,16 +968,16 @@ void __fastcall TForm1::HookTrack(int X, int Y, bool CPA_Hook)
             }
         }
     }
-    if (MinRange < 0.2)
+    if (MinRange < 0.2) // close enough to consider it is hooked
     {
         TADS_B_Aircraft *ADS_B_Aircraft = (TADS_B_Aircraft *)
             ght_get(HashTable, sizeof(Current_ICAO),
                     &Current_ICAO);
-        if (ADS_B_Aircraft)
+        if (ADS_B_Aircraft) // aircraft data is in hash table
         {
-            if (!CPA_Hook)
+            if (!CPA_Hook)  // selection of the first aircraft
             {
-                TrackHook.Valid_CC = true;
+                TrackHook.Valid_CC = true;  // valid track hook
                 TrackHook.ICAO_CC = ADS_B_Aircraft->ICAO;
                 const TAircraftData* acData = AircraftDB->GetAircraftDBInfo(ADS_B_Aircraft->ICAO);
                 if (acData) {
@@ -1004,7 +1002,7 @@ void __fastcall TForm1::HookTrack(int X, int Y, bool CPA_Hook)
                     CountryLabel->Caption = "N/A";
                 }
             }
-            else
+            else    // selection of the second aircarft
             {
                 TrackHook.Valid_CPA = true;
                 TrackHook.ICAO_CPA = ADS_B_Aircraft->ICAO;
@@ -1045,7 +1043,7 @@ void __fastcall TForm1::LatLon2XY(double lat, double lon, double &x, double &y)
 // convert x/y to lat/lon
 int __fastcall TForm1::XY2LatLon2(int x, int y, double &lat, double &lon)
 {
-    double Lat, Lon, dlat, dlon, Range;
+    // double Lat, Lon, dlat, dlon, Range;
     int X1, Y1;
 
     Y1 = (ObjectDisplay->Height - 1) - y;
@@ -1373,7 +1371,7 @@ void __fastcall TForm1::RawConnectButtonClick(TObject *Sender)
         try
         {
             IdTCPClientRaw->Connect();
-            TCPClientRawHandleThread = new TTCPClientRawHandleThread(true);
+            TCPClientRawHandleThread = new TTCPClientRawHandleThread(true, msgProcThread);
             TCPClientRawHandleThread->UseFileInsteadOfNetwork = false;
             TCPClientRawHandleThread->FreeOnTerminate = TRUE;
             TCPClientRawHandleThread->OnTerminate = RawThreadTerminated;
@@ -1465,7 +1463,7 @@ void __fastcall TForm1::RawPlaybackButtonClick(TObject *Sender)
                 }
                 else
                 {
-                    TCPClientRawHandleThread = new TTCPClientRawHandleThread(true);
+                    TCPClientRawHandleThread = new TTCPClientRawHandleThread(true, msgProcThread);
                     TCPClientRawHandleThread->UseFileInsteadOfNetwork = true;
                     TCPClientRawHandleThread->First = true;
                     TCPClientRawHandleThread->FreeOnTerminate = TRUE;
@@ -1488,12 +1486,11 @@ void __fastcall TForm1::RawPlaybackButtonClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 // Constructor for the thread class
-__fastcall TTCPClientRawHandleThread::TTCPClientRawHandleThread(bool value) : TThread(value)
+__fastcall TTCPClientRawHandleThread::TTCPClientRawHandleThread(bool value,
+    TMessageProcessorThread* procThread) : TThread(value), msgProcThread(procThread)
 {
 	printf("[Thread] TTCPClientRawHandleThread created.\n");
 	FreeOnTerminate = true; // Automatically free the thread object after execution
-    processorThread = new TMessageProcessorThread(true);
-    processorThread->Start();
 }
 //---------------------------------------------------------------------------
 // Destructor for the thread class
@@ -1501,12 +1498,6 @@ __fastcall TTCPClientRawHandleThread::~TTCPClientRawHandleThread()
 {
 	printf("[Thread] TTCPClientRawHandleThread destroyed.\n");
 	// Clean up resources if needed
-    if (processorThread) {
-        processorThread->Terminate();
-        processorThread->WaitFor();
-        delete processorThread;
-        processorThread = NULL;
-    }
 }
 //---------------------------------------------------------------------------
 // Execute method where the thread's logic resides
@@ -1568,7 +1559,7 @@ void __fastcall TTCPClientRawHandleThread::Execute(void)
         try
         {
             // Push RAW message into shared processor thread
-            processorThread->AddMessage(MessageType::RAW, StringMsgBuffer);
+            msgProcThread->AddMessage(MessageType::RAW, StringMsgBuffer);
         }
         catch (...)
         {
@@ -1602,7 +1593,7 @@ void __fastcall TForm1::SBSConnectButtonClick(TObject *Sender)
         try
         {
             IdTCPClientSBS->Connect();
-            TCPClientSBSHandleThread = new TTCPClientSBSHandleThread(true);
+            TCPClientSBSHandleThread = new TTCPClientSBSHandleThread(true, msgProcThread);
             TCPClientSBSHandleThread->UseFileInsteadOfNetwork = false;
             TCPClientSBSHandleThread->FreeOnTerminate = TRUE;
             TCPClientSBSHandleThread->OnTerminate = SBSThreadTerminated;
@@ -1625,12 +1616,11 @@ void __fastcall TForm1::SBSConnectButtonClick(TObject *Sender)
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 // Constructor for the thread class
-__fastcall TTCPClientSBSHandleThread::TTCPClientSBSHandleThread(bool value) : TThread(value)
+__fastcall TTCPClientSBSHandleThread::TTCPClientSBSHandleThread(bool value, 
+    TMessageProcessorThread* procThread) : TThread(value), msgProcThread(procThread)
 {
 	printf("[Thread] TTCPClientSBSHandleThread created.\n");
 	FreeOnTerminate = true; // Automatically free the thread object after execution
-    processorThread = new TMessageProcessorThread(true);
-    processorThread->Start();
 }
 //---------------------------------------------------------------------------
 // Destructor for the thread class
@@ -1638,19 +1628,12 @@ __fastcall TTCPClientSBSHandleThread::~TTCPClientSBSHandleThread()
 {
 	printf("[Thread] TTCPClientSBSHandleThread destroyed.\n");
 	// Clean up resources if needed
-    if (processorThread) {
-        processorThread->Terminate();
-        processorThread->WaitFor();
-        delete processorThread;
-        processorThread = NULL;
-    }
 }
 //---------------------------------------------------------------------------
 // Execute method where the thread's logic resides
 void __fastcall TTCPClientSBSHandleThread::Execute(void)
 {
     __int64 Time, SleepTime;
-    AnsiString SBSMsg;
     while (!Terminated)
     {
         if (!UseFileInsteadOfNetwork)
@@ -1661,7 +1644,7 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
                     Terminate();
 
                 // Receive message from Hub
-                SBSMsg = Form1->IdTCPClientSBS->IOHandler->ReadLn();
+                StringMsgBuffer = Form1->IdTCPClientSBS->IOHandler->ReadLn();
             }
             catch (...)
             {
@@ -1700,7 +1683,7 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
                 }
 
                 // Read SBS message
-                SBSMsg = Form1->PlayBackSBSStream->ReadLine();
+                StringMsgBuffer = Form1->PlayBackSBSStream->ReadLine();
             }
             catch (...)
             {
@@ -1711,7 +1694,7 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
         }
         try
         {
-            processorThread->AddMessage(MessageType::SBS, SBSMsg);
+            msgProcThread->AddMessage(MessageType::SBS, StringMsgBuffer);
         }
         catch (...)
         {
@@ -1736,8 +1719,12 @@ __fastcall TMessageProcessorThread::TMessageProcessorThread(bool value) : TThrea
 {
 	printf("[Thread] TMessageProcessorThread created.\n");
 	queueLock = new TCriticalSection();
-	messageEvent = new TEvent(nullptr, false, false, "", false);
-	isProcessing = false;
+	messageEvent = new TEvent(
+        nullptr, // security attributes - none
+        false,   // automatic reset after read by WaitFor()
+        false,   // Initial state - not signaled
+        "",      // no name
+        false);  // Use COMWait - false
 }
 //---------------------------------------------------------------------------
 TMessageProcessorThread::~TMessageProcessorThread()
@@ -1760,6 +1747,20 @@ void TMessageProcessorThread::AddMessage(MessageType type, const AnsiString& msg
     queueLock->Leave();
 
     messageEvent->SetEvent();
+}
+//---------------------------------------------------------------------------
+void TMessageProcessorThread::wakeUp()
+{
+    // Signal the event to wake up the thread
+    messageEvent->SetEvent();
+}
+//---------------------------------------------------------------------------
+void TMessageProcessorThread::clearQueue(void) {
+    queueLock->Enter();
+    while (!messageQueue.empty()) {
+        messageQueue.pop();
+    }
+    queueLock->Leave();
 }
 //---------------------------------------------------------------------------
 void __fastcall TMessageProcessorThread::Execute(void)
@@ -1928,7 +1929,7 @@ void __fastcall TForm1::SBSPlaybackButtonClick(TObject *Sender)
                 }
                 else
                 {
-                    TCPClientSBSHandleThread = new TTCPClientSBSHandleThread(true);
+                    TCPClientSBSHandleThread = new TTCPClientSBSHandleThread(true, msgProcThread);
                     TCPClientSBSHandleThread->UseFileInsteadOfNetwork = true;
                     TCPClientSBSHandleThread->First = true;
                     TCPClientSBSHandleThread->FreeOnTerminate = TRUE;
@@ -2118,12 +2119,27 @@ void __fastcall TForm1::UseSBSRemoteClick(TObject *Sender)
     SBSIpAddress->Text = "data.adsbhub.org";
 }
 //---------------------------------------------------------------------------
-
 void __fastcall TForm1::UseSBSLocalClick(TObject *Sender)
 {
     SBSIpAddress->Text = "128.237.96.41";
 }
 //---------------------------------------------------------------------------
+void __fastcall TForm1::UseRawRouterClick(TObject *Sender)
+{
+    RawIpAddress->Text = "192.168.0.223";
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::UseRawCmuSecureClick(TObject *Sender)
+{
+    RawIpAddress->Text = "172.26.43.119";
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::UseRawHyattClick(TObject *Sender)
+{
+    RawIpAddress->Text = "172.20.2.97";
+}
+//---------------------------------------------------------------------------
+
 static bool DeleteFilesWithExtension(AnsiString dirPath, AnsiString extension)
 {
     AnsiString searchPattern = dirPath + "\\*." + extension;
@@ -2437,6 +2453,13 @@ void __fastcall TForm1::FormClose(TObject *Sender, TCloseAction &Action)
     if (TCPClientSBSHandleThread)
     {
         TCPClientSBSHandleThread->Terminate();
+    }
+
+    if (msgProcThread) {
+        msgProcThread->clearQueue(); // Clear any remaining messages
+        msgProcThread->Terminate(); // change Terminated flag to true
+        msgProcThread->wakeUp(); // trigger natual exit
+        msgProcThread = NULL;
     }
 
     // Wait for threads to terminate
