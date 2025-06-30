@@ -538,65 +538,68 @@ void __fastcall TForm1::DrawObjects(void)
             glRasterPos2i(ScrX + 40, ScrY - 10);
             ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
             
-            AnsiString callsignHeadAltSpeedText = "";
-            
-            // Add callsign if available
-            if (Data->HaveFlightNum && strlen(Data->FlightNum) > 0) {
-                AnsiString flightNum = AnsiString(Data->FlightNum).Trim();
-                if (!flightNum.IsEmpty()) {
-                    callsignHeadAltSpeedText += flightNum;
+            float zoomLevel = getCurrentZoomLevel();
+            if (zoomLevel > 0.5) {
+                AnsiString callsignHeadAltSpeedText = "";
+                
+                // Add callsign if available
+                if (Data->HaveFlightNum && strlen(Data->FlightNum) > 0) {
+                    AnsiString flightNum = AnsiString(Data->FlightNum).Trim();
+                    if (!flightNum.IsEmpty()) {
+                        callsignHeadAltSpeedText += flightNum;
+                    } else {
+                        callsignHeadAltSpeedText += "--";
+                    }
+                } else {
+                    callsignHeadAltSpeedText += "--";  // placeholder if no callsign is available
+                }
+                callsignHeadAltSpeedText += "/";
+                
+                // Add heading if available
+                if (Data->Heading > 0) {
+                    callsignHeadAltSpeedText += FloatToStrF((double)Data->Heading, ffFixed, 6, 0);
                 } else {
                     callsignHeadAltSpeedText += "--";
                 }
-            } else {
-                callsignHeadAltSpeedText += "--";  // placeholder if no callsign is available
+                callsignHeadAltSpeedText += "/";
+                
+                if (Data->Altitude > 0) {
+                    int altitudeInThousands = (int)(Data->Altitude / 1000);
+                    callsignHeadAltSpeedText += IntToStr(altitudeInThousands);
+                } else {
+                    callsignHeadAltSpeedText += "--";
+                }
+                callsignHeadAltSpeedText += "k/";
+    
+                if (Data->Speed > 0) {
+                    callsignHeadAltSpeedText += FloatToStrF((double)Data->Speed, ffFixed, 6, 0);
+                } else {
+                    callsignHeadAltSpeedText += "--";
+                }
+                callsignHeadAltSpeedText += "kts";
+    
+                // Draw the aircraft info text with callsign, heading, altitude and speed 
+                // Draw black outline for aircraft info text
+                glColor4f(0.0, 0.0, 0.0, 1.0);  // black outline
+                glRasterPos2i(ScrX + 39, ScrY - 25);
+                ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
+                glRasterPos2i(ScrX + 41, ScrY - 25);
+                ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
+                glRasterPos2i(ScrX + 40, ScrY - 26);
+                ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
+                glRasterPos2i(ScrX + 40, ScrY - 24);
+                ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
+                // Draw main text
+                glColor4f(0.5, 1.0, 0.0, 1.0);  // lime green for high visibility
+                glRasterPos2i(ScrX + 40, ScrY - 25);
+                ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
+    
+                // track age information below the ICAO code
+                glColor4f(1.0, 0.0, 0.0, 1.0);  // red
+                glRasterPos2i(ScrX + 40, ScrY - 40);    // TODO: location should be adjusted based on font size setting from the dfm file
+                TimeDifferenceInSecToChar(Data->LastSeen, Data->TimeElapsedInSec, sizeof(Data->TimeElapsedInSec));
+                ObjectDisplay->Draw2DTextAdditional(Data->TimeElapsedInSec + AnsiString(" seconds ago"));
             }
-            callsignHeadAltSpeedText += "/";
-            
-            // Add heading if available
-            if (Data->Heading > 0) {
-                callsignHeadAltSpeedText += FloatToStrF((double)Data->Heading, ffFixed, 6, 0);
-            } else {
-                callsignHeadAltSpeedText += "--";
-            }
-            callsignHeadAltSpeedText += "/";
-            
-            if (Data->Altitude > 0) {
-                int altitudeInThousands = (int)(Data->Altitude / 1000);
-                callsignHeadAltSpeedText += IntToStr(altitudeInThousands);
-            } else {
-                callsignHeadAltSpeedText += "--";
-            }
-            callsignHeadAltSpeedText += "k/";
-
-            if (Data->Speed > 0) {
-                callsignHeadAltSpeedText += FloatToStrF((double)Data->Speed, ffFixed, 6, 0);
-            } else {
-                callsignHeadAltSpeedText += "--";
-            }
-            callsignHeadAltSpeedText += "kts";
-
-            // Draw the aircraft info text with callsign, heading, altitude and speed 
-            // Draw black outline for aircraft info text
-            glColor4f(0.0, 0.0, 0.0, 1.0);  // black outline
-            glRasterPos2i(ScrX + 39, ScrY - 25);
-            ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
-            glRasterPos2i(ScrX + 41, ScrY - 25);
-            ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
-            glRasterPos2i(ScrX + 40, ScrY - 26);
-            ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
-            glRasterPos2i(ScrX + 40, ScrY - 24);
-            ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
-            // Draw main text
-            glColor4f(0.5, 1.0, 0.0, 1.0);  // lime green for high visibility
-            glRasterPos2i(ScrX + 40, ScrY - 25);
-            ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
-
-            // track age information below the ICAO code
-            glColor4f(1.0, 0.0, 0.0, 1.0);  // red
-            glRasterPos2i(ScrX + 40, ScrY - 40);    // TODO: location should be adjusted based on font size setting from the dfm file
-            TimeDifferenceInSecToChar(Data->LastSeen, Data->TimeElapsedInSec, sizeof(Data->TimeElapsedInSec));
-            ObjectDisplay->Draw2DTextAdditional(Data->TimeElapsedInSec + AnsiString(" seconds ago"));
 
         }
     }
