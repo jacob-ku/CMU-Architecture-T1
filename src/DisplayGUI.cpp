@@ -524,17 +524,17 @@ void __fastcall TForm1::DrawObjects(void)
             // ICAO code text besides the aircraft with yellow color and black outline for better readability
             // Draw black outline for ICAO text
             glColor4f(0.0, 0.0, 0.0, 1.0);  // black outline
-            glRasterPos2i(ScrX + 40 - 1, ScrY - 10);
+            glRasterPos2i(ScrX + 39, ScrY - 10);
             ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
-            glRasterPos2i(ScrX + 40 + 1, ScrY - 10);
+            glRasterPos2i(ScrX + 41, ScrY - 10);
             ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
-            glRasterPos2i(ScrX + 40, ScrY - 10 - 1);
+            glRasterPos2i(ScrX + 40, ScrY - 11);
             ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
-            glRasterPos2i(ScrX + 40, ScrY - 10 + 1);
+            glRasterPos2i(ScrX + 40, ScrY - 9);
             ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
             
             // Draw main ICAO text in bright yellow
-            glColor4f(1.0, 1.0, 0.0, 1.0);  // bright yellow color for ICAO code            
+            glColor4f(1.0, 1.0, 0.0, 1.0);  // bright yellow color for ICAO code
             glRasterPos2i(ScrX + 40, ScrY - 10);
             ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
             
@@ -576,9 +576,19 @@ void __fastcall TForm1::DrawObjects(void)
             }
             callsignHeadAltSpeedText += "kts";
 
-            // Display the callsign, heading, altitude and speed text            
-            // Draw main text in bright orange
-            glColor4f(1.0, 0.6, 0.0, 1.0);  // bright orange for high visibility
+            // Draw the aircraft info text with callsign, heading, altitude and speed 
+            // Draw black outline for aircraft info text
+            glColor4f(0.0, 0.0, 0.0, 1.0);  // black outline
+            glRasterPos2i(ScrX + 39, ScrY - 25);
+            ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
+            glRasterPos2i(ScrX + 41, ScrY - 25);
+            ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
+            glRasterPos2i(ScrX + 40, ScrY - 26);
+            ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
+            glRasterPos2i(ScrX + 40, ScrY - 24);
+            ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
+            // Draw main text
+            glColor4f(0.5, 1.0, 0.0, 1.0);  // lime green for high visibility
             glRasterPos2i(ScrX + 40, ScrY - 25);
             ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
 
