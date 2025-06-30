@@ -317,6 +317,18 @@ void __fastcall TForm1::ObjectDisplayInit(TObject *Sender)
     glPushAttrib(GL_LINE_BIT);
     glPopAttrib();
     printf("OpenGL Version %s\n", glGetString(GL_VERSION));
+
+    // initialize message processor thread
+    if (!msgProcThread)
+    {
+        msgProcThread = new TMessageProcessorThread(true); // start in suspended state
+        msgProcThread->FreeOnTerminate = true; // Automatically free the thread object after execution
+        msgProcThread->Start();
+    }
+    else
+    {
+        printf("[Form] Message processor thread already exists.\n");
+    }
 }
 //---------------------------------------------------------------------------
 
@@ -1373,7 +1385,7 @@ void __fastcall TForm1::RawConnectButtonClick(TObject *Sender)
         try
         {
             IdTCPClientRaw->Connect();
-            TCPClientRawHandleThread = new TTCPClientRawHandleThread(true);
+            TCPClientRawHandleThread = new TTCPClientRawHandleThread(true, msgProcThread);
             TCPClientRawHandleThread->UseFileInsteadOfNetwork = false;
             TCPClientRawHandleThread->FreeOnTerminate = TRUE;
             TCPClientRawHandleThread->OnTerminate = RawThreadTerminated;
@@ -1465,7 +1477,7 @@ void __fastcall TForm1::RawPlaybackButtonClick(TObject *Sender)
                 }
                 else
                 {
-                    TCPClientRawHandleThread = new TTCPClientRawHandleThread(true);
+                    TCPClientRawHandleThread = new TTCPClientRawHandleThread(true, msgProcThread);
                     TCPClientRawHandleThread->UseFileInsteadOfNetwork = true;
                     TCPClientRawHandleThread->First = true;
                     TCPClientRawHandleThread->FreeOnTerminate = TRUE;
@@ -1488,12 +1500,11 @@ void __fastcall TForm1::RawPlaybackButtonClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 // Constructor for the thread class
-__fastcall TTCPClientRawHandleThread::TTCPClientRawHandleThread(bool value) : TThread(value)
+__fastcall TTCPClientRawHandleThread::TTCPClientRawHandleThread(bool value,
+    TMessageProcessorThread* procThread) : TThread(value), msgProcThread(procThread)
 {
 	printf("[Thread] TTCPClientRawHandleThread created.\n");
 	FreeOnTerminate = true; // Automatically free the thread object after execution
-    processorThread = new TMessageProcessorThread(true);
-    processorThread->Start();
 }
 //---------------------------------------------------------------------------
 // Destructor for the thread class
@@ -1501,12 +1512,6 @@ __fastcall TTCPClientRawHandleThread::~TTCPClientRawHandleThread()
 {
 	printf("[Thread] TTCPClientRawHandleThread destroyed.\n");
 	// Clean up resources if needed
-    if (processorThread) {
-        processorThread->Terminate();
-        processorThread->WaitFor();
-        delete processorThread;
-        processorThread = NULL;
-    }
 }
 //---------------------------------------------------------------------------
 // Execute method where the thread's logic resides
@@ -1568,7 +1573,7 @@ void __fastcall TTCPClientRawHandleThread::Execute(void)
         try
         {
             // Push RAW message into shared processor thread
-            processorThread->AddMessage(MessageType::RAW, StringMsgBuffer);
+            msgProcThread->AddMessage(MessageType::RAW, StringMsgBuffer);
         }
         catch (...)
         {
@@ -1602,7 +1607,7 @@ void __fastcall TForm1::SBSConnectButtonClick(TObject *Sender)
         try
         {
             IdTCPClientSBS->Connect();
-            TCPClientSBSHandleThread = new TTCPClientSBSHandleThread(true);
+            TCPClientSBSHandleThread = new TTCPClientSBSHandleThread(true, msgProcThread);
             TCPClientSBSHandleThread->UseFileInsteadOfNetwork = false;
             TCPClientSBSHandleThread->FreeOnTerminate = TRUE;
             TCPClientSBSHandleThread->OnTerminate = SBSThreadTerminated;
@@ -1625,12 +1630,11 @@ void __fastcall TForm1::SBSConnectButtonClick(TObject *Sender)
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 // Constructor for the thread class
-__fastcall TTCPClientSBSHandleThread::TTCPClientSBSHandleThread(bool value) : TThread(value)
+__fastcall TTCPClientSBSHandleThread::TTCPClientSBSHandleThread(bool value, 
+    TMessageProcessorThread* procThread) : TThread(value), msgProcThread(procThread)
 {
 	printf("[Thread] TTCPClientSBSHandleThread created.\n");
 	FreeOnTerminate = true; // Automatically free the thread object after execution
-    processorThread = new TMessageProcessorThread(true);
-    processorThread->Start();
 }
 //---------------------------------------------------------------------------
 // Destructor for the thread class
@@ -1638,19 +1642,12 @@ __fastcall TTCPClientSBSHandleThread::~TTCPClientSBSHandleThread()
 {
 	printf("[Thread] TTCPClientSBSHandleThread destroyed.\n");
 	// Clean up resources if needed
-    if (processorThread) {
-        processorThread->Terminate();
-        processorThread->WaitFor();
-        delete processorThread;
-        processorThread = NULL;
-    }
 }
 //---------------------------------------------------------------------------
 // Execute method where the thread's logic resides
 void __fastcall TTCPClientSBSHandleThread::Execute(void)
 {
     __int64 Time, SleepTime;
-    AnsiString SBSMsg;
     while (!Terminated)
     {
         if (!UseFileInsteadOfNetwork)
@@ -1661,7 +1658,7 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
                     Terminate();
 
                 // Receive message from Hub
-                SBSMsg = Form1->IdTCPClientSBS->IOHandler->ReadLn();
+                StringMsgBuffer = Form1->IdTCPClientSBS->IOHandler->ReadLn();
             }
             catch (...)
             {
@@ -1700,7 +1697,7 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
                 }
 
                 // Read SBS message
-                SBSMsg = Form1->PlayBackSBSStream->ReadLine();
+                StringMsgBuffer = Form1->PlayBackSBSStream->ReadLine();
             }
             catch (...)
             {
@@ -1711,7 +1708,7 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
         }
         try
         {
-            processorThread->AddMessage(MessageType::SBS, SBSMsg);
+            msgProcThread->AddMessage(MessageType::SBS, StringMsgBuffer);
         }
         catch (...)
         {
@@ -1736,8 +1733,12 @@ __fastcall TMessageProcessorThread::TMessageProcessorThread(bool value) : TThrea
 {
 	printf("[Thread] TMessageProcessorThread created.\n");
 	queueLock = new TCriticalSection();
-	messageEvent = new TEvent(nullptr, false, false, "", false);
-	isProcessing = false;
+	messageEvent = new TEvent(
+        nullptr, // security attributes - none
+        false,   // automatic reset after read by WaitFor()
+        false,   // Initial state - not signaled
+        "",      // no name
+        false);  // Use COMWait - false
 }
 //---------------------------------------------------------------------------
 TMessageProcessorThread::~TMessageProcessorThread()
@@ -1760,6 +1761,20 @@ void TMessageProcessorThread::AddMessage(MessageType type, const AnsiString& msg
     queueLock->Leave();
 
     messageEvent->SetEvent();
+}
+//---------------------------------------------------------------------------
+void TMessageProcessorThread::wakeUp()
+{
+    // Signal the event to wake up the thread
+    messageEvent->SetEvent();
+}
+//---------------------------------------------------------------------------
+void TMessageProcessorThread::clearQueue(void) {
+    queueLock->Enter();
+    while (!messageQueue.empty()) {
+        messageQueue.pop();
+    }
+    queueLock->Leave();
 }
 //---------------------------------------------------------------------------
 void __fastcall TMessageProcessorThread::Execute(void)
@@ -1928,7 +1943,7 @@ void __fastcall TForm1::SBSPlaybackButtonClick(TObject *Sender)
                 }
                 else
                 {
-                    TCPClientSBSHandleThread = new TTCPClientSBSHandleThread(true);
+                    TCPClientSBSHandleThread = new TTCPClientSBSHandleThread(true, msgProcThread);
                     TCPClientSBSHandleThread->UseFileInsteadOfNetwork = true;
                     TCPClientSBSHandleThread->First = true;
                     TCPClientSBSHandleThread->FreeOnTerminate = TRUE;
@@ -2452,6 +2467,13 @@ void __fastcall TForm1::FormClose(TObject *Sender, TCloseAction &Action)
     if (TCPClientSBSHandleThread)
     {
         TCPClientSBSHandleThread->Terminate();
+    }
+
+    if (msgProcThread) {
+        msgProcThread->clearQueue(); // Clear any remaining messages
+        msgProcThread->Terminate(); // change Terminated flag to true
+        msgProcThread->wakeUp(); // trigger natual exit
+        msgProcThread = NULL;
     }
 
     // Wait for threads to terminate

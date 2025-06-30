@@ -65,21 +65,22 @@ private:
     std::queue<QueuedMessage> messageQueue;
     TCriticalSection* queueLock;
     TEvent* messageEvent;
-    bool isProcessing;
 
 public:
     __fastcall TMessageProcessorThread(bool value);
     ~TMessageProcessorThread();
 
     void __fastcall Execute(void);
-    void AddMessage(MessageType type, const AnsiString& msg);
+    void AddMessage(MessageType type, const AnsiString& msg);    // takes a copy to ensure thread safety
+    void wakeUp(void);
+    void clearQueue(void);
 };
 //---------------------------------------------------------------------------
 class TTCPClientRawHandleThread : public TThread
 {
 private:
     AnsiString StringMsgBuffer;
-    TMessageProcessorThread* processorThread;
+    TMessageProcessorThread* msgProcThread;
     void __fastcall StopPlayback(void);
     void __fastcall StopTCPClient(void);
 
@@ -90,7 +91,7 @@ public:
     bool UseFileInsteadOfNetwork;
     bool First;
     __int64 LastTime;
-    __fastcall TTCPClientRawHandleThread(bool value);
+    __fastcall TTCPClientRawHandleThread(bool value, TMessageProcessorThread* procThread);
     ~TTCPClientRawHandleThread();
 };
 //---------------------------------------------------------------------------
@@ -98,7 +99,7 @@ class TTCPClientSBSHandleThread : public TThread
 {
 private:
     AnsiString StringMsgBuffer;
-    TMessageProcessorThread* processorThread;
+    TMessageProcessorThread* msgProcThread;
     void __fastcall StopPlayback(void);
     void __fastcall StopTCPClient(void);
 
@@ -109,7 +110,7 @@ public:
     bool UseFileInsteadOfNetwork;
     bool First;
     __int64 LastTime;
-    __fastcall TTCPClientSBSHandleThread(bool value);
+    __fastcall TTCPClientSBSHandleThread(bool value, TMessageProcessorThread* procThread);
     ~TTCPClientSBSHandleThread();
 };
 //---------------------------------------------------------------------------
@@ -272,6 +273,8 @@ private: // User declarations
     AirportManager AirportMgr;
     RouteManager RouteMgr;
     AircraftFilter DefaultFilter;
+
+    TMessageProcessorThread* msgProcThread; // single thread which has same lifecycle as the application
 public:  // User declarations
     __fastcall TForm1(TComponent *Owner);
     __fastcall ~TForm1();
