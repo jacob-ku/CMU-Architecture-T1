@@ -18,6 +18,7 @@
 #include "DisplayGUI.h"
 #include "AreaDialog.h"
 #include "ntds2d.h"
+#include "AircraftFilter/ZoneFilter.h"
 #include "LatLonConv.h"
 #include "PointInPolygon.h"
 #include "DecodeRawADS_B.h"
@@ -411,6 +412,14 @@ void __fastcall TForm1::DrawObjects(void)
 
     // --- drawing area of interest (polygon) ---
     DrawAirportsBatch();
+    TArea screenBoundsArea = getScreenBoundsAsArea();
+    
+    std::unique_ptr<AirplaneFilterInterface> screenfilter = std::make_unique<ZoneFilter>();
+    screenfilter->updateFilterArea(screenBoundsArea, "screen_bounds");
+    DefaultFilter.addFilter("screen_bounds", std::move(screenfilter));
+    DefaultFilter.activateFilter("screen_bounds");
+    
+    // AreaFilter.filterAircraftPosition(40.0, -80.0);
     if (AreaTemp)
     {
         glPointSize(3.0);
@@ -483,9 +492,16 @@ void __fastcall TForm1::DrawObjects(void)
             Tri = Tri->next;
         }
     }
-
+    int filtered = 0;
     // --- drawing aircrafts ---
     AircraftCountLabel->Caption = IntToStr((int)ght_size(HashTable));
+
+    
+    // Performance measurement for aircraft processing loop
+    static int loopPerfCounter = 0;
+    static double totalLoopTime = 0.0;
+    auto loopStart = std::chrono::high_resolution_clock::now();
+
     for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
          Data; Data = (TADS_B_Aircraft *)ght_next(HashTable, &iterator, (const void **)&Key))
     {
@@ -496,6 +512,21 @@ void __fastcall TForm1::DrawObjects(void)
             }
 
             ViewableAircraft++;
+            if(DefaultFilter.filterAircraftPosition(Data->Latitude, Data->Longitude))
+            {
+                filtered++; // Skip aircraft if it does not match the filter criteria
+            } else
+            {
+                continue; // Reset filtered count if aircraft matches the filter
+            }
+            
+            if(AreaFilter.filterAircraftPosition(Data->Latitude, Data->Longitude))
+            {
+                filtered++; // Skip aircraft if it does not match the filter criteria
+            } else
+            {
+                continue; // Reset filtered count if aircraft matches the filter
+            }
             glColor4f(1.0, 1.0, 1.0, 1.0);  // white color - is this necessary?
 
             LatLon2XY(Data->Latitude, Data->Longitude, ScrX, ScrY);
@@ -616,6 +647,27 @@ void __fastcall TForm1::DrawObjects(void)
 
         }
     }
+    // End performance measurement for aircraft processing loop
+    auto loopEnd = std::chrono::high_resolution_clock::now();
+    auto loopDuration = std::chrono::duration_cast<std::chrono::milliseconds>(loopEnd - loopStart);
+    totalLoopTime += loopDuration.count();
+    loopPerfCounter++;
+    
+    // Output performance data every 100 measurements
+    if (loopPerfCounter >= 100) {
+        double avgLoopTime = totalLoopTime / loopPerfCounter;
+        std::cout << "Aircraft processing loop avg time: " << avgLoopTime << " milliseconds (over " << loopPerfCounter << " iterations)" << std::endl;
+        loopPerfCounter = 0;
+        totalLoopTime = 0.0;
+    }
+	    // Output filtered aircraft count every 300 calls
+    static int outputCounter = 0;
+    outputCounter++;
+    if (outputCounter >= 300) {
+        std::cout << "Filtered aircraft count: " << filtered << std::endl;
+        outputCounter = 0;
+	}
+
 
     // --- side bar - contents for text box: Close Control which is for hooked airplane ----
     ViewableAircraftCountLabel->Caption = ViewableAircraft;
@@ -1148,6 +1200,9 @@ void __fastcall TForm1::DeleteClick(TObject *Sender)
             int Index;
 
             Area = (TArea *)AreaListView->Items->Item[i]->Data;
+            std::cout << "Deleting area: " << Area->Name.c_str() << std::endl;
+            AreaFilter.removeFilter(AnsiStringToStdString(Area->Name));
+
             for (Index = 0; Index < Areas->Count; Index++)
             {
                 if (Area == Areas->Items[Index])
@@ -2251,6 +2306,23 @@ static int FinshARTCCBoundary(void)
     Form1->AreaListView->Items->Item[Row]->Data = Form1->AreaTemp;
     Form1->AreaListView->Items->Item[Row]->SubItems->Add("");
     Form1->AreaListView->Items->EndUpdate();
+    
+    // Original code (commented out for backup)
+    /*
+    std::unique_ptr<AirplaneFilterInterface> artccBoundaryFilter(new ZoneFilter());
+    TArea *currentArea;
+    currentArea = Form1->AreaTemp;
+    std::string areaName(Form1->AnsiStringToStdString(currentArea->Name));
+    std::cout << "Adding filter area: " << areaName << std::endl;
+    artccBoundaryFilter->updateFilterArea(*currentArea, Form1->AnsiStringToStdString(currentArea->Name));
+    Form1->AreaFilter.addFilter(Form1->AnsiStringToStdString(currentArea->Name), std::move(artccBoundaryFilter));
+    Form1->AreaFilter.activateFilter(Form1->AnsiStringToStdString(currentArea->Name));
+    printf("Area %s added to AreaFilter\n", currentArea->Name.c_str());
+    */
+    
+    // Add area to filter using extracted function
+    Form1->AddAreaToFilter(Form1->AreaTemp);
+    
     Form1->AreaTemp = NULL;
     return 0;
 }
@@ -2508,6 +2580,13 @@ void __fastcall TForm1::DrawTowerImage(float x, float y, float scale)
         return; 
     }
     
+    // Save current OpenGL state
+    GLboolean blendEnabled = glIsEnabled(GL_BLEND);
+    GLboolean textureEnabled = glIsEnabled(GL_TEXTURE_2D);
+    GLint blendSrc, blendDst;
+    glGetIntegerv(GL_BLEND_SRC, &blendSrc);
+    glGetIntegerv(GL_BLEND_DST, &blendDst);
+    
     glPushMatrix();
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
@@ -2528,8 +2607,11 @@ void __fastcall TForm1::DrawTowerImage(float x, float y, float scale)
     glEnd();
     
     glBindTexture(GL_TEXTURE_2D, 0);
-    glDisable(GL_BLEND);
-    glDisable(GL_TEXTURE_2D);
+    
+    // Restore previous OpenGL state
+    if (!textureEnabled) glDisable(GL_TEXTURE_2D);
+    if (!blendEnabled) glDisable(GL_BLEND);
+    else glBlendFunc(blendSrc, blendDst);
     glPopMatrix();
 }
 //---------------------------------------------------------------------------
@@ -2593,3 +2675,77 @@ void __fastcall TForm1::HandlePIErrorState(const int &code) {
         LabelErrorMessage->Font->Color = clGreen;
     }
 }
+TArea __fastcall TForm1::getScreenBoundsAsArea()
+{
+    TArea screenArea;
+    
+    // Initialize the area structure
+    screenArea.Name = "Screen Bounds";
+    screenArea.Color = clRed;  // Default color
+    screenArea.NumPoints = 4;  // Rectangle has 4 corners
+    screenArea.Selected = false;
+    screenArea.Triangles = nullptr;
+    
+    // Get the current screen bounds
+    double minLat, maxLat, minLon, maxLon;
+    getScreenLatLonBounds(minLat, maxLat, minLon, maxLon);
+    
+    // Create rectangle points in clockwise order
+    // Bottom-left
+    screenArea.Points[0][0] = minLon;  // Longitude
+    screenArea.Points[0][1] = minLat;  // Latitude
+    screenArea.Points[0][2] = 0.0;     // Altitude
+    
+    // Bottom-right
+    screenArea.Points[1][0] = maxLon;  // Longitude
+    screenArea.Points[1][1] = minLat;  // Latitude
+    screenArea.Points[1][2] = 0.0;     // Altitude
+    
+    // Top-right
+    screenArea.Points[2][0] = maxLon;  // Longitude
+    screenArea.Points[2][1] = maxLat;  // Latitude
+    screenArea.Points[2][2] = 0.0;     // Altitude
+    
+    // Top-left
+    screenArea.Points[3][0] = minLon;  // Longitude
+    screenArea.Points[3][1] = maxLat;  // Latitude
+    screenArea.Points[3][2] = 0.0;     // Altitude
+    
+    // Copy Points to PointsAdj (screen coordinates will be calculated when needed)
+    for (int i = 0; i < 4; i++) {
+        screenArea.PointsAdj[i][0] = screenArea.Points[i][0];
+        screenArea.PointsAdj[i][1] = screenArea.Points[i][1];
+        screenArea.PointsAdj[i][2] = screenArea.Points[i][2];
+    }
+    
+    return screenArea;
+}
+//---------------------------------------------------------------------------
+
+std::string TForm1::AnsiStringToStdString(const AnsiString& ansiStr)
+{
+    if (ansiStr.IsEmpty()) {
+        return std::string();
+    }
+    
+    // Convert AnsiString to std::string using c_str()
+    return std::string(ansiStr.c_str());
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::AddAreaToFilter(TArea* area)
+{
+    if (!area) {
+        std::cerr << "Error: Cannot add null area to filter" << std::endl;
+        return;
+    }
+    
+    std::unique_ptr<AirplaneFilterInterface> artccBoundaryFilter(new ZoneFilter());
+    std::string areaName(AnsiStringToStdString(area->Name));
+    std::cout << "Adding filter area: " << areaName << std::endl;
+    artccBoundaryFilter->updateFilterArea(*area, AnsiStringToStdString(area->Name));
+    AreaFilter.addFilter(AnsiStringToStdString(area->Name), std::move(artccBoundaryFilter));
+    AreaFilter.activateFilter(AnsiStringToStdString(area->Name));
+    printf("Area %s added to AreaFilter\n", area->Name.c_str());
+}
+//---------------------------------------------------------------------------

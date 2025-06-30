@@ -20,6 +20,7 @@
 #include "FlatEarthView.h"
 #include "ght_hash_table.h"
 #include "TriangulatPoly.h"
+#include "TArea.h"
 #include <Dialogs.hpp>
 #include <IdTCPClient.hpp>
 #include <IdTCPConnection.hpp>
@@ -27,6 +28,10 @@
 #include "Map/Providers/MapProviderFactory.h"
 #include "MetadataManager/AirportManager.h"
 #include "MetadataManager/RouteManager.h"
+#include "AircraftFilter/AircraftFilter.h"
+#include "AircraftFilter/AirplaneFilterInterface.h"
+#include "AircraftFilter/ZoneFilter.h"
+
 #include <queue>
 #include "ErrorHandling/PIErrorMonitor.h"
 
@@ -46,25 +51,8 @@ typedef struct
     uint32_t ICAO_CPA;
 } TTrackHook;
 
-typedef struct
-{
-    double lat;
-    double lon;
-    double hae;
-} TPolyLine;
-
 #define MAX_AREA_POINTS 500
 
-typedef struct
-{
-    AnsiString Name;
-    TColor Color;
-    DWORD NumPoints;
-    pfVec3 Points[MAX_AREA_POINTS];
-    pfVec3 PointsAdj[MAX_AREA_POINTS];
-    TTriangles *Triangles;
-    bool Selected;
-} TArea;    // Target Area - area of interest
 
 //---------------------------------------------------------------------------
 class TMessageProcessorThread : public TThread
@@ -280,6 +268,7 @@ private: // User declarations
     void __fastcall FormClose(TObject *Sender, TCloseAction &Action);
     AirportManager AirportMgr;
     RouteManager RouteMgr;
+    AircraftFilter DefaultFilter;
 public:  // User declarations
     __fastcall TForm1(TComponent *Owner);
     __fastcall ~TForm1();
@@ -308,6 +297,9 @@ public:  // User declarations
     void getScreenLatLonBounds(double &minLat, double &maxLat, double &minLon, double &maxLon);
     void __fastcall HandlePIErrorState(const int &code);
 
+    TArea getScreenBoundsAsArea();
+    std::string AnsiStringToStdString(const AnsiString& ansiStr);
+    void __fastcall AddAreaToFilter(TArea* area);
     int MouseDownX, MouseDownY;
     bool MouseDown;
     TTrackHook TrackHook;
@@ -345,6 +337,8 @@ public:  // User declarations
     int GetUnregisteredAircraftCount(void);
     GLuint towerTextureID;
     bool towerTextureLoaded;
+    AircraftFilter AreaFilter;
+
 };
 //---------------------------------------------------------------------------
 extern PACKAGE TForm1 *Form1;
