@@ -229,6 +229,7 @@ class TForm1 : public TForm
     void __fastcall ZoomInClick(TObject *Sender);
     void __fastcall ZoomOutClick(TObject *Sender);
     void __fastcall Timer2Timer(TObject *Sender);
+    
     void __fastcall PurgeButtonClick(TObject *Sender);
     void __fastcall InsertClick(TObject *Sender);
     void __fastcall CancelClick(TObject *Sender);
@@ -344,6 +345,7 @@ public:  // User declarations
     bool towerTextureLoaded;
     AircraftFilter AreaFilter;
 
+    void PurgeInternal(std::function<bool(TADS_B_Aircraft*)> shouldPurge);
 };
 //---------------------------------------------------------------------------
 extern PACKAGE TForm1 *Form1;
