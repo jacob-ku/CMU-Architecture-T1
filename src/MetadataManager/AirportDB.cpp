@@ -24,8 +24,6 @@ AirportDB::~AirportDB() {
     std::cout << "[MetadataManager] AirportDB destructor completed" << std::endl;
 }
 
-
-
 bool AirportDB::loadFromFile(const std::string& filePath) {
     std::cout << "[MetadataManager] Loading airport data from file: " << filePath << std::endl;
     

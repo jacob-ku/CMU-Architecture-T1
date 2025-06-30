@@ -252,18 +252,8 @@ __fastcall TForm1::TForm1(TComponent *Owner)
     BigQueryRowCount = 0;
     BigQueryFileCount = 0;
     UnregisteredAircraftCount = 0;
-    AirportMgr.LoadAirport();
-    RouteMgr.LoadRouteFromFile();
-    RouteMgr.StartUpdateMonitor();
 
-    AircraftDB = new TAircraftDB();
-    AircraftDB->LoadDatabaseAsync(AircraftDBPathFileName);
-
-//    RouteMgr.LoadRouteFromFile();
-
-    std::string tmpsign = "KAL123";
-
-//    RouteMgr.StartUpdateMonitor();
+    // std::string tmpsign = "KAL123";
     
     // Initialize tower texture
     towerTextureID = 0;
@@ -317,6 +307,18 @@ void __fastcall TForm1::ObjectDisplayInit(TObject *Sender)
     glPushAttrib(GL_LINE_BIT);
     glPopAttrib();
     printf("OpenGL Version %s\n", glGetString(GL_VERSION));
+
+    // ----- Metadata database initialization -----
+    // using local files to initialize
+    AirportMgr.LoadAirport();
+    RouteMgr.LoadRouteFromFile();
+
+    // invoke thread to handle periodic updates
+    RouteMgr.StartUpdateMonitor();
+
+    // load DB asynchronously in background
+    AircraftDB = new TAircraftDB();
+    AircraftDB->LoadDatabaseAsync(AircraftDBPathFileName);
 
     // initialize message processor thread
     if (!msgProcThread)
