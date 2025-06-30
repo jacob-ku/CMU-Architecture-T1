@@ -518,7 +518,8 @@ void __fastcall TForm1::DrawObjects(void)
     // Get zoom level and Define zoom threshold constants for better performance
     float zoomLevel = getCurrentZoomLevel();
     const float ZOOM_THRESHOLD_FOR_DETAILED_VIEW = 0.5f;
-    
+    float lastR = -1, lastG = -1, lastB = -1, lastA = -1;
+    const float colorEps = 1e-5f;
     for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
          Data; Data = (TADS_B_Aircraft *)ght_next(HashTable, &iterator, (const void **)&Key))
     {
@@ -544,23 +545,32 @@ void __fastcall TForm1::DrawObjects(void)
             {
                 continue; // Reset filtered count if aircraft matches the filter
             }
-            glColor4f(1.0, 1.0, 1.0, 1.0);  // white color - is this necessary?
-            
+            // glColor4f(1.0, 1.0, 1.0, 1.0);  // white color - is this necessary?
+            // 좌표 변환 1회만 수행
             LatLon2XY(Data->Latitude, Data->Longitude, ScrX, ScrY);
-            // DrawPoint(ScrX,ScrY);
+            // 화면 밖이면 continue (예: -50~Width+50, -50~Height+50 범위만)
+            if (ScrX < -50 || ScrX > ObjectDisplay->Width + 50 || ScrY < -50 || ScrY > ObjectDisplay->Height + 50)
+                continue;
+
+            float r = 1.0f, g = 1.0f, b = 1.0f, a = 1.0f;
             if (!AircraftDB->aircraft_is_registered(Data->ICAO)) {
-                glColor4f(0.5, 0.5, 0.5, 1.0);  // unregistered - gray color
+                r = g = b = 0.5f; // gray
             } else if (Data->HaveSpeedAndHeading) {
-                glColor4f(0.0, 1.0, 0.0, 1.0);  // with speed & heading - basic color is Green
+                r = 0.0f; g = 1.0f; b = 0.0f; // green
                 if (Data->IsHelicopter) {
-                    glColor4f(1.0, 0.41, 0.71, 1.0) ; // helicopter color is Pink
+                    r = 1.0f; g = 0.41f; b = 0.71f; // pink
                 }
                 if (Data->IsMilitary) {
-                    glColor4f(0.0, 0.0, 1.0, 1.0) ; // military color is Blue
+                    r = 0.0f; g = 0.0f; b = 1.0f; // blue
                 }
             } else {
                 Data->Heading = 0.0;
-                glColor4f(1.0, 0.0, 0.0, 1.0);  // no speed & heading - red
+                r = 1.0f; g = 0.0f; b = 0.0f; // red
+            }
+            // float 비교 시 epsilon 사용
+            if (fabs(r - lastR) > colorEps || fabs(g - lastG) > colorEps || fabs(b - lastB) > colorEps || fabs(a - lastA) > colorEps) {
+                glColor4f(r, g, b, a);
+                lastR = r; lastG = g; lastB = b; lastA = a;
             }
 
             if (zoomLevel > ZOOM_THRESHOLD_FOR_DETAILED_VIEW) {
@@ -568,6 +578,7 @@ void __fastcall TForm1::DrawObjects(void)
             } else {
                 DrawAirplaneImage(ScrX, ScrY, 0.5, Data->Heading, Data->SpriteImage);   // Draw airplane image. scale is changed to smaller
             }
+            
 
             // heading line
             if ((Data->HaveSpeedAndHeading) && (TimeToGoCheckBox->State == cbChecked))
@@ -578,7 +589,10 @@ void __fastcall TForm1::DrawObjects(void)
                 {
                     double ScrX2, ScrY2;
                     LatLon2XY(lat, lon, ScrX2, ScrY2);
-                    glColor4f(1.0, 1.0, 0.0, 1.0);  // yellow color for heading line
+                    if (fabs(1.0f - lastR) > colorEps || fabs(1.0f - lastG) > colorEps || fabs(0.0f - lastB) > colorEps || fabs(1.0f - lastA) > colorEps) {
+                        glColor4f(1.0f, 1.0f, 0.0f, 1.0f); // yellow
+                        lastR = 1.0f; lastG = 1.0f; lastB = 0.0f; lastA = 1.0f;
+                    }
                     glBegin(GL_LINE_STRIP);
                     glVertex2f(ScrX, ScrY);
                     glVertex2f(ScrX2, ScrY2);
@@ -1901,8 +1915,6 @@ void __fastcall TMessageProcessorThread::Execute(void)
         }
     }
 }
-//---------------------------------------------------------------------------
-// [END] TMessageProcessorThread
 //---------------------------------------------------------------------------
 void __fastcall TForm1::SBSRecordButtonClick(TObject *Sender)
 {
