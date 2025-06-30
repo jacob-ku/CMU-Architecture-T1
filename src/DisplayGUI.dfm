@@ -298,7 +298,7 @@ object Form1: TForm1
         Width = 110
         Height = 20
         TabOrder = 10
-        Text = '127.0.0.1'
+        Text = '172.20.2.97'
       end
       object CycleImages: TCheckBox
         Left = 107
@@ -1016,16 +1016,28 @@ object Form1: TForm1
     object File1: TMenuItem
       Caption = 'File'
       object UseSBSRemote: TMenuItem
-        Caption = 'ADS-B Hub'
+        Caption = 'SBS Hub'
         OnClick = UseSBSRemoteClick
       end
       object UseSBSLocal: TMenuItem
-        Caption = 'ADS-B Local'
+        Caption = 'SBS Local'
         OnClick = UseSBSLocalClick
       end
       object LoadARTCCBoundaries1: TMenuItem
         Caption = 'Load ARTCC Boundaries'
         OnClick = LoadARTCCBoundaries1Click
+      end
+      object UseRawRouter: TMenuItem
+        Caption = 'ADS-B Router'
+        OnClick = UseRawRouterClick
+      end
+      object UseRawCmuSecure: TMenuItem
+        Caption = 'ADS-B CMU-SECURE'
+        OnClick = UseRawCmuSecureClick
+      end
+      object UseRawHyattClick: TMenuItem
+        Caption = 'ADS-B Hyatt'
+        OnClick = UseRawHyattClick
       end
       object Exit1: TMenuItem
         Caption = 'Exit'

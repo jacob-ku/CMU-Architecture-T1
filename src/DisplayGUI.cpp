@@ -2118,12 +2118,27 @@ void __fastcall TForm1::UseSBSRemoteClick(TObject *Sender)
     SBSIpAddress->Text = "data.adsbhub.org";
 }
 //---------------------------------------------------------------------------
-
 void __fastcall TForm1::UseSBSLocalClick(TObject *Sender)
 {
     SBSIpAddress->Text = "128.237.96.41";
 }
 //---------------------------------------------------------------------------
+void __fastcall TForm1::UseRawRouterClick(TObject *Sender)
+{
+    RawIpAddress->Text = "192.168.0.223";
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::UseRawCmuSecureClick(TObject *Sender)
+{
+    RawIpAddress->Text = "172.26.43.119";
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::UseRawHyattClick(TObject *Sender)
+{
+    RawIpAddress->Text = "172.20.2.97";
+}
+//---------------------------------------------------------------------------
+
 static bool DeleteFilesWithExtension(AnsiString dirPath, AnsiString extension)
 {
     AnsiString searchPattern = dirPath + "\\*." + extension;

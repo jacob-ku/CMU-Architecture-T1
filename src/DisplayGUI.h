@@ -259,6 +259,9 @@ class TForm1 : public TForm
     void __fastcall UseSBSRemoteClick(TObject *Sender);
     void __fastcall UseSBSLocalClick(TObject *Sender);
     void __fastcall LoadARTCCBoundaries1Click(TObject *Sender);
+    void __fastcall UseRawRouterClick(TObject *Sender);
+    void __fastcall UseRawCmuSecureClick(TObject *Sender);
+    void __fastcall UseRawHyattClick(TObject *Sender);
 
 private: // User declarations
     MapProvider* currentMapProvider;
