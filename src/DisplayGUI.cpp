@@ -2515,6 +2515,9 @@ void __fastcall TForm1::DrawTowerImage(float x, float y, float scale)
     
     glBindTexture(GL_TEXTURE_2D, towerTextureID);
     
+    // Set sky blue color to make tower more visible
+    glColor4f(0.5f, 0.8f, 1.0f, 1.0f); // Sky blue with full opacity
+    
     glTranslatef(x, y, 0.0f);
     
     
@@ -2526,6 +2529,9 @@ void __fastcall TForm1::DrawTowerImage(float x, float y, float scale)
     glTexCoord2f(1.0f, 1.0f); glVertex2f(size/2, -size/2); 
     glTexCoord2f(0.0f, 1.0f); glVertex2f(-size/2, -size/2);
     glEnd();
+    
+    // Reset color to white to not affect other drawings
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_BLEND);
