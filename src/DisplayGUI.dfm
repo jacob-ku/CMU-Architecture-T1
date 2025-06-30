@@ -51,8 +51,8 @@ object Form1: TForm1
     Color = clWindow
     Constraints.MaxWidth = 250
     TabOrder = 0
-    ExplicitLeft = 1406
-    ExplicitHeight = 1078
+    ExplicitLeft = 1414
+    ExplicitHeight = 1102
     object Panel1: TPanel
       Left = 1
       Top = 962
@@ -60,7 +60,7 @@ object Form1: TForm1
       Height = 147
       Align = alBottom
       TabOrder = 0
-      ExplicitTop = 930
+      ExplicitTop = 954
       object Label12: TLabel
         Left = 8
         Top = 8
@@ -160,7 +160,7 @@ object Form1: TForm1
       TabOrder = 1
       object Label15: TLabel
         Left = 72
-        Top = 502
+        Top = 517
         Width = 98
         Height = 13
         Caption = 'Areas Of Interest'
@@ -173,7 +173,7 @@ object Form1: TForm1
       end
       object DrawMap: TCheckBox
         Left = 5
-        Top = 351
+        Top = 373
         Width = 96
         Height = 17
         Caption = 'Display Map'
@@ -189,7 +189,7 @@ object Form1: TForm1
       end
       object PurgeStale: TCheckBox
         Left = 5
-        Top = 374
+        Top = 396
         Width = 96
         Height = 19
         Caption = 'Purge Stale'
@@ -205,7 +205,7 @@ object Form1: TForm1
       end
       object CSpinStaleTime: TCSpinEdit
         Left = 107
-        Top = 351
+        Top = 373
         Width = 62
         Height = 21
         Increment = 5
@@ -216,7 +216,7 @@ object Form1: TForm1
       end
       object PurgeButton: TButton
         Left = 186
-        Top = 351
+        Top = 373
         Width = 51
         Height = 16
         Caption = 'Purge'
@@ -225,9 +225,9 @@ object Form1: TForm1
       end
       object AreaListView: TListView
         Left = 5
-        Top = 521
+        Top = 536
         Width = 240
-        Height = 97
+        Height = 82
         Columns = <
           item
             Caption = 'Area'
@@ -285,7 +285,7 @@ object Form1: TForm1
       end
       object RawConnectButton: TButton
         Left = 5
-        Top = 399
+        Top = 421
         Width = 104
         Height = 18
         Caption = 'Raw Connect'
@@ -294,7 +294,7 @@ object Form1: TForm1
       end
       object RawIpAddress: TEdit
         Left = 115
-        Top = 399
+        Top = 421
         Width = 110
         Height = 20
         TabOrder = 10
@@ -302,7 +302,7 @@ object Form1: TForm1
       end
       object CycleImages: TCheckBox
         Left = 107
-        Top = 374
+        Top = 396
         Width = 96
         Height = 19
         Caption = 'Cycle Images'
@@ -317,7 +317,7 @@ object Form1: TForm1
       end
       object Panel4: TPanel
         Left = 5
-        Top = 85
+        Top = 107
         Width = 240
         Height = 260
         BevelInner = bvLowered
@@ -706,7 +706,7 @@ object Form1: TForm1
         Left = 5
         Top = 2
         Width = 240
-        Height = 77
+        Height = 99
         BevelInner = bvLowered
         BevelKind = bkFlat
         TabOrder = 13
@@ -821,6 +821,19 @@ object Form1: TForm1
           Font.Style = [fsBold]
           ParentFont = False
         end
+        object UnregisteredCount: TLabel
+          Left = 5
+          Top = 77
+          Width = 87
+          Height = 13
+          Caption = 'Unregistered: 0'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
         object SystemTime: TStaticText
           Left = 85
           Top = 4
@@ -838,7 +851,7 @@ object Form1: TForm1
       end
       object RawPlaybackButton: TButton
         Left = 115
-        Top = 423
+        Top = 445
         Width = 96
         Height = 17
         Caption = 'Raw Playback'
@@ -847,7 +860,7 @@ object Form1: TForm1
       end
       object RawRecordButton: TButton
         Left = 5
-        Top = 423
+        Top = 445
         Width = 104
         Height = 17
         Caption = 'Raw Record'
@@ -856,7 +869,7 @@ object Form1: TForm1
       end
       object SBSConnectButton: TButton
         Left = 5
-        Top = 446
+        Top = 468
         Width = 104
         Height = 20
         Caption = 'SBS Connect'
@@ -865,7 +878,7 @@ object Form1: TForm1
       end
       object SBSIpAddress: TEdit
         Left = 115
-        Top = 446
+        Top = 468
         Width = 117
         Height = 20
         TabOrder = 17
@@ -873,7 +886,7 @@ object Form1: TForm1
       end
       object SBSRecordButton: TButton
         Left = 5
-        Top = 472
+        Top = 494
         Width = 104
         Height = 17
         Caption = 'SBS Record'
@@ -882,7 +895,7 @@ object Form1: TForm1
       end
       object SBSPlaybackButton: TButton
         Left = 115
-        Top = 472
+        Top = 494
         Width = 96
         Height = 17
         Caption = 'SBS Playback'
@@ -897,22 +910,9 @@ object Form1: TForm1
       Height = 313
       Align = alClient
       TabOrder = 2
-      object UnregisteredCountLabel: TLabel
-        Left = 13
-        Top = 80
-        Width = 87
-        Height = 13
-        Caption = 'Unregistered: 0'
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Tahoma'
-        Font.Style = [fsBold]
-        ParentFont = False
-      end
       object LabelErrorMessage: TLabel
         Left = 13
-        Top = 102
+        Top = 83
         Width = 150
         Height = 13
         Caption = 'Error Message Placeholder'
@@ -923,16 +923,9 @@ object Form1: TForm1
         Font.Style = [fsBold]
         ParentFont = False
       end
-      object BigQuerySeparatorBottom: TBevel
-        Left = 5
-        Top = 69
-        Width = 238
-        Height = 2
-        Shape = bsTopLine
-      end
       object MapComboBox: TComboBox
         Left = 5
-        Top = 14
+        Top = 6
         Width = 108
         Height = 20
         Style = csDropDownList
@@ -948,7 +941,7 @@ object Form1: TForm1
       end
       object CheckBoxUpdateMapTiles: TCheckBox
         Left = 119
-        Top = 14
+        Top = 7
         Width = 150
         Height = 17
         Caption = 'Update map tiles'
@@ -965,8 +958,8 @@ object Form1: TForm1
         OnClick = BigQueryCheckBoxClick
       end
       object HideUnregisteredCheckBox: TCheckBox
-        Left = 120
-        Top = 79
+        Left = 5
+        Top = 60
         Width = 120
         Height = 17
         Caption = 'Hide unregistered'
