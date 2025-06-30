@@ -1099,55 +1099,58 @@ void __fastcall TForm1::ZoomOutClick(TObject *Sender)
     ObjectDisplay->Repaint();
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Purge(void)
+// Internal helper to remove aircrafts matching predicate
+void TForm1::PurgeInternal(std::function<bool(TADS_B_Aircraft*)> shouldPurge)
 {
     uint32_t *Key;
     ght_iterator_t iterator;
     TADS_B_Aircraft *Data;
     void *p;
-    __int64 CurrentTime = GetCurrentTimeInMsec();
-    __int64 StaleTimeInMs = CSpinStaleTime->Value * 1000;
 
-    if (PurgeStale->Checked == false)
-        return;
+    // Collect keys to remove to avoid iterator invalidation
+    std::vector<uint32_t> keysToRemove;
 
     for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
          Data; Data = (TADS_B_Aircraft *)ght_next(HashTable, &iterator, (const void **)&Key))
     {
-        if ((CurrentTime - Data->LastSeen) >= StaleTimeInMs)
-        {
-            p = ght_remove(HashTable, sizeof(*Key), Key);
-            ;
-            if (!p)
-                ShowMessage("Removing the current iterated entry failed! This is a BUG\n");
-
-            delete Data;
-        }
+        if (shouldPurge(Data))
+            keysToRemove.push_back(*Key);
     }
+
+    for (auto icao : keysToRemove)
+    {
+        Data = (TADS_B_Aircraft *)ght_get(HashTable, sizeof(icao), &icao);
+        p = ght_remove(HashTable, sizeof(icao), &icao);
+        if (!p)
+            ShowMessage("Removing the current iterated entry failed! This is a BUG\n");
+        delete Data;
+    }
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::Purge(void)
+{
+    if (PurgeStale->Checked == false)
+        return;
+
+    __int64 CurrentTime = GetCurrentTimeInMsec();
+    __int64 StaleTimeInMs = CSpinStaleTime->Value * 1000;
+
+    auto shouldPurge = [CurrentTime, StaleTimeInMs](TADS_B_Aircraft* Data) {
+        return (CurrentTime - Data->LastSeen) >= StaleTimeInMs;
+    };
+
+    PurgeInternal(shouldPurge);
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::PurgeButtonClick(TObject *Sender)
+{
+    auto alwaysPurge = [](TADS_B_Aircraft*) { return true; };
+    PurgeInternal(alwaysPurge);
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::Timer2Timer(TObject *Sender)
 {
     Purge();
-}
-//---------------------------------------------------------------------------
-void __fastcall TForm1::PurgeButtonClick(TObject *Sender)
-{
-    uint32_t *Key;
-    ght_iterator_t iterator;
-    TADS_B_Aircraft *Data;
-    void *p;
-
-    for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
-         Data; Data = (TADS_B_Aircraft *)ght_next(HashTable, &iterator, (const void **)&Key))
-    {
-
-        p = ght_remove(HashTable, sizeof(*Key), Key);
-        if (!p)
-            ShowMessage("Removing the current iterated entry failed! This is a BUG\n");
-
-        delete Data;
-    }
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::InsertClick(TObject *Sender)
