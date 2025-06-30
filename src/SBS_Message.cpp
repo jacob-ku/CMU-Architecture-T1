@@ -334,15 +334,11 @@ bool SBS_Message_Decode(char *msg)
 
     if ((SBS_Fields[SBS_CALLSIGN]) && strlen(SBS_Fields[SBS_CALLSIGN]) > 0)
     {
-        strncpy(ADS_B_Aircraft->FlightNum, SBS_Fields[SBS_CALLSIGN], 9);
-        ADS_B_Aircraft->FlightNum[8] = '\0';
+        int len = strlen(SBS_Fields[SBS_CALLSIGN]);     // maximum 8 by specification
+        strncpy(ADS_B_Aircraft->FlightNum, SBS_Fields[SBS_CALLSIGN], len + 1);    // including null terminator
         ADS_B_Aircraft->HaveFlightNum = true;
-        for (unsigned i = 0; i < 8; ++i)
+        for (unsigned i = 0; i < len; ++i)
         {
-            if (ADS_B_Aircraft->FlightNum[i] == '\0')
-            {
-                ADS_B_Aircraft->FlightNum[i] = ' ';
-            }
             if (!(ADS_B_Aircraft->FlightNum[i] >= 'A' && ADS_B_Aircraft->FlightNum[i] <= 'Z') &&
                 !(ADS_B_Aircraft->FlightNum[i] >= '0' && ADS_B_Aircraft->FlightNum[i] <= '9') &&
                 ADS_B_Aircraft->FlightNum[i] != ' ')

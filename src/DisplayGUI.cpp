@@ -628,7 +628,7 @@ void __fastcall TForm1::DrawObjects(void)
                 
                 // Add callsign if available
                 if (Data->HaveFlightNum && strlen(Data->FlightNum) > 0) {
-                    AnsiString flightNum = AnsiString(Data->FlightNum).Trim();
+                    AnsiString flightNum = AnsiString(Data->FlightNum).Trim();  // can remove trim()
                     if (!flightNum.IsEmpty()) {
                         callsignHeadAltSpeedText += flightNum;
                     } else {
