@@ -39,6 +39,8 @@ void __fastcall TAreaConfirm::OkButtonClick(TObject *Sender)
     Form1->AreaTemp->Color = ColorBox1->Selected;
     Form1->Areas->Add(Form1->AreaTemp);
 
+    Form1->AddAreaToFilter(Form1->AreaTemp);
+
     Form1->AreaListView->Items->BeginUpdate();
     Form1->AreaListView->Items->Add();
     Row = Form1->AreaListView->Items->Count - 1;
