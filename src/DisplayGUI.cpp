@@ -2432,7 +2432,7 @@ int TForm1::GetUnregisteredAircraftCount(void)
 void __fastcall TForm1::UpdateUnregisteredCount(void)
 {
     UnregisteredAircraftCount = GetUnregisteredAircraftCount();
-    UnregisteredCountLabel->Caption = "Unregistered: " + IntToStr(UnregisteredAircraftCount);
+    UnregisteredCount->Caption = "Unregistered: " + IntToStr(UnregisteredAircraftCount);
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::HideUnregisteredCheckBoxClick(TObject *Sender)
