@@ -448,20 +448,14 @@ void __fastcall TForm1::DrawObjects(void)
         for (DWORD i = 0; i < AreaTemp->NumPoints; i++)
             LatLon2XY(AreaTemp->Points[i][1], AreaTemp->Points[i][0],
                       AreaTemp->PointsAdj[i][0], AreaTemp->PointsAdj[i][1]);
-
+        // 점과 선을 각각 한 번의 draw call로 묶음
         glBegin(GL_POINTS);
         for (DWORD i = 0; i < AreaTemp->NumPoints; i++)
-        {
-            glVertex2f(AreaTemp->PointsAdj[i][0],
-                       AreaTemp->PointsAdj[i][1]);
-        }
+            glVertex2f(AreaTemp->PointsAdj[i][0], AreaTemp->PointsAdj[i][1]);
         glEnd();
         glBegin(GL_LINE_STRIP);
         for (DWORD i = 0; i < AreaTemp->NumPoints; i++)
-        {
-            glVertex2f(AreaTemp->PointsAdj[i][0],
-                       AreaTemp->PointsAdj[i][1]);
-        }
+            glVertex2f(AreaTemp->PointsAdj[i][0], AreaTemp->PointsAdj[i][1]);
         glEnd();
     }
     Count = Areas->Count;
@@ -469,7 +463,6 @@ void __fastcall TForm1::DrawObjects(void)
     {
         TArea *Area = (TArea *)Areas->Items[i];
         TMultiColor MC;
-
         MC.Rgb = ColorToRGB(Area->Color);
         if (Area->Selected)
         {
@@ -477,7 +470,7 @@ void __fastcall TForm1::DrawObjects(void)
             glPushAttrib(GL_LINE_BIT);
             glLineStipple(3, 0xAAAA);
         }
-
+        // 폴리곤 라인 전체를 한 번에 그리기
         glColor4f(MC.Red / 255.0, MC.Green / 255.0, MC.Blue / 255.0, 1.0);
         glBegin(GL_LINE_LOOP);
         for (j = 0; j < Area->NumPoints; j++)
@@ -491,27 +484,24 @@ void __fastcall TForm1::DrawObjects(void)
             glPopAttrib();
             glLineWidth(2.0);
         }
-
+        // 폴리곤 면 전체를 한 번에 그리기
         glColor4f(MC.Red / 255.0, MC.Green / 255.0, MC.Blue / 255.0, 0.4);
-
         for (j = 0; j < Area->NumPoints; j++)
         {
             LatLon2XY(Area->Points[j][1], Area->Points[j][0],
                       Area->PointsAdj[j][0], Area->PointsAdj[j][1]);
         }
         TTriangles *Tri = Area->Triangles;
-
-        while (Tri)
-        {
+        if (Tri) {
             glBegin(GL_TRIANGLES);
-            glVertex2f(Area->PointsAdj[Tri->indexList[0]][0],
-                       Area->PointsAdj[Tri->indexList[0]][1]);
-            glVertex2f(Area->PointsAdj[Tri->indexList[1]][0],
-                       Area->PointsAdj[Tri->indexList[1]][1]);
-            glVertex2f(Area->PointsAdj[Tri->indexList[2]][0],
-                       Area->PointsAdj[Tri->indexList[2]][1]);
+            while (Tri)
+            {
+                glVertex2f(Area->PointsAdj[Tri->indexList[0]][0], Area->PointsAdj[Tri->indexList[0]][1]);
+                glVertex2f(Area->PointsAdj[Tri->indexList[1]][0], Area->PointsAdj[Tri->indexList[1]][1]);
+                glVertex2f(Area->PointsAdj[Tri->indexList[2]][0], Area->PointsAdj[Tri->indexList[2]][1]);
+                Tri = Tri->next;
+            }
             glEnd();
-            Tri = Tri->next;
         }
     }
     int filtered = 0;
