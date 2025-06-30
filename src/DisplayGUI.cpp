@@ -496,6 +496,11 @@ void __fastcall TForm1::DrawObjects(void)
     // --- drawing aircrafts ---
     AircraftCountLabel->Caption = IntToStr((int)ght_size(HashTable));
     
+    // Performance measurement for aircraft processing loop
+    static int loopPerfCounter = 0;
+    static double totalLoopTime = 0.0;
+    auto loopStart = std::chrono::high_resolution_clock::now();
+
     // Get zoom level and Define zoom threshold constants for better performance
     float zoomLevel = getCurrentZoomLevel();
     const float ZOOM_THRESHOLD_FOR_DETAILED_VIEW = 0.5f;
