@@ -752,34 +752,66 @@ void __fastcall TForm1::DrawObjects(void)
             // draw route line
             std::string callSign = Data->FlightNum;   // CallSign
             const Route* route = RouteMgr.getRouteByCallSign(callSign);
-
-            const std::vector<std::string>& routes = route->getWaypoints();
-
-            if(!routes.empty())
+            if(route != nullptr)
             {
-                std::string departureAirportCode = routes.front();
-                std::string arrivalAirportCode = routes.back();
-    
-                const Airport* departureAirport = AirportMgr.getAirportByCode(departureAirportCode);
-                std::cout << "Departure Airport: " << departureAirport->getName() << std::endl;
-                std::cout << "Departure Airport Code: " << departureAirportCode << std::endl;
-                std::cout << "Departure Airport Latitude: " << departureAirport->getLatitude() << std::endl;
-                std::cout << "Departure Airport Longitude: " << departureAirport->getLongitude() << std::endl;
-                const Airport* arrivalAirport = AirportMgr.getAirportByCode(arrivalAirportCode);
-                std::cout << "Arrival Airport: " << arrivalAirport->getName() << std::endl;
-                std::cout << "Arrival Airport Code: " << arrivalAirportCode << std::endl;
-                std::cout << "Arrival Airport Latitude: " << arrivalAirport->getLatitude() << std::endl;
-                std::cout << "Arrival Airport Longitude: " << arrivalAirport->getLongitude() << std::endl;
+                const std::vector<std::string>& routes = route->getWaypoints();
 
-                // latlon to XY
-//                LatLon2XY(departureAirport->getLatitude(), departureAirport->getLongitude(), ScrX, ScrY);
-//                double arrX, arrY;
-//                LatLon2XY(arrivalAirport->getLatitude(), arrivalAirport->getLongitude(), arrX, arrY);
-//                DrawLeader(ScrX, ScrY, arrX, arrY);
-            } else {
-                std::cout << "No route found for call sign: " << callSign << std::endl;
+                if(!routes.empty())
+                {
+                    // std::cout << "Route found for call sign: " << route->getWaypointStr() << std::endl;
+                    // std::cout << "Route found for call sign: " << routes.size() << std::endl;
+                    std::string departureAirportCode = routes.front();
+                    std::string arrivalAirportCode = routes.back();
+        
+                    const Airport* departureAirport = AirportMgr.getAirportByCode(departureAirportCode);
+                    // std::cout << "Departure Airport: " << departureAirport->getName() << std::endl;
+                    // std::cout << "Departure Airport Code: " << departureAirportCode << std::endl;
+                    // std::cout << "Departure Airport Latitude: " << departureAirport->getLatitude() << std::endl;
+                    // std::cout << "Departure Airport Longitude: " << departureAirport->getLongitude() << std::endl;
+                    const Airport* arrivalAirport = AirportMgr.getAirportByCode(arrivalAirportCode);
+                    // std::cout << "Arrival Airport: " << arrivalAirport->getName() << std::endl;
+                    // std::cout << "Arrival Airport Code: " << arrivalAirportCode << std::endl;
+                    // std::cout << "Arrival Airport Latitude: " << arrivalAirport->getLatitude() << std::endl;
+                    // std::cout << "Arrival Airport Longitude: " << arrivalAirport->getLongitude() << std::endl;
+
+                    // latlon to XY
+                    LatLon2XY(departureAirport->getLatitude(), departureAirport->getLongitude(), ScrX, ScrY);
+                    double arrX, arrY;
+                    LatLon2XY(arrivalAirport->getLatitude(), arrivalAirport->getLongitude(), arrX, arrY);
+
+                    // std::cout << "Departure Airport XY: (" << ScrX << ", " << ScrY << ")" << std::endl;
+                    // std::cout << "Arrival Airport XY: (" << arrX << ", " << arrY << ")" << std::endl;
+                    // std::cout << (GLsizei)ObjectDisplay->Width << ", " << (GLsizei)ObjectDisplay->Height << std::endl;
+
+                    // TODO: whether both points are within the screen bounds
+
+
+                    std::vector<std::pair<double, double>> intersections = cohenSutherlandClip(ScrX, ScrY, arrX, arrY, 0, 0, (GLsizei)ObjectDisplay->Width, (GLsizei)ObjectDisplay->Height);
+
+                    // 결과 출력
+                    // std::cout << "Intersection points:\n";
+                    // for (const auto& point : intersections) {
+                    //     std::cout << "(" << point.first << ", " << point.second << ")\n";
+                    // }
+
+                    glColor4f(0.0, 1.0, 1.0, 1.0); // Cyan color for route line
+                    int numIntersections = intersections.size();
+                    if(numIntersections == 2) {
+                        // Draw the route line between the two intersection points
+                        DrawLeader(intersections[0].first, intersections[0].second, intersections[1].first, intersections[1].second);
+                    } else if(numIntersections >= 1) {
+                        if(computeRegionCode(ScrX, ScrY, 0, 0, (GLsizei)ObjectDisplay->Width, ObjectDisplay->Height) == 0) {
+                            DrawLeader(intersections[0].first, intersections[0].second, ScrX, ScrY);
+                        } else {
+                            DrawLeader(intersections[0].first, intersections[0].second, arrX, arrY);
+                        }
+                    } else {
+                        DrawLeader(ScrX, ScrY, arrX, arrY);
+                    }
+                } else {
+                    std::cout << "No route found for call sign: " << callSign << std::endl;
+                }
             }
-
 
             // draw circle for hooked aircraft
             glColor4f(1.0, 0.0, 0.0, 1.0);
