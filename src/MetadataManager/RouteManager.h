@@ -2,27 +2,21 @@
 #define ROUTEMANAGER_H
 
 #include "RouteManagerInterface.h"
-#include "Route.h"
 #include "RouteDB.h"
-#include <iostream>
-#include <string>
-#include <vector>
 
 class RouteManager : public RouteManagerInterface {
-    private:
-        RouteDB* routeDB;
-    public:
-        std::string routeData;
-        Route dummy;
+private:
+    RouteDB* routeDB;
 
-        RouteManager();
-        ~RouteManager();
+public:
+    RouteManager();
+    ~RouteManager();
 
-        bool LoadRouteFromFile(const std::string& filename = "") override;
+    bool LoadRouteFromFile(const std::string& filename = "") override;
+    std::unordered_map<std::string, Route>& getRouteCallSignMap() override;
+    const Route* getRouteByCallSign(const std::string& callSign) override;
 
-        Route GetRoute(std::string& callsign) override;
-
-        bool StartUpdateMonitor();
+    bool startUpdateMonitor();
 };
 
-#endif
+#endif  // ROUTEMANAGER_H

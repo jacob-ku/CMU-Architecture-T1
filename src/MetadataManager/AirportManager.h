@@ -1,21 +1,20 @@
 #ifndef AIRPORTMANAGER_H
 #define AIRPORTMANAGER_H
 
-#include "AirportDB.h"
 #include "AirportManagerInterface.h"
+#include "AirportDB.h"
 
 class AirportManager : public AirportManagerInterface {
-    private:
-        AirportDB* airportDB;
+private:
+    AirportDB* airportDB;
 
-    public:
-        AirportManager();
-        ~AirportManager();
-        
-        bool LoadAirport(const std::string& sourcefile = "") override;
-        std::unordered_map<std::string, Airport>& getAirportCodeMap() override;
-        Airport getAirportByCode(const std::string& code) override;
-        std::vector<std::string> getAirportList() const override;
+public:
+    AirportManager();
+    ~AirportManager();
+    
+    bool LoadAirportFromFile(const std::string& sourcefile = "") override;
+    std::unordered_map<std::string, Airport>& getAirportCodeMap() override;
+    const Airport* getAirportByCode(const std::string& code) override;
 };
 
-#endif
+#endif  // AIRPORTMANAGER_H
