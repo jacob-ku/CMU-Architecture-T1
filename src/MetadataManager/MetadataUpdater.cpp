@@ -44,17 +44,17 @@ bool MetaDataUpdater::update(const string& src, const std::function<void(bool)>&
         auto lastCallbackTime = std::chrono::steady_clock::now();
         const auto tenMinutes = std::chrono::minutes(10);
         const auto oneHour = std::chrono::hours(1);
-        
+        const int sleepDuration = 1800; // 30 minutes in seconds
         while (!shouldStop) {
             auto currentTime = std::chrono::steady_clock::now();
             
-            std::cout << "[UPDATE_THREAD] Performing 10-minute check..." << std::endl;
+            std::cout << "[UPDATE_THREAD] Performing 30-minute check..." << std::endl;
             std::time_t fileUpdatedTime = webDownloadManager.getLastModifiedTime(src);
             if (fileUpdatedTime == 0) {
                 std::cout << "[UPDATE_THREAD] Failed to get last modified time for: " << src << std::endl;
                 fileUnavailableCallback(true);
-                std::cout << "[UPDATE_THREAD] Retrying after 600 seconds..." << std::endl;
-                for(int i = 0; i < 600 && !shouldStop; ++i) {
+                std::cout << "[UPDATE_THREAD] Retrying after 1800 seconds..." << std::endl;
+                for(int i = 0; i < sleepDuration && !shouldStop; ++i) {
                     std::this_thread::sleep_for(std::chrono::seconds(1));
                 }
                 continue;
@@ -79,7 +79,7 @@ bool MetaDataUpdater::update(const string& src, const std::function<void(bool)>&
                 std::cout << "[UPDATE_THREAD] No new data available" << std::endl;
             }
             
-            for (int i = 0; i < 600 && !shouldStop; ++i) {
+            for (int i = 0; i < sleepDuration && !shouldStop; ++i) {
                 std::this_thread::sleep_for(std::chrono::seconds(1));
             }
         }
@@ -167,7 +167,7 @@ bool MetaDataUpdater::downloadOnBackground(const string &url, const string &outp
         cout << "[ASYNC] Download thread completed for: " << url << endl;
     });
     
-    downloadThread.detach();
+    // downloadThread.detach();
     
     cout << "Background download thread started for: " << url << endl;
     return true;
@@ -282,4 +282,24 @@ void MetaDataUpdater::stopUpdates() {
     } else {
         std::cout << "Failed to stop updates" << std::endl;
     }
+}
+
+MetaDataUpdater::~MetaDataUpdater() {
+    std::cout << "MetaDataUpdater::~MetaDataUpdater() - Starting destructor" << std::endl;
+    
+    // Stop the update thread safely
+    if (isUpdateThreadRunning) {
+        std::cout << "MetaDataUpdater::~MetaDataUpdater() - Stopping update thread..." << std::endl;
+        shouldStop = true;
+        
+        // Wait for the thread to finish
+        if (updateThread.joinable()) {
+            updateThread.join();
+            std::cout << "MetaDataUpdater::~MetaDataUpdater() - Update thread stopped successfully" << std::endl;
+        }
+        
+        isUpdateThreadRunning = false;
+    }
+    
+    std::cout << "MetaDataUpdater::~MetaDataUpdater() - Destructor completed" << std::endl;
 }
