@@ -42,8 +42,8 @@
 #include "Util/WebDownloadManager.h"
 
 /*  소요시간 측정용
-    측정 시작:   EXECUTION_TIMER("SomeName");
-    측정 종료:   int64_t elapsedTime = EXECUTION_TIMER_ELAPSED("SomeName");
+    측정 시작:   EXECUTION_TIMER(SomeName);
+    측정 종료:   EXECUTION_TIMER_ELAPSED(SomeName, elapsedTime);
 */
 #define ELAPSED_TIME_CHK    // NOTE: 사용 시 Enable 할 것
 #include "Util/ExecutionTimer.h"
@@ -402,7 +402,6 @@ static void SetGLColor4f(float r, float g, float b, float a, float colorEps = 1e
 
 void __fastcall TForm1::DrawObjects(void)
 {
-    // ExecutionTimer timer("drawingTime");
     EXECUTION_TIMER(drawingTime);
 
     double ScrX, ScrY;
@@ -1522,6 +1521,15 @@ void __fastcall TForm1::RawPlaybackButtonClick(TObject *Sender)
                 }
                 else
                 {
+                    // 콤보박스에서 속도 읽기
+                    double playbackSpeed = 1.0;
+                    if (RawPlaybackSpeedComboBox)
+                    {
+                        int idx = RawPlaybackSpeedComboBox->ItemIndex;
+                        if (idx == 1) playbackSpeed = 2.0;
+                        else if (idx == 2) playbackSpeed = 3.0;
+                        else playbackSpeed = 1.0;
+                    }
                     TCPClientRawHandleThread = new TTCPClientRawHandleThread(true, msgProcThread);
                     TCPClientRawHandleThread->UseFileInsteadOfNetwork = true;
                     TCPClientRawHandleThread->First = true;
@@ -1530,6 +1538,7 @@ void __fastcall TForm1::RawPlaybackButtonClick(TObject *Sender)
                     TCPClientRawHandleThread->Resume();
                     RawPlaybackButton->Caption = "Stop Raw Playback";
                     RawConnectButton->Enabled = false;
+                    RawPlaybackSpeedComboBox->Enabled = false;
                 }
             }
         }
@@ -1541,12 +1550,13 @@ void __fastcall TForm1::RawPlaybackButtonClick(TObject *Sender)
         PlayBackRawStream = NULL;
         RawPlaybackButton->Caption = "Raw Playback";
         RawConnectButton->Enabled = true;
+        RawPlaybackSpeedComboBox->Enabled = true;
     }
 }
 //---------------------------------------------------------------------------
 // Constructor for the thread class
 __fastcall TTCPClientRawHandleThread::TTCPClientRawHandleThread(bool value,
-    TMessageProcessorThread* procThread) : TThread(value), msgProcThread(procThread)
+    TMessageProcessorThread* procThread, double playbackSpeed) : TThread(value), msgProcThread(procThread), PlaybackSpeed(playbackSpeed)
 {
 	printf("[Thread] TTCPClientRawHandleThread created.\n");
 	FreeOnTerminate = true; // Automatically free the thread object after execution
@@ -1598,8 +1608,13 @@ void __fastcall TTCPClientRawHandleThread::Execute(void)
                 }
                 SleepTime = Time - LastTime;
                 LastTime = Time;
-                if (SleepTime > 0)
-                    Sleep(SleepTime);
+                if (SleepTime > 0 && PlaybackSpeed > 0.0)
+                {
+                    EXECUTION_TIMER(sleepTime);
+                    Sleep((int)(SleepTime / PlaybackSpeed));
+                    EXECUTION_TIMER_ELAPSED(elapsed, sleepTime);
+                    LOG("Raw playback sleep time: " + to_string(elapsed) + "ms");
+                }
                 if (Form1->PlayBackRawStream->EndOfStream)
                 {
                     printf("End Raw Playback 2\n");
@@ -1740,7 +1755,7 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
                     EXECUTION_TIMER(sleepTime);
                     Sleep((int)(SleepTime / PlaybackSpeed));
                     EXECUTION_TIMER_ELAPSED(elapsed, sleepTime);
-                    LOG("Sleep time: " + to_string(elapsed) + "ms");
+                    LOG("SBS playback sleep time: " + to_string(elapsed) + "ms");
                 }
                 if (Form1->PlayBackSBSStream->EndOfStream)
                 {

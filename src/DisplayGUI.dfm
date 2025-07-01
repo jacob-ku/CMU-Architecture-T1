@@ -156,8 +156,8 @@ object Form1: TForm1
       Constraints.MinHeight = 70
       TabOrder = 1
       object Label15: TLabel
-        Left = 72
-        Top = 565
+        Left = 5
+        Top = 597
         Width = 98
         Height = 13
         Caption = 'Areas Of Interest'
@@ -222,7 +222,7 @@ object Form1: TForm1
       end
       object AreaListView: TListView
         Left = 5
-        Top = 584
+        Top = 616
         Width = 240
         Height = 82
         Columns = <
@@ -243,7 +243,7 @@ object Form1: TForm1
       end
       object Insert: TButton
         Left = 5
-        Top = 672
+        Top = 704
         Width = 36
         Height = 18
         Caption = 'Insert'
@@ -252,7 +252,7 @@ object Form1: TForm1
       end
       object Delete: TButton
         Left = 158
-        Top = 672
+        Top = 704
         Width = 44
         Height = 18
         Caption = 'Delete'
@@ -262,7 +262,7 @@ object Form1: TForm1
       end
       object Complete: TButton
         Left = 45
-        Top = 672
+        Top = 704
         Width = 57
         Height = 18
         Caption = 'Complete'
@@ -272,7 +272,7 @@ object Form1: TForm1
       end
       object Cancel: TButton
         Left = 107
-        Top = 672
+        Top = 704
         Width = 41
         Height = 18
         Caption = 'Cancel'
@@ -847,9 +847,9 @@ object Form1: TForm1
         end
       end
       object RawPlaybackButton: TButton
-        Left = 115
-        Top = 445
-        Width = 96
+        Left = 5
+        Top = 469
+        Width = 104
         Height = 17
         Caption = 'Raw Playback'
         TabOrder = 14
@@ -866,7 +866,7 @@ object Form1: TForm1
       end
       object SBSConnectButton: TButton
         Left = 5
-        Top = 468
+        Top = 492
         Width = 104
         Height = 20
         Caption = 'SBS Connect'
@@ -875,7 +875,7 @@ object Form1: TForm1
       end
       object SBSIpAddress: TEdit
         Left = 115
-        Top = 468
+        Top = 492
         Width = 117
         Height = 20
         TabOrder = 17
@@ -883,7 +883,7 @@ object Form1: TForm1
       end
       object SBSRecordButton: TButton
         Left = 5
-        Top = 494
+        Top = 518
         Width = 104
         Height = 17
         Caption = 'SBS Record'
@@ -892,7 +892,7 @@ object Form1: TForm1
       end
       object SBSPlaybackButton: TButton
         Left = 5
-        Top = 517
+        Top = 541
         Width = 103
         Height = 17
         Caption = 'SBS Playback'
@@ -901,7 +901,7 @@ object Form1: TForm1
       end
       object SBSPlaybackSpeedComboBox: TComboBox
         Left = 114
-        Top = 517
+        Top = 541
         Width = 119
         Height = 20
         Style = csDropDownList
@@ -915,7 +915,7 @@ object Form1: TForm1
       end
       object SearchAircraft: TButton
         Left = 5
-        Top = 539
+        Top = 563
         Width = 103
         Height = 20
         Caption = 'Search Aircraft'
@@ -924,7 +924,7 @@ object Form1: TForm1
       end
       object AircraftNumber: TEdit
         Left = 114
-        Top = 539
+        Top = 567
         Width = 118
         Height = 20
         TabOrder = 22
@@ -933,12 +933,26 @@ object Form1: TForm1
       end
       object IsMilitary: TCheckBox
         Left = 5
-        Top = 696
+        Top = 728
         Width = 97
         Height = 17
         Caption = 'Military'
         TabOrder = 23
         OnClick = MilitaryClick
+      end
+      object RawPlaybackSpeedComboBox: TComboBox
+        Left = 115
+        Top = 466
+        Width = 119
+        Height = 20
+        Style = csDropDownList
+        ItemIndex = 0
+        TabOrder = 24
+        Text = 'Speed X1'
+        Items.Strings = (
+          'Speed X1'
+          'Speed X2'
+          'Speed X3')
       end
     end
     object Panel2: TPanel

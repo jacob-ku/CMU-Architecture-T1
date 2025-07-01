@@ -91,7 +91,8 @@ public:
     bool UseFileInsteadOfNetwork;
     bool First;
     __int64 LastTime;
-    __fastcall TTCPClientRawHandleThread(bool value, TMessageProcessorThread* procThread);
+    double PlaybackSpeed; // 추가: RAW 재생속도 (1.0, 2.0, 3.0)
+    __fastcall TTCPClientRawHandleThread(bool value, TMessageProcessorThread* procThread, double playbackSpeed = 1.0);
     ~TTCPClientRawHandleThread();
 };
 //---------------------------------------------------------------------------
@@ -218,6 +219,7 @@ class TForm1 : public TForm
     TButton *SearchAircraft;
     TEdit *AircraftNumber;
 	TCheckBox *IsMilitary;
+	TComboBox *RawPlaybackSpeedComboBox;
     void __fastcall ObjectDisplayInit(TObject *Sender);
     void __fastcall ObjectDisplayResize(TObject *Sender);
     void __fastcall ObjectDisplayPaint(TObject *Sender);
