@@ -515,7 +515,8 @@ void __fastcall TForm1::DrawObjects(void)
 
     // Get zoom level and Define zoom threshold constants for better performance
     float zoomLevel = getCurrentZoomLevel();
-    const float ZOOM_THRESHOLD_FOR_DETAILED_VIEW = 0.5f;
+    const float ZOOM_THRESHOLD_FOR_MIDDLE = 1.01f;
+    const float ZOOM_THRESHOLD_FOR_HIGH = 1.9f;
     const float colorEps = 1e-3f;
     for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
          Data; Data = (TADS_B_Aircraft *)ght_next(HashTable, &iterator, (const void **)&Key))
@@ -566,12 +567,11 @@ void __fastcall TForm1::DrawObjects(void)
             }
             SetGLColor4f(r, g, b, a, colorEps);
 
-            if (zoomLevel > ZOOM_THRESHOLD_FOR_DETAILED_VIEW) {
+            if (zoomLevel > ZOOM_THRESHOLD_FOR_MIDDLE) {
                 DrawAirplaneImage(ScrX, ScrY, 0.8, Data->Heading, Data->SpriteImage);   // Draw airplane image. scale is changed from 1.5 to 0.8
             } else {
                 DrawAirplaneImage(ScrX, ScrY, 0.5, Data->Heading, Data->SpriteImage);   // Draw airplane image. scale is changed to smaller
             }
-            
 
             // heading line
             if ((Data->HaveSpeedAndHeading) && (TimeToGoCheckBox->State == cbChecked))
@@ -590,7 +590,8 @@ void __fastcall TForm1::DrawObjects(void)
                 }
             }
 
-            if (zoomLevel > ZOOM_THRESHOLD_FOR_DETAILED_VIEW) {
+            // Draw ICAO text
+            if (zoomLevel > ZOOM_THRESHOLD_FOR_HIGH) {
                 // ICAO code text besides the aircraft with yellow color and black outline for better readability
                 // Draw black outline for ICAO text
                 SetGLColor4f(0.0, 0.0, 0.0, 1.0, colorEps);  // black outline
@@ -598,38 +599,26 @@ void __fastcall TForm1::DrawObjects(void)
                 ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
                 glRasterPos2i(ScrX + 41, ScrY - 10);
                 ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
-                glRasterPos2i(ScrX + 40, ScrY - 11);
-                ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
-                glRasterPos2i(ScrX + 40, ScrY - 9);
-                ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
                 // Draw main ICAO text in bright yellow
                 SetGLColor4f(1.0, 1.0, 0.0, 1.0, colorEps);  // bright yellow color for ICAO code
                 glRasterPos2i(ScrX + 40, ScrY - 10);
                 ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
-            } else {
-                // ICAO code text besides the aircraft with yellow color and black outline for better readability
-                // Draw black outline for ICAO text
-                SetGLColor4f(0.0, 0.0, 0.0, 1.0, colorEps);  // black outline
-                glRasterPos2i(ScrX + 39, ScrY - 10);
-                ObjectDisplay->Draw2DTextAdditional(Data->HexAddr);
-                glRasterPos2i(ScrX + 41, ScrY - 10);
-                ObjectDisplay->Draw2DTextAdditional(Data->HexAddr);
-                glRasterPos2i(ScrX + 40, ScrY - 11);
-                ObjectDisplay->Draw2DTextAdditional(Data->HexAddr);
-                glRasterPos2i(ScrX + 40, ScrY - 9);
-                ObjectDisplay->Draw2DTextAdditional(Data->HexAddr);
+            } else if(zoomLevel > ZOOM_THRESHOLD_FOR_MIDDLE && zoomLevel <= ZOOM_THRESHOLD_FOR_HIGH) {
                 // Draw main ICAO text in bright yellow
                 SetGLColor4f(1.0, 1.0, 0.0, 1.0, colorEps);  // bright yellow color for ICAO code
                 glRasterPos2i(ScrX + 40, ScrY - 10);
-                ObjectDisplay->Draw2DTextAdditional(Data->HexAddr);
-            }
-
-            if (zoomLevel > ZOOM_THRESHOLD_FOR_DETAILED_VIEW) {
+                ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
+            } 
+            else {
+            }            
+            
+            // Draw aircraft info text
+            if (zoomLevel > ZOOM_THRESHOLD_FOR_HIGH) {
                 AnsiString callsignHeadAltSpeedText = "";
                 
                 // Add callsign if available
                 if (Data->HaveFlightNum && strlen(Data->FlightNum) > 0) {
-                    AnsiString flightNum = AnsiString(Data->FlightNum).Trim();  // can remove trim()
+                    AnsiString flightNum = AnsiString(Data->FlightNum);
                     if (!flightNum.IsEmpty()) {
                         callsignHeadAltSpeedText += flightNum;
                     } else {
@@ -670,11 +659,7 @@ void __fastcall TForm1::DrawObjects(void)
                 ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
                 glRasterPos2i(ScrX + 41, ScrY - 25);
                 ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
-                glRasterPos2i(ScrX + 40, ScrY - 26);
-                ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
-                glRasterPos2i(ScrX + 40, ScrY - 24);
-                ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
-                // Draw main text
+                // Draw main aircraft info text
                 SetGLColor4f(0.5, 1.0, 0.0, 1.0, colorEps);  // lime green for high visibility
                 glRasterPos2i(ScrX + 40, ScrY - 25);
                 ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
