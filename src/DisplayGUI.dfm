@@ -1039,7 +1039,6 @@ object Form1: TForm1
     OnInit = ObjectDisplayInit
     OnResize = ObjectDisplayResize
     OnPaint = ObjectDisplayPaint
-    ExplicitLeft = 3
   end
   object MainMenu1: TMainMenu
     Left = 24
@@ -1076,13 +1075,12 @@ object Form1: TForm1
     end
   end
   object Timer1: TTimer
-    Interval = 500
+    Interval = 50
     OnTimer = Timer1Timer
     Left = 24
     Top = 64
   end
   object Timer2: TTimer
-    Interval = 5000
     OnTimer = Timer2Timer
     Left = 16
     Top = 120
