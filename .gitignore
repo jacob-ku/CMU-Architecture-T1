@@ -2,6 +2,7 @@
 src/Python/*
 !src/Python/Python.zip
 src/BigQuery/YourJsonFile.json
+src/MapData/
 src/Map/
 !src/Map/Providers/*
 src/Win64/
