@@ -37,7 +37,19 @@ gefetch_error gefetch_fetch_image_googlemaps_with_type(gefetch *handle, int x, i
 
 	if (_snprintf(urlbuf, sizeof(urlbuf),"%s/vt/lyrs=%s&x=%d&y=%d&z=%d", handle->url, tile_type, x, y, level) >= sizeof(urlbuf))
 		return GEFETCH_SMALL_BUFFER;
-	printf("urlbuf %s\n",urlbuf);
+	//printf("urlbuf %s\n",urlbuf);
+	/* fetch */
+	return gefetch_fetch(handle, urlbuf);
+}
+
+gefetch_error gefetch_fetch_image_openstreetmap(gefetch *handle, int x, int y, int level) {
+	/* form full url */
+	char urlbuf[1024];
+	int correct = int_pow(2,level)-1;
+	y=correct-y;
+
+	if (_snprintf(urlbuf, sizeof(urlbuf),"%s/%d/%d/%d.png", handle->url, level, x, y) >= sizeof(urlbuf))
+		return GEFETCH_SMALL_BUFFER;
 	/* fetch */
 	return gefetch_fetch(handle, urlbuf);
 }

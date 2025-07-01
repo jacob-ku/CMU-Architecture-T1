@@ -937,7 +937,8 @@ object Form1: TForm1
           'Google Terrain with Labels'
           'VFR'
           'IFS Low'
-          'IFS High')
+          'IFS High'
+          'Open Street')
       end
       object CheckBoxUpdateMapTiles: TCheckBox
         Left = 119

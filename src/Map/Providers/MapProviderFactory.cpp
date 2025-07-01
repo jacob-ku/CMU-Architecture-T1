@@ -2,6 +2,7 @@
 #include "GoogleMapProvider.h"
 #include "GoogleStreetViewMapProvider.h"
 #include "GoogleTerrainWithLabelsMapProvider.h"
+#include "OpenStreetMapProvider.h"
 #include "VFRMapProvider.h"
 #include "IFRLowMapProvider.h"
 #include "IFRHighMapProvider.h"
@@ -16,6 +17,8 @@ MapProvider *MapProviderFactory::Create(int mapType)
         return new GoogleStreetViewMapProvider();
     case GoogleMaps_TerrainLabels:
         return new GoogleTerrainWithLabelsMapProvider();
+    case Open_Street:
+        return new OpenStreetMapProvider();
     case SkyVector_VFR:
         return new VFRMapProvider();
     case SkyVector_IFR_Low:
