@@ -1895,6 +1895,8 @@ void __fastcall TMessageProcessorThread::Execute(void)
     }
 }
 //---------------------------------------------------------------------------
+// [END] TMessageProcessorThread
+//---------------------------------------------------------------------------
 void __fastcall TForm1::SBSRecordButtonClick(TObject *Sender)
 {
     if (SBSRecordButton->Caption == "SBS Record")
@@ -2830,3 +2832,97 @@ void __fastcall TForm1::AddAreaToFilter(TArea* area)
     printf("Area %s added to AreaFilter\n", area->Name.c_str());
 }
 //---------------------------------------------------------------------------
+void __fastcall TForm1::SearchAircraftClick(TObject *Sender)
+{
+    AnsiString searchInput = AircraftNumber->Text.Trim().UpperCase();
+    
+    if (searchInput.IsEmpty()) {
+        ShowMessage("Please enter an ICAO code or callsign to search.");
+        return;
+    }
+    
+    // Search through all aircraft in the hash table
+    uint32_t *Key;
+    ght_iterator_t iterator;
+    TADS_B_Aircraft *Data;
+    TADS_B_Aircraft *foundAircraft = nullptr;
+    
+    for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
+         Data; Data = (TADS_B_Aircraft *)ght_next(HashTable, &iterator, (const void **)&Key))
+    {
+        if (Data->HaveLatLon) {
+            // Check ICAO code (HexAddr)
+            AnsiString icaoCode = AnsiString(Data->HexAddr).UpperCase();
+            
+            // Check callsign (FlightNum)
+            AnsiString callsign = "";
+            if (Data->HaveFlightNum && strlen(Data->FlightNum) > 0) {
+                callsign = AnsiString(Data->FlightNum).Trim().UpperCase();
+            }
+            
+            // Match either ICAO or callsign
+            if (icaoCode == searchInput || callsign == searchInput) {
+                foundAircraft = Data;
+                break;
+            }
+        }
+    }
+    
+    if (foundAircraft) {
+        // Aircraft found - center map on aircraft and highlight it
+        if (GetEarthView()) {
+            // Method 1: Use proper coordinate transformation
+            // The EarthView coordinate system: -0.5 to +0.5 for both x and y
+            // Longitude: -180° to +180° maps to -0.5 to +0.5
+            double normalizedLon = foundAircraft->Longitude / 360.0;
+            
+            // Latitude: -90° to +90°, but need to account for Mercator projection
+            // Use the inverse of what LatLon2XY does
+            double latRad = foundAircraft->Latitude * M_PI / 180.0;
+            double mercatorY = asinh(tan(latRad)) / (2 * M_PI);
+            
+            // Set the eye position to center on the aircraft
+            GetEarthView()->m_Eye.x = normalizedLon;
+            GetEarthView()->m_Eye.y = mercatorY;
+            
+            // Set TrackHook to highlight the aircraft
+            TrackHook.ICAO_CC = foundAircraft->ICAO;
+            TrackHook.Valid_CC = true;
+            
+            // Refresh the display
+            ObjectDisplay->Repaint();
+            
+            // Show success message with coordinates for debugging
+            AnsiString message = "Aircraft found: " + AnsiString(foundAircraft->HexAddr);
+            if (foundAircraft->HaveFlightNum && strlen(foundAircraft->FlightNum) > 0) {
+                message += " (" + AnsiString(foundAircraft->FlightNum).Trim() + ")";
+            }
+            message += "\nLat: " + FloatToStrF(foundAircraft->Latitude, ffFixed, 8, 4) + 
+                      " Lon: " + FloatToStrF(foundAircraft->Longitude, ffFixed, 8, 4);
+            message += "\nEye.x: " + FloatToStrF(GetEarthView()->m_Eye.x, ffFixed, 8, 6) +
+                      " Eye.y: " + FloatToStrF(GetEarthView()->m_Eye.y, ffFixed, 8, 6);
+            ShowMessage(message);
+        }
+    } else {
+        // Aircraft not found
+        ShowMessage("Aircraft with ICAO '" + searchInput + "' or callsign '" + searchInput + "' not found.");
+    }
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::AircraftNumberChange(TObject *Sender)
+{
+    // Optional: Real-time validation or formatting of input
+    AnsiString inputText = AircraftNumber->Text.Trim();
+    
+    // Convert to uppercase for consistency (ICAO codes are typically uppercase)
+    if (inputText != inputText.UpperCase()) {
+        int cursorPos = AircraftNumber->SelStart;
+        AircraftNumber->Text = inputText.UpperCase();
+        AircraftNumber->SelStart = cursorPos;
+    }
+    
+    // Optional: Enable/disable search button based on input
+    // You can add validation logic here if needed
+}
+//---------------------------------------------------------------------------
+
