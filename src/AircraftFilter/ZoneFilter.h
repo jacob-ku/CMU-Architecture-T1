@@ -42,6 +42,7 @@ public:
     virtual void ActivateFilter() override;
     virtual void DeactivateFilter() override;
     virtual void setAndFilter(bool value) override;
+    virtual bool getAndfilter() const override;
     
     void setPolygonFromArea(const TArea& area);
     bool isPointInPolygon(double latitude, double longitude) const;

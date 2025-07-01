@@ -1,4 +1,4 @@
-#include "ZoneFilter.h"
+﻿#include "ZoneFilter.h"
 #include <iostream>
 #include <cmath>
 
@@ -275,6 +275,7 @@ void ZoneFilter::setAndFilter(bool value) {
     // Set AND filter mode for ZoneFilter
     // This could be used to determine how multiple conditions are combined
     std::cout << "ZoneFilter: AND filter mode set to " << (value ? "true" : "false") << std::endl;
+    isAndFilter = value;
     // Implementation can be expanded based on specific requirements
 }
 
@@ -420,5 +421,9 @@ bool ZoneFilter::getMaxInscribedRectangle(const boost::geometry::model::polygon<
         minLon = maxLon = minLat = maxLat = 0.0;
         return false;
     }
+}
+
+bool ZoneFilter::getAndfilter() const {
+    return isAndFilter;
 }
 
