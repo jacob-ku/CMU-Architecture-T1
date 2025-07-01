@@ -2,6 +2,16 @@
 
 #ifndef NTDS2DH
 #define NTDS2DH
+
+#include <vector>
+
+// Define region codes
+const int RESION_INSIDE = 0; // 0000
+const int RESION_LEFT = 1;   // 0001
+const int RESION_RIGHT = 2;  // 0010
+const int RESION_BOTTOM = 4; // 0100
+const int RESION_TOP = 8;    // 1000
+
 int MakeAirplaneImages(void);
 void MakeAirTrackFriend(void);
 void MakeAirTrackHostile(void);
@@ -21,6 +31,14 @@ void ComputeTimeToGoPosition(float TimeToGo,
                              float xv, float yv,
                              float &xe, float &ye);
 void DrawLines(DWORD resolution, double xpts[], double ypts[]);
+
+// Function to compute the region code for a point
+int computeRegionCode(double x, double y, double minX, double minY, double maxX, double maxY);
+
+// Function to clip a line using the Cohen-Sutherland algorithm
+std::vector<std::pair<double, double>> cohenSutherlandClip(
+    double x1, double y1, double x2, double y2,
+    double minX, double minY, double maxX, double maxY);
 
 //---------------------------------------------------------------------------
 #endif
