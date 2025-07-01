@@ -7,6 +7,7 @@
 #include <float.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 #include <filesystem>
 #include <fileapi.h>
 #include <chrono>
@@ -19,6 +20,7 @@
 #include "AreaDialog.h"
 #include "ntds2d.h"
 #include "AircraftFilter/ZoneFilter.h"
+#include "AircraftFilter/ScreenFilter.h"
 #include "LatLonConv.h"
 #include "PointInPolygon.h"
 #include "DecodeRawADS_B.h"
@@ -306,6 +308,10 @@ void __fastcall TForm1::ObjectDisplayInit(TObject *Sender)
     currentMapProvider->Resize(ObjectDisplay->Width,ObjectDisplay->Height);
     glPushAttrib(GL_LINE_BIT);
     glPopAttrib();
+
+    LoadTowerTexture();
+    
+    
     printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 
     // ----- Metadata database initialization -----
@@ -436,7 +442,7 @@ void __fastcall TForm1::DrawObjects(void)
     DrawAirportsBatch();
     TArea screenBoundsArea = getScreenBoundsAsArea();
     
-    std::unique_ptr<AirplaneFilterInterface> screenfilter = std::make_unique<ZoneFilter>();
+    std::unique_ptr<ScreenFilter> screenfilter = std::make_unique<ScreenFilter>();
     screenfilter->updateFilterArea(screenBoundsArea, "screen_bounds");
     DefaultFilter.addFilter("screen_bounds", std::move(screenfilter));
     DefaultFilter.activateFilter("screen_bounds");
@@ -505,6 +511,7 @@ void __fastcall TForm1::DrawObjects(void)
         }
     }
     int filtered = 0;
+    int inscreen = 0;
     // --- drawing aircrafts ---
     AircraftCountLabel->Caption = IntToStr((int)ght_size(HashTable));
     
@@ -518,6 +525,9 @@ void __fastcall TForm1::DrawObjects(void)
     const float ZOOM_THRESHOLD_FOR_MIDDLE = 1.01f;
     const float ZOOM_THRESHOLD_FOR_HIGH = 1.9f;
     const float colorEps = 1e-3f;
+	// Measure block execution time
+	static double totalBlockTime = 0.0;
+	static int blockCounter = 0;
     for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
          Data; Data = (TADS_B_Aircraft *)ght_next(HashTable, &iterator, (const void **)&Key))
     {
@@ -528,23 +538,29 @@ void __fastcall TForm1::DrawObjects(void)
             }
 
             ViewableAircraft++;
-            if(DefaultFilter.filterAircraftPosition(Data->Latitude, Data->Longitude))
-            {
-                filtered++; // Skip aircraft if it does not match the filter criteria
-            } else
-            {
-                continue; // Reset filtered count if aircraft matches the filter
-            }
+            // if(DefaultFilter.filterAircraftPosition(Data->Latitude, Data->Longitude))
+            // {
+            //     inscreen++; // Skip aircraft if it does not match the filter criteria
+            // } else
+            // {
+            //     continue; // Reset filtered count if aircraft matches the filter
+            // }
             
-            if(AreaFilter.filterAircraftPosition(Data->Latitude, Data->Longitude))
+            // Performance measurement for filter block
+            auto blockStart = std::chrono::high_resolution_clock::now();
+            
+            if(AreaFilter.filterAircraft(*Data))
             {
                 filtered++; // Skip aircraft if it does not match the filter criteria
             } else
             {
                 continue; // Reset filtered count if aircraft matches the filter
             }
-            // glColor4f(1.0, 1.0, 1.0, 1.0);  // white color - is this necessary?
-            // 좌표 변환 1회만 수행
+			auto blockEnd = std::chrono::high_resolution_clock::now();
+			auto blockDuration = std::chrono::duration_cast<std::chrono::microseconds>(blockEnd - blockStart);
+
+			totalBlockTime += blockDuration.count() / 1000.0; // Convert to milliseconds
+			blockCounter++;
             LatLon2XY(Data->Latitude, Data->Longitude, ScrX, ScrY);
             // 화면 밖이면 continue (예: -50~Width+50, -50~Height+50 범위만)
             if (ScrX < -50 || ScrX > ObjectDisplay->Width + 50 || ScrY < -50 || ScrY > ObjectDisplay->Height + 50)
@@ -673,6 +689,16 @@ void __fastcall TForm1::DrawObjects(void)
 
         }
     }
+    static int lopcont= 0;
+    if (lopcont % 20 == 0) {
+        double avgBlockTime = totalBlockTime / blockCounter;
+        std::cout << "Filter block avg time: " << avgBlockTime << " ms (total: " << totalBlockTime 
+                    << " ms over " << blockCounter << " iterations)" << std::endl;
+    }
+    lopcont++;
+
+    blockCounter = 0;
+    totalBlockTime = 0.0;
     // End performance measurement for aircraft processing loop
     auto loopEnd = std::chrono::high_resolution_clock::now();
     auto loopDuration = std::chrono::duration_cast<std::chrono::milliseconds>(loopEnd - loopStart);
@@ -1225,6 +1251,19 @@ void __fastcall TForm1::AreaListViewSelectItem(TObject *Sender, TListItem *Item,
         Delete->Enabled = true;
     else
         Delete->Enabled = false;
+    
+    if (HaveSelected)
+    {
+        AreaFilter.allFiltersDeactivate();
+        for (unsigned int i = 0; i < Count; i++)
+        {
+            TArea *Area = (TArea *)Areas->Items[i];
+            if (Area->Selected)
+            {   
+                AreaFilter.activateFilter(AnsiStringToStdString(Area->Name));
+            }
+        }
+    }
     ObjectDisplay->Repaint();
 }
 //---------------------------------------------------------------------------
@@ -1242,7 +1281,7 @@ void __fastcall TForm1::DeleteClick(TObject *Sender)
             Area = (TArea *)AreaListView->Items->Item[i]->Data;
             std::cout << "Deleting area: " << Area->Name.c_str() << std::endl;
             AreaFilter.removeFilter(AnsiStringToStdString(Area->Name));
-
+            AreaFilter.allFiltersActivate();
             for (Index = 0; Index < Areas->Count; Index++)
             {
                 if (Area == Areas->Items[Index])
@@ -2651,9 +2690,7 @@ bool __fastcall TForm1::LoadTowerTexture(void)
 
 void __fastcall TForm1::DrawTowerImage(float x, float y, float scale)
 {
-    if (!LoadTowerTexture()) {
-        return;
-    }
+
 
     // Save current OpenGL state
     GLboolean blendEnabled = glIsEnabled(GL_BLEND);
@@ -2663,8 +2700,15 @@ void __fastcall TForm1::DrawTowerImage(float x, float y, float scale)
     glGetIntegerv(GL_BLEND_DST, &blendDst);
 
     glPushMatrix();
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
+    if (!blendEnabled)
+    {
+        glEnable(GL_BLEND);
+    }
+    if (!textureEnabled)
+    {
+        glEnable(GL_TEXTURE_2D);
+    }
+    
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glBindTexture(GL_TEXTURE_2D, towerTextureID);
@@ -2690,9 +2734,9 @@ void __fastcall TForm1::DrawTowerImage(float x, float y, float scale)
     glBindTexture(GL_TEXTURE_2D, 0);
     
     // Restore previous OpenGL state
-    if (!textureEnabled) glDisable(GL_TEXTURE_2D);
-    if (!blendEnabled) glDisable(GL_BLEND);
-    else glBlendFunc(blendSrc, blendDst);
+    // if (!textureEnabled) glDisable(GL_TEXTURE_2D);
+    // if (!blendEnabled) glDisable(GL_BLEND);
+    // else glBlendFunc(blendSrc, blendDst);
     glPopMatrix();
 }
 //---------------------------------------------------------------------------
@@ -2820,8 +2864,8 @@ void __fastcall TForm1::AddAreaToFilter(TArea* area)
         std::cerr << "Error: Cannot add null area to filter" << std::endl;
         return;
     }
-    
-    std::unique_ptr<AirplaneFilterInterface> artccBoundaryFilter(new ZoneFilter());
+    //std::unique_ptr<AirplaneFilterInterface> artccBoundaryFilter(new ZoneFilter());
+    std::unique_ptr<ZoneFilter> artccBoundaryFilter(new ZoneFilter());
     std::string areaName(AnsiStringToStdString(area->Name));
     std::cout << "Adding filter area: " << areaName << std::endl;
     artccBoundaryFilter->updateFilterArea(*area, AnsiStringToStdString(area->Name));

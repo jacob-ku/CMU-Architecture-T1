@@ -68,7 +68,7 @@ void AircraftFilter::activateFilter(const std::string& filterName) {
         if (it->second->isFilterActive()) {
             return; // Filter is already active
         }
-        std::cout << "AircraftFilter: Activating filter '" << filterName << "'" << std::endl;
+        // std::cout << "AircraftFilter: Activating filter '" << filterName << "'" << std::endl;
         it->second->ActivateFilter();
     } else {
         std::cerr << "AircraftFilter: Error - Filter '" << filterName << "' not found for activation" << std::endl;
@@ -83,6 +83,58 @@ void AircraftFilter::deactivateFilter(const std::string& filterName) {
     } else {
         std::cerr << "AircraftFilter: Error - Filter '" << filterName << "' not found for deactivation" << std::endl;
     }
+}
+
+void AircraftFilter::allFiltersActivate() {
+    // std::cout << "AircraftFilter: Activating all filters (" << filters.size() << " filters)" << std::endl;
+    
+    if (filters.empty()) {
+        // std::cout << "AircraftFilter: No filters to activate" << std::endl;
+        return;
+    }
+    
+    int activatedCount = 0;
+    for (const auto& [filterName, filterInstance] : filters) {
+        if (filterInstance) {
+            if (!filterInstance->isFilterActive()) {
+                // std::cout << "AircraftFilter: Activating filter '" << filterName << "'" << std::endl;
+                filterInstance->ActivateFilter();
+                activatedCount++;
+            } else {
+                // std::cout << "AircraftFilter: Filter '" << filterName << "' is already active" << std::endl;
+            }
+        } else {
+            // std::cerr << "AircraftFilter: Error - Filter '" << filterName << "' is null" << std::endl;
+        }
+    }
+    
+    // std::cout << "AircraftFilter: Activated " << activatedCount << " out of " << filters.size() << " filters" << std::endl;
+}
+
+void AircraftFilter::allFiltersDeactivate() {
+    // std::cout << "AircraftFilter: Deactivating all filters (" << filters.size() << " filters)" << std::endl;
+    
+    if (filters.empty()) {
+        // std::cout << "AircraftFilter: No filters to deactivate" << std::endl;
+        return;
+    }
+    
+    int deactivatedCount = 0;
+    for (const auto& [filterName, filterInstance] : filters) {
+        if (filterInstance) {
+            if (filterInstance->isFilterActive()) {
+                // std::cout << "AircraftFilter: Deactivating filter '" << filterName << "'" << std::endl;
+                filterInstance->DeactivateFilter();
+                deactivatedCount++;
+            } else {
+                // std::cout << "AircraftFilter: Filter '" << filterName << "' is already inactive" << std::endl;
+            }
+        } else {
+            // std::cerr << "AircraftFilter: Error - Filter '" << filterName << "' is null" << std::endl;
+        }
+    }
+    
+    // std::cout << "AircraftFilter: Deactivated " << deactivatedCount << " out of " << filters.size() << " filters" << std::endl;
 }
 
 bool AircraftFilter::filterAircraft(const TADS_B_Aircraft& aircraft) {
