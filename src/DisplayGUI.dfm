@@ -2,7 +2,7 @@ object Form1: TForm1
   Left = 0
   Top = 0
   Caption = 'ADS-B Viewer'
-  ClientHeight = 1110
+  ClientHeight = 1041
   ClientWidth = 1121
   Color = clBtnFace
   Constraints.MinHeight = 740
@@ -46,14 +46,14 @@ object Form1: TForm1
     Left = 871
     Top = 0
     Width = 250
-    Height = 1110
+    Height = 1041
     Align = alRight
     Color = clWindow
     Constraints.MaxWidth = 250
     TabOrder = 0
     object Panel1: TPanel
       Left = 1
-      Top = 962
+      Top = 893
       Width = 248
       Height = 147
       Align = alBottom
@@ -884,25 +884,25 @@ object Form1: TForm1
       object SBSRecordButton: TButton
         Left = 5
         Top = 494
-        Width = 104
+        Width = 76
         Height = 17
         Caption = 'SBS Record'
         TabOrder = 18
         OnClick = SBSRecordButtonClick
       end
       object SBSPlaybackButton: TButton
-        Left = 115
+        Left = 87
         Top = 494
-        Width = 96
+        Width = 82
         Height = 17
         Caption = 'SBS Playback'
         TabOrder = 19
         OnClick = SBSPlaybackButtonClick
       end
       object SBSPlaybackSpeedComboBox: TComboBox
-        Left = 115
-        Top = 517
-        Width = 118
+        Left = 175
+        Top = 494
+        Width = 58
         Height = 20
         TabOrder = 20
         Text = '1.0'
@@ -911,12 +911,30 @@ object Form1: TForm1
           '2.0'
           '3.0')
       end
+      object SearchAircraft: TButton
+        Left = 5
+        Top = 517
+        Width = 103
+        Height = 20
+        Caption = 'Search Aircraft'
+        TabOrder = 21
+        OnClick = SearchAircraftClick
+      end
+      object AircraftNumber: TEdit
+        Left = 115
+        Top = 517
+        Width = 118
+        Height = 20
+        TabOrder = 22
+        TextHint = 'Enter Aircraft Number'
+        OnChange = AircraftNumberChange
+      end
     end
     object Panel2: TPanel
       Left = 1
       Top = 777
       Width = 248
-      Height = 185
+      Height = 116
       Align = alClient
       TabOrder = 2
       object LabelErrorMessage: TLabel
@@ -982,7 +1000,7 @@ object Form1: TForm1
     Left = 0
     Top = 0
     Width = 871
-    Height = 1110
+    Height = 1041
     Cursor = crCross
     Align = alClient
     TabOrder = 1

@@ -1,4 +1,4 @@
-ï»¿//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 
 #ifndef DisplayGUIH
 #define DisplayGUIH
@@ -110,7 +110,7 @@ public:
     bool UseFileInsteadOfNetwork;
     bool First;
     __int64 LastTime;
-    double PlaybackSpeed; // ì¶”ê°€: ì¬ìƒ ì†ë„ (1.0, 2.0, 3.0)
+    double PlaybackSpeed; // Ãß°¡: Àç»ı ¼Óµµ (1.0, 2.0, 3.0)
     __fastcall TTCPClientSBSHandleThread(bool value, TMessageProcessorThread* procThread, double playbackSpeed = 1.0);
     ~TTCPClientSBSHandleThread();
 };
@@ -214,7 +214,9 @@ class TForm1 : public TForm
     TLabel *Label25;
     TLabel *RouteLabel;
     TLabel *Label27;
-	TComboBox *SBSPlaybackSpeedComboBox; // SBS ì¬ìƒ ì†ë„ ì„ íƒ ì½¤ë³´ë°•ìŠ¤ (ë””ìì¸ì— ì¶”ê°€ í•„ìš”)
+    TComboBox *SBSPlaybackSpeedComboBox; // SBS Àç»ı ¼Óµµ ¼±ÅÃ ÄŞº¸¹Ú½º (µğÀÚÀÎ¿¡ Ãß°¡ ÇÊ¿ä)
+    TButton *SearchAircraft;
+    TEdit *AircraftNumber;
     void __fastcall ObjectDisplayInit(TObject *Sender);
     void __fastcall ObjectDisplayResize(TObject *Sender);
     void __fastcall ObjectDisplayPaint(TObject *Sender);
@@ -265,6 +267,8 @@ class TForm1 : public TForm
     void __fastcall UseRawRouterClick(TObject *Sender);
     void __fastcall UseRawCmuSecureClick(TObject *Sender);
     void __fastcall UseRawHyattClick(TObject *Sender);
+    void __fastcall SearchAircraftClick(TObject *Sender);
+    void __fastcall AircraftNumberChange(TObject *Sender);
 
 private: // User declarations
     MapProvider* currentMapProvider;
