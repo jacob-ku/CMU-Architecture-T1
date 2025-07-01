@@ -967,10 +967,11 @@ object Form1: TForm1
   end
   object ObjectDisplay: TOpenGLPanel
     Left = 0
-    Top = -4
-    Width = 521
-    Height = 581
+    Top = 0
+    Width = 871
+    Height = 1110
     Cursor = crCross
+    Align = alClient
     TabOrder = 1
     PFDFlags = [f_PFD_DRAW_TO_WINDOW, f_PFD_SUPPORT_OPENGL, f_PFD_DOUBLEBUFFER]
     Font3D_Type.Charset = ANSI_CHARSET
@@ -996,6 +997,9 @@ object Form1: TForm1
     OnInit = ObjectDisplayInit
     OnResize = ObjectDisplayResize
     OnPaint = ObjectDisplayPaint
+    ExplicitTop = -4
+    ExplicitWidth = 521
+    ExplicitHeight = 581
   end
   object MainMenu1: TMainMenu
     Left = 24
