@@ -1,0 +1,77 @@
+@startuml runtime-view
+!theme toy
+title ADS-B BigQuery Integration - Runtime View
+
+actor "Air Traffic Controller" as controller
+participant "ADS-B Aircraft" as aircraft
+participant "dump1090" as dump
+participant "ADSBBridge" as bridge
+participant "RealTimeStreaming" as streaming
+participant "Google BigQuery" as bigquery
+participant "AnalyticsAPIServer" as api
+participant "RealTimeAlertSystem" as alerts
+participant "DisplayGUI" as gui
+
+== Real-Time Data Flow ==
+
+aircraft -> dump : ADS-B Radio Signals
+note right : Continuous broadcast\nfrom aircraft transponders
+
+dump -> bridge : SBS-1 Messages\n(Port 30003)
+note right : MSG,1,111111,11111,111111,11111,...
+
+bridge -> bridge : Parse & Validate\nSBS Messages
+note right : Extract aircraft position,\nvelocity, squawk code
+
+bridge -> streaming : Parsed JSON Data
+note right : Structured aircraft data\nwith timestamps
+
+streaming -> streaming : Batch Collection\n(100 messages)
+note right : Buffer messages for\nefficient BigQuery insert
+
+streaming -> bigquery : Batch Insert
+note right : INSERT INTO RealTimeStream\nVALUES (...)
+
+== Real-Time Analytics ==
+
+gui -> api : HTTP GET /api/traffic/summary
+note right : Request current traffic data
+
+api -> bigquery : Execute Analytics Query
+note right : SELECT COUNT(*), AVG(altitude)\nFROM RealTimeStream\nWHERE timestamp > NOW() - INTERVAL 5 MINUTE
+
+bigquery -> api : Query Results
+api -> api : Cache Response (30s)
+api -> gui : JSON Response
+
+== Real-Time Alerts ==
+
+alerts -> bigquery : Monitor Emergency Codes
+note right : SELECT * FROM RealTimeStream\nWHERE squawk IN ('7500', '7600', '7700')
+
+bigquery -> alerts : Emergency Aircraft Found
+alerts -> gui : WebSocket Push\n(Port 8081)
+note right : {"type": "EMERGENCY",\n"aircraft": {...}}
+
+gui -> gui : Display Alert
+gui -> controller : Visual/Audio Alert
+
+== Continuous Monitoring ==
+
+loop Every 2-5 seconds
+    gui -> api : Request Updates
+    api -> bigquery : Fresh Queries
+    bigquery -> api : Latest Data
+    api -> gui : Updated Display
+end
+
+note over aircraft, controller
+    **Performance Characteristics:**
+    • Data Latency: < 5 seconds
+    • Batch Size: 100 messages
+    • API Cache TTL: 30 seconds
+    • Update Frequency: 2-5 seconds
+    • Throughput: ~1000 messages/minute
+end note
+
+@enduml

@@ -1,0 +1,127 @@
+@startuml component-interaction
+!theme toy
+title ADS-B BigQuery Integration - Component Interaction View
+
+package "Data Collection Layer" {
+    [dump1090] as dump
+    [ADSBBridge] as bridge
+}
+
+package "Data Processing Layer" {
+    [RealTimeStreaming] as streaming
+    [AnalyticsQueries] as queries
+}
+
+package "Storage Layer" {
+    [Google BigQuery] as bigquery
+}
+
+package "API Layer" {
+    [AnalyticsAPIServer] as api
+    [RealTimeAlertSystem] as alerts
+}
+
+package "Analysis Layer" {
+    [TrafficSummary] as traffic
+    [AircraftDetails] as aircraft
+    [Geographic] as geo
+    [Anomaly] as anomaly
+    [Emergency] as emergency
+    [Prediction] as prediction
+}
+
+package "Management Layer" {
+    [StreamingManager] as stream_mgr
+    [DataStatusChecker] as status
+    [BatchAnalyzer] as batch
+    [DisplayGUIIntegration] as integration
+}
+
+package "External Systems" {
+    [DisplayGUI] as gui
+    [ADS-B Aircraft] as planes
+}
+
+' Data Flow Connections
+planes --> dump : "Radio Signals"
+dump --> bridge : "SBS-1 Messages\n(Port 30003)"
+bridge --> streaming : "Parsed JSON\n(Validated Data)"
+streaming --> bigquery : "Batch Insert\n(100 msgs)"
+
+' Query Connections
+api --> queries : "uses"
+queries --> bigquery : "SQL Templates"
+bigquery --> api : "Result Sets"
+
+' Alert Connections
+alerts --> queries : "uses"
+alerts --> bigquery : "Monitor Queries"
+bigquery --> alerts : "Emergency Data"
+
+' Analysis Connections
+traffic --> queries : "uses"
+aircraft --> queries : "uses"
+geo --> queries : "uses"
+anomaly --> queries : "uses"
+emergency --> queries : "uses"
+prediction --> queries : "uses"
+
+' Management Connections
+stream_mgr --> streaming : "controls"
+stream_mgr --> bridge : "controls"
+status --> bigquery : "health checks"
+batch --> traffic : "executes"
+batch --> aircraft : "executes"
+batch --> geo : "executes"
+integration --> api : "manages"
+integration --> alerts : "manages"
+
+' External Connections
+gui --> api : "HTTP GET\n(Port 8080)"
+gui --> alerts : "WebSocket\n(Port 8081)"
+
+interface "REST API" as rest_api
+interface "WebSocket" as websocket
+interface "SBS Stream" as sbs_stream
+
+api --> rest_api
+alerts --> websocket
+bridge --> sbs_stream
+
+gui --> rest_api : "Analytics Requests"
+gui --> websocket : "Real-time Alerts"
+dump --> sbs_stream : "Live Data"
+
+note right of bridge
+    **Message Processing**
+    • Parse SBS-1 format
+    • Validate coordinates
+    • Extract metadata
+    • Rate: ~1000/min
+end note
+
+note right of streaming
+    **Batch Processing**
+    • Buffer 100 messages
+    • Schema validation
+    • Deduplication
+    • Error handling
+end note
+
+note right of api
+    **Analytics API**
+    • Real-time queries
+    • Response caching
+    • CORS enabled
+    • JSON responses
+end note
+
+note right of alerts
+    **Alert System**
+    • Emergency detection
+    • Trajectory anomalies
+    • Traffic density warnings
+    • WebSocket broadcasts
+end note
+
+@enduml

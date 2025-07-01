@@ -1,0 +1,104 @@
+@startuml module-view
+!theme toy
+title ADS-B BigQuery Integration - Module View
+
+package "ADS-B BigQuery System" {
+
+    package "core" {
+        [RealTimeStreaming.py] as streaming
+        [ADSBBridge.py] as bridge
+        [AnalyticsAPIServer.py] as api
+        [RealTimeAlertSystem.py] as alerts
+        [AnalyticsQueries.py] as queries
+        [SetupBigQuery.py] as setup
+    }
+
+    package "analyses" {
+        [analysis_01_traffic_summary.py] as traffic
+        [analysis_02_aircraft_details.py] as aircraft
+        [analysis_03_geographic.py] as geo
+        [analysis_04_trajectory_anomaly.py] as anomaly
+        [analysis_05_emergency.py] as emergency
+        [analysis_06_prediction.py] as prediction
+    }
+
+    package "management" {
+        [start_streaming.py] as start
+        [check_data_status.py] as status
+        [run_all_analyses.py] as batch
+        [displaygui_integration.py] as integration
+        [architecture_viewer.py] as viewer
+    }
+
+    package "config" {
+        [config.json] as config
+        [YourJsonFile.json] as credentials
+    }
+
+    package "docs" {
+        [README.md] as readme
+        [ANALYSIS_GUIDE.md] as guide
+        [ARCHITECTURE_VIEWS.md] as arch_docs
+    }
+}
+
+package "External Systems" {
+    [DisplayGUI.exe] as gui
+    [dump1090] as dump
+    [Google BigQuery] as bigquery
+}
+
+' Module Dependencies
+bridge --> streaming : parsed data
+streaming --> bigquery : batch insert
+api --> bigquery : queries
+alerts --> bigquery : monitoring
+queries --> bigquery : SQL templates
+
+' Management Dependencies
+start --> streaming : controls
+start --> bridge : controls
+status --> bigquery : checks
+batch --> traffic : runs
+batch --> aircraft : runs
+batch --> geo : runs
+integration --> api : manages
+integration --> alerts : manages
+
+' Analysis Dependencies
+traffic --> queries : uses
+aircraft --> queries : uses
+geo --> queries : uses
+anomaly --> queries : uses
+emergency --> queries : uses
+prediction --> queries : uses
+
+' Configuration
+streaming --> config : reads
+api --> config : reads
+bridge --> config : reads
+streaming --> credentials : auth
+api --> credentials : auth
+
+' External Integrations
+bridge --> dump : reads SBS
+gui --> api : HTTP requests
+gui --> alerts : WebSocket
+dump --> bridge : SBS messages
+
+note right of bridge
+  Parses SBS-1 messages
+  from dump1090 on port 30003
+end note
+
+note right of api
+  REST API on port 8080
+  Provides real-time analytics
+end note
+
+note right of alerts
+  WebSocket on port 8081
+  Real-time alert notifications
+end note
+
+@enduml
