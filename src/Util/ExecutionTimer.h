@@ -8,7 +8,7 @@
     #define EXECUTION_TIMER_ELAPSED(elapsed, timerName) int64_t (elapsed) = (timerName).Elapsed()
 #else
     #define EXECUTION_TIMER(timerName)
-    #define EXECUTION_TIMER_ELAPSED(timerName) 0
+    #define EXECUTION_TIMER_ELAPSED(elapsed, timerName) 0
 #endif
 
 class ExecutionTimer {
