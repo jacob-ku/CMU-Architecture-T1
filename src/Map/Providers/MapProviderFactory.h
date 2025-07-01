@@ -11,6 +11,7 @@
 #define SkyVector_IFR_Low 4
 #define SkyVector_IFR_High 5
 // Add other map type defines as needed
+#define Open_Street 6
 
 class MapProviderFactory
 {

@@ -47,6 +47,7 @@ gefetch_error	gefetch_set_url(gefetch_t handle, char *url);
 gefetch_error	gefetch_fetch_uri(gefetch_t handle, char *uri);
 gefetch_error	gefetch_fetch_image_googlemaps(gefetch_t handle, int x, int y, int level);
 gefetch_error	gefetch_fetch_image_googlemaps_with_type(gefetch_t handle, int x, int y, int level, const char *tile_type);
+gefetch_error	gefetch_fetch_image_openstreetmap(gefetch_t handle, int x, int y, int level);
 gefetch_error	gefetch_fetch_image_skyvector(gefetch_t handle, const char *key,const char *chart, const char * edition, int x, int y, int level);
 /* retrieve data from library */
 size_t		gefetch_get_data_size(gefetch_t handle);

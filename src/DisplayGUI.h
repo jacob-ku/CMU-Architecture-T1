@@ -1,4 +1,4 @@
-//---------------------------------------------------------------------------
+﻿//---------------------------------------------------------------------------
 
 #ifndef DisplayGUIH
 #define DisplayGUIH
@@ -110,7 +110,8 @@ public:
     bool UseFileInsteadOfNetwork;
     bool First;
     __int64 LastTime;
-    __fastcall TTCPClientSBSHandleThread(bool value, TMessageProcessorThread* procThread);
+    double PlaybackSpeed; // �߰�: ��� �ӵ� (1.0, 2.0, 3.0)
+    __fastcall TTCPClientSBSHandleThread(bool value, TMessageProcessorThread* procThread, double playbackSpeed = 1.0);
     ~TTCPClientSBSHandleThread();
 };
 //---------------------------------------------------------------------------
@@ -197,23 +198,26 @@ class TForm1 : public TForm
     TComboBox *MapComboBox;
     TCheckBox *CheckBoxUpdateMapTiles;
     TCheckBox *BigQueryCheckBox;
-    TBevel *BigQuerySeparatorBottom;
-    TLabel *UnregisteredCountLabel;
+    TLabel *UnregisteredCount;
     TCheckBox *HideUnregisteredCheckBox;
     TMenuItem *UseSBSLocal;
     TMenuItem *UseSBSRemote;
     TMenuItem *LoadARTCCBoundaries1;
     TLabel *Label20;
     TLabel *RegNumLabel;
-    TLabel *Label21;
-    TLabel *ManufactureLabel;
-    TLabel *Label22;
-    TLabel *ModelLabel;
     TLabel *Label24;
     TLabel *OperatorLabel;
     TLabel *Label26;
     TLabel *CountryLabel;
-	TLabel *LabelErrorMessage;
+    TLabel *LabelErrorMessage;
+    TLabel *TypeLabel;
+    TLabel *Label25;
+    TLabel *RouteLabel;
+    TLabel *Label27;
+    TComboBox *SBSPlaybackSpeedComboBox; // SBS ��� �ӵ� ���� �޺��ڽ� (�����ο� �߰� �ʿ�)
+    TButton *SearchAircraft;
+    TEdit *AircraftNumber;
+	TCheckBox *IsMilitary;
     void __fastcall ObjectDisplayInit(TObject *Sender);
     void __fastcall ObjectDisplayResize(TObject *Sender);
     void __fastcall ObjectDisplayPaint(TObject *Sender);
@@ -230,6 +234,7 @@ class TForm1 : public TForm
     void __fastcall ZoomInClick(TObject *Sender);
     void __fastcall ZoomOutClick(TObject *Sender);
     void __fastcall Timer2Timer(TObject *Sender);
+    
     void __fastcall PurgeButtonClick(TObject *Sender);
     void __fastcall InsertClick(TObject *Sender);
     void __fastcall CancelClick(TObject *Sender);
@@ -263,6 +268,9 @@ class TForm1 : public TForm
     void __fastcall UseRawRouterClick(TObject *Sender);
     void __fastcall UseRawCmuSecureClick(TObject *Sender);
     void __fastcall UseRawHyattClick(TObject *Sender);
+    void __fastcall SearchAircraftClick(TObject *Sender);
+    void __fastcall AircraftNumberChange(TObject *Sender);
+	void __fastcall MilitaryClick(TObject *Sender);
 
 private: // User declarations
     MapProvider* currentMapProvider;
@@ -345,6 +353,7 @@ public:  // User declarations
     bool towerTextureLoaded;
     AircraftFilter AreaFilter;
 
+    void PurgeInternal(std::function<bool(TADS_B_Aircraft*)> shouldPurge);
 };
 //---------------------------------------------------------------------------
 extern PACKAGE TForm1 *Form1;

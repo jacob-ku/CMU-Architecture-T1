@@ -12,7 +12,8 @@
 #define SkyVector_VFR            3
 #define SkyVector_IFR_Low        4
 #define SkyVector_IFR_High       5
-#define SkyVector                6
+#define Open_Street              6
+#define SkyVector                7
 
 /**
  * Connection to Google server.
@@ -41,9 +42,15 @@ protected:
 	 */
 	void Process(TilePtr tile);
 
+	/**
+	 * Cleanup resources after thread termination.
+	 */
+	virtual void CleanupResources();
+
 private:
 	gefetch_t	m_GEFetch;
 	int         ServerType;
+	int         DelayTime;
 	const char  *Key;
 	const char  *Chart;
 	const char  *Edition;

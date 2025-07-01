@@ -24,6 +24,9 @@ public:
     bool filterAircraft(const TADS_B_Aircraft& aircraft);
     bool filterAircraftPosition(double latitude, double longitude);
 
+    void allFiltersActivate();
+    void allFiltersDeactivate();
+
     
     // 유틸리티 메서드들
     bool hasFilter(const std::string& filterName) const;

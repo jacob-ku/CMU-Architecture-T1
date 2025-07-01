@@ -2,6 +2,7 @@
 src/Python/*
 !src/Python/Python.zip
 src/BigQuery/YourJsonFile.json
+src/MapData/
 src/Map/
 !src/Map/Providers/*
 src/Win64/
@@ -13,6 +14,7 @@ src/HashTable/Lib/__history
 **.local.**
 *.res
 **__history**
+**__recovery**
 
 # Created by https://www.toptal.com/developers/gitignore/api/c++,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=c++,visualstudiocode

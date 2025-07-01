@@ -48,15 +48,15 @@ void AbstractMapProvider::CleanUp()
         delete masterLayer;
         masterLayer = nullptr;
     }
-    if (storage)
-    {
-        delete storage;
-        storage = nullptr;
-    }
     if (keyhole)
     {
         delete keyhole;
         keyhole = nullptr;
+    }
+    if (storage)
+    {
+        delete storage;
+        storage = nullptr;
     }
 }
 

@@ -53,15 +53,43 @@ SimpleTileStorage::SimpleTileStorage() {
 SimpleTileStorage::~SimpleTileStorage() {
 
 	/* wait for loader thread to finish */
+	printf("SimpleTileStorage: signaling thread to stop\n");
 	SetEvent(ThreadKillEvent);
-    WaitForSingleObject(m_Thread,INFINITE);
 
+	/* wait for thread to finish with timeout */
+	printf("SimpleTileStorage: wait for thread to finish\n");
+	DWORD waitResult = WaitForSingleObject(m_Thread, 10);
+	if (waitResult == WAIT_TIMEOUT) {
+		printf("SimpleTileStorage: thread termination timeout, forcing termination\n");
+		// Force terminate thread if it doesn't respond
+		TerminateThread(m_Thread, 0);
+	} else if (waitResult == WAIT_OBJECT_0) {
+		printf("SimpleTileStorage: thread finished normally\n");
+	} else {
+		printf("SimpleTileStorage: thread wait failed with error %d\n", GetLastError());
+	}
 
 	/* cleanup synchronisation objects */
+	if (SemQueueCount != NULL) {
 		CloseHandle(SemQueueCount);
+		SemQueueCount = NULL;
+	}
+	if (m_QueueMutex != NULL) {
 		CloseHandle(m_QueueMutex);
+		m_QueueMutex = NULL;
+	}
+	if (ThreadKillEvent != NULL) {
 		CloseHandle(ThreadKillEvent);
+		ThreadKillEvent = NULL;
+	}
+	if (m_Thread != NULL) {
 		CloseHandle(m_Thread);
+		m_Thread = NULL;
+	}
+	// Call resource cleanup for derived classes
+	this->CleanupResources();
+
+	printf("SimpleTileStorage: destructor done\n");
 }
 
 DWORD WINAPI SimpleTileStorage::ThreadEntryPoint(LPVOID pthis) {
@@ -91,7 +119,10 @@ void SimpleTileStorage::ThreadRun() {
 	/* spin in this loop forever */
 	while(1) {
 		Result=WaitForMultipleObjects(2,Handles,false,INFINITE);   
-        if ((Result==WAIT_OBJECT_0+1) || (Result!=WAIT_OBJECT_0)) break;
+        if ((Result==WAIT_OBJECT_0+1) || (Result!=WAIT_OBJECT_0)) {
+			printf("SimpleTileStorage: thread received termination signal\n");
+			break;
+		}
 
 		WaitForSingleObject(m_QueueMutex,INFINITE); 
 		TilePtr current = m_Queue.front();
@@ -128,6 +159,7 @@ void SimpleTileStorage::ThreadRun() {
 			}
 		}
 	}
+	printf("SimpleTileStorage: thread exiting\n");
 }
 
 void SimpleTileStorage::SetNextLoadStorage(TileStorage *ts) {

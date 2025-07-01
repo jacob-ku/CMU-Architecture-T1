@@ -17,6 +17,7 @@
 
 
 #define GOOGLE_URL               "http://mt1.google.com"
+#define OPENSTREET_URL           "http://b.tile.openstreetmap.org"
 #define SKYVECTOR_URL            "http://t.skyvector.com"
 #define SKYVECTOR_CHART_VPS      "301"
 #define SKYVECTOR_CHART_IFR_LOW  "302"
@@ -24,6 +25,9 @@
 #define SKYVECTOR_KEY             "V7pMh4xRihf1nr61"
 #define SKYVECTOR_EDITION         "2504"
 
+#define MAX_DELAY_TIME (30*1000) // ms
+#define MIN_DELAY_TIME 10 // ms
+#define BACKOFF_FACTOR 10
 
 KeyholeConnection::KeyholeConnection(int type)
 {
@@ -42,6 +46,11 @@ KeyholeConnection::KeyholeConnection(int type)
     {
         ServerType = GoogleMaps_TerrainLabels;
         url=GOOGLE_URL;
+    }
+    else if (type == Open_Street)
+    {
+        ServerType = Open_Street;
+        url = OPENSTREET_URL;
     }
 	else if (type== SkyVector_VFR)
 	{
@@ -69,11 +78,18 @@ KeyholeConnection::KeyholeConnection(int type)
 	}
 	if ((m_GEFetch = gefetch_init(url)) == 0)
 		throw Exception("gefetch_init() failed");
+	DelayTime = MIN_DELAY_TIME;
 }
 
 KeyholeConnection::~KeyholeConnection() {
-	if (m_GEFetch)
+}
+
+void KeyholeConnection::CleanupResources() {
+	if (m_GEFetch) {
+		printf("KeyholeConnection: cleaning up gefetch\n");
 		gefetch_cleanup(m_GEFetch);
+		m_GEFetch = 0;
+	}
 }
 
 void KeyholeConnection::Process(TilePtr tile) {
@@ -90,6 +106,10 @@ void KeyholeConnection::Process(TilePtr tile) {
     {
         res = gefetch_fetch_image_googlemaps_with_type(m_GEFetch, tile->GetX(), tile->GetY(), tile->GetLevel(), "p");
     }
+	else if (ServerType == Open_Street)
+	{
+		res = gefetch_fetch_image_openstreetmap(m_GEFetch, tile->GetX(), tile->GetY(), tile->GetLevel());
+	}
     else if (ServerType== SkyVector)
 	{
 	  res = gefetch_fetch_image_skyvector(m_GEFetch,Key,Chart,Edition, tile->GetX(), tile->GetY(), tile->GetLevel());
@@ -101,8 +121,14 @@ void KeyholeConnection::Process(TilePtr tile) {
 		return;
 	}
 	else if (res != GEFETCH_OK) {
-		sleep(1);	/* don't do a DOS in case of any problems */
-		throw Exception("gefetch_fetch_image() failed");
+		printf("map tile fetch error, sleep %d\n", DelayTime);
+		Sleep(DelayTime);	/* don't do a DOS in case of any problems */
+		DelayTime = DelayTime * BACKOFF_FACTOR;
+		if (DelayTime > MAX_DELAY_TIME)
+			DelayTime = MAX_DELAY_TIME;
+		//throw Exception("gefetch_fetch_image() failed");
+	} else {
+		DelayTime = MIN_DELAY_TIME;
 	}
 
 	RawBuffer *buf = new RawBuffer(gefetch_get_data_ptr(m_GEFetch), gefetch_get_data_size(m_GEFetch));

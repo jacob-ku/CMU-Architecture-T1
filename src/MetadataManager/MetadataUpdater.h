@@ -47,7 +47,7 @@ public:
     
     void scheduleUpdate(int intervalMinutes) override;
     void stopUpdates() override;
-    ~MetaDataUpdater() = default;
+    ~MetaDataUpdater();
     
     void setWebDownloadManager(const WebDownloadManager& manager);
     WebDownloadManager getWebDownloadManager() const;

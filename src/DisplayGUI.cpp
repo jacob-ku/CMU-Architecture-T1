@@ -7,6 +7,7 @@
 #include <float.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 #include <filesystem>
 #include <fileapi.h>
 #include <chrono>
@@ -19,6 +20,8 @@
 #include "AreaDialog.h"
 #include "ntds2d.h"
 #include "AircraftFilter/ZoneFilter.h"
+#include "AircraftFilter/ScreenFilter.h"
+#include "AircraftFilter/MilitaryFilter.h"
 #include "LatLonConv.h"
 #include "PointInPolygon.h"
 #include "DecodeRawADS_B.h"
@@ -255,7 +258,7 @@ __fastcall TForm1::TForm1(TComponent *Owner)
     UnregisteredAircraftCount = 0;
 
     // std::string tmpsign = "KAL123";
-    
+
     // Initialize tower texture
     towerTextureID = 0;
     towerTextureLoaded = false;
@@ -307,6 +310,10 @@ void __fastcall TForm1::ObjectDisplayInit(TObject *Sender)
     currentMapProvider->Resize(ObjectDisplay->Width,ObjectDisplay->Height);
     glPushAttrib(GL_LINE_BIT);
     glPopAttrib();
+
+    LoadTowerTexture();
+    
+    
     printf("OpenGL Version %s\n", glGetString(GL_VERSION));
 
     // ----- Metadata database initialization -----
@@ -321,6 +328,8 @@ void __fastcall TForm1::ObjectDisplayInit(TObject *Sender)
     AircraftDB = new TAircraftDB();
     AircraftDB->LoadDatabaseAsync(AircraftDBPathFileName);
 
+    std::unique_ptr<MilitaryFilter> militaryfilter = std::make_unique<MilitaryFilter>();
+    DefaultFilter.addFilter("military", std::move(militaryfilter));
     // initialize message processor thread
     if (!msgProcThread)
     {
@@ -384,6 +393,14 @@ void __fastcall TForm1::Timer1Timer(TObject *Sender)
     ObjectDisplay->Repaint();
 }
 //---------------------------------------------------------------------------
+static void SetGLColor4f(float r, float g, float b, float a, float colorEps = 1e-3f) {
+    static float lastR = -1.0f, lastG = -1.0f, lastB = -1.0f, lastA = -1.0f;
+    if (fabs(r - lastR) > colorEps || fabs(g - lastG) > colorEps || fabs(b - lastB) > colorEps || fabs(a - lastA) > colorEps) {
+        glColor4f(r, g, b, a);
+        lastR = r; lastG = g; lastB = b; lastA = a;
+    }
+}
+
 void __fastcall TForm1::DrawObjects(void)
 {
     // ExecutionTimer timer("drawingTime");
@@ -429,11 +446,14 @@ void __fastcall TForm1::DrawObjects(void)
     DrawAirportsBatch();
     TArea screenBoundsArea = getScreenBoundsAsArea();
     
-    std::unique_ptr<AirplaneFilterInterface> screenfilter = std::make_unique<ZoneFilter>();
+    std::unique_ptr<ScreenFilter> screenfilter = std::make_unique<ScreenFilter>();
+
+
     screenfilter->updateFilterArea(screenBoundsArea, "screen_bounds");
+    screenfilter->setAndFilter(true);
+
     DefaultFilter.addFilter("screen_bounds", std::move(screenfilter));
     DefaultFilter.activateFilter("screen_bounds");
-    
     // AreaFilter.filterAircraftPosition(40.0, -80.0);
     if (AreaTemp)
     {
@@ -441,20 +461,14 @@ void __fastcall TForm1::DrawObjects(void)
         for (DWORD i = 0; i < AreaTemp->NumPoints; i++)
             LatLon2XY(AreaTemp->Points[i][1], AreaTemp->Points[i][0],
                       AreaTemp->PointsAdj[i][0], AreaTemp->PointsAdj[i][1]);
-
+        // 점과 선을 각각 한 번의 draw call로 묶음
         glBegin(GL_POINTS);
         for (DWORD i = 0; i < AreaTemp->NumPoints; i++)
-        {
-            glVertex2f(AreaTemp->PointsAdj[i][0],
-                       AreaTemp->PointsAdj[i][1]);
-        }
+            glVertex2f(AreaTemp->PointsAdj[i][0], AreaTemp->PointsAdj[i][1]);
         glEnd();
         glBegin(GL_LINE_STRIP);
         for (DWORD i = 0; i < AreaTemp->NumPoints; i++)
-        {
-            glVertex2f(AreaTemp->PointsAdj[i][0],
-                       AreaTemp->PointsAdj[i][1]);
-        }
+            glVertex2f(AreaTemp->PointsAdj[i][0], AreaTemp->PointsAdj[i][1]);
         glEnd();
     }
     Count = Areas->Count;
@@ -462,7 +476,6 @@ void __fastcall TForm1::DrawObjects(void)
     {
         TArea *Area = (TArea *)Areas->Items[i];
         TMultiColor MC;
-
         MC.Rgb = ColorToRGB(Area->Color);
         if (Area->Selected)
         {
@@ -470,7 +483,7 @@ void __fastcall TForm1::DrawObjects(void)
             glPushAttrib(GL_LINE_BIT);
             glLineStipple(3, 0xAAAA);
         }
-
+        // 폴리곤 라인 전체를 한 번에 그리기
         glColor4f(MC.Red / 255.0, MC.Green / 255.0, MC.Blue / 255.0, 1.0);
         glBegin(GL_LINE_LOOP);
         for (j = 0; j < Area->NumPoints; j++)
@@ -484,30 +497,28 @@ void __fastcall TForm1::DrawObjects(void)
             glPopAttrib();
             glLineWidth(2.0);
         }
-
+        // 폴리곤 면 전체를 한 번에 그리기
         glColor4f(MC.Red / 255.0, MC.Green / 255.0, MC.Blue / 255.0, 0.4);
-
         for (j = 0; j < Area->NumPoints; j++)
         {
             LatLon2XY(Area->Points[j][1], Area->Points[j][0],
                       Area->PointsAdj[j][0], Area->PointsAdj[j][1]);
         }
         TTriangles *Tri = Area->Triangles;
-
-        while (Tri)
-        {
+        if (Tri) {
             glBegin(GL_TRIANGLES);
-            glVertex2f(Area->PointsAdj[Tri->indexList[0]][0],
-                       Area->PointsAdj[Tri->indexList[0]][1]);
-            glVertex2f(Area->PointsAdj[Tri->indexList[1]][0],
-                       Area->PointsAdj[Tri->indexList[1]][1]);
-            glVertex2f(Area->PointsAdj[Tri->indexList[2]][0],
-                       Area->PointsAdj[Tri->indexList[2]][1]);
+            while (Tri)
+            {
+                glVertex2f(Area->PointsAdj[Tri->indexList[0]][0], Area->PointsAdj[Tri->indexList[0]][1]);
+                glVertex2f(Area->PointsAdj[Tri->indexList[1]][0], Area->PointsAdj[Tri->indexList[1]][1]);
+                glVertex2f(Area->PointsAdj[Tri->indexList[2]][0], Area->PointsAdj[Tri->indexList[2]][1]);
+                Tri = Tri->next;
+            }
             glEnd();
-            Tri = Tri->next;
         }
     }
     int filtered = 0;
+    int inscreen = 0;
     // --- drawing aircrafts ---
     AircraftCountLabel->Caption = IntToStr((int)ght_size(HashTable));
     
@@ -518,8 +529,12 @@ void __fastcall TForm1::DrawObjects(void)
 
     // Get zoom level and Define zoom threshold constants for better performance
     float zoomLevel = getCurrentZoomLevel();
-    const float ZOOM_THRESHOLD_FOR_DETAILED_VIEW = 0.5f;
-    
+    const float ZOOM_THRESHOLD_FOR_MIDDLE = 1.01f;
+    const float ZOOM_THRESHOLD_FOR_HIGH = 1.9f;
+    const float colorEps = 1e-3f;
+	// Measure block execution time
+	static double totalBlockTime = 0.0;
+	static int blockCounter = 0;
     for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
          Data; Data = (TADS_B_Aircraft *)ght_next(HashTable, &iterator, (const void **)&Key))
     {
@@ -530,41 +545,52 @@ void __fastcall TForm1::DrawObjects(void)
             }
 
             ViewableAircraft++;
-            if(DefaultFilter.filterAircraftPosition(Data->Latitude, Data->Longitude))
+            if(DefaultFilter.filterAircraft(*Data))
+            {
+                inscreen++; // Skip aircraft if it does not match the filter criteria
+            } else
+            {
+                continue; // Reset filtered count if aircraft matches the filter
+            }
+            
+            // Performance measurement for filter block
+            auto blockStart = std::chrono::high_resolution_clock::now();
+            
+            if(AreaFilter.filterAircraft(*Data))
             {
                 filtered++; // Skip aircraft if it does not match the filter criteria
             } else
             {
                 continue; // Reset filtered count if aircraft matches the filter
             }
-            
-            if(AreaFilter.filterAircraftPosition(Data->Latitude, Data->Longitude))
-            {
-                filtered++; // Skip aircraft if it does not match the filter criteria
-            } else
-            {
-                continue; // Reset filtered count if aircraft matches the filter
-            }
-            glColor4f(1.0, 1.0, 1.0, 1.0);  // white color - is this necessary?
-            
+			auto blockEnd = std::chrono::high_resolution_clock::now();
+			auto blockDuration = std::chrono::duration_cast<std::chrono::microseconds>(blockEnd - blockStart);
+
+			totalBlockTime += blockDuration.count() / 1000.0; // Convert to milliseconds
+			blockCounter++;
             LatLon2XY(Data->Latitude, Data->Longitude, ScrX, ScrY);
-            // DrawPoint(ScrX,ScrY);
+            // 화면 밖이면 continue (예: -50~Width+50, -50~Height+50 범위만)
+            if (ScrX < -50 || ScrX > ObjectDisplay->Width + 50 || ScrY < -50 || ScrY > ObjectDisplay->Height + 50)
+                continue;
+
+            float r = 1.0f, g = 1.0f, b = 1.0f, a = 1.0f;
             if (!AircraftDB->aircraft_is_registered(Data->ICAO)) {
-                glColor4f(0.5, 0.5, 0.5, 1.0);  // unregistered - gray color
+                r = g = b = 0.5f; // gray
             } else if (Data->HaveSpeedAndHeading) {
-                glColor4f(0.0, 1.0, 0.0, 1.0);  // with speed & heading - basic color is Green
+                r = 0.0f; g = 1.0f; b = 0.0f; // green
                 if (Data->IsHelicopter) {
-                    glColor4f(1.0, 0.41, 0.71, 1.0) ; // helicopter color is Pink
+                    r = 1.0f; g = 0.41f; b = 0.71f; // pink
                 }
                 if (Data->IsMilitary) {
-                    glColor4f(0.0, 0.0, 1.0, 1.0) ; // military color is Blue
+                    r = 0.0f; g = 0.0f; b = 1.0f; // blue
                 }
             } else {
                 Data->Heading = 0.0;
-                glColor4f(1.0, 0.0, 0.0, 1.0);  // no speed & heading - red
+                r = 1.0f; g = 0.0f; b = 0.0f; // red
             }
+            SetGLColor4f(r, g, b, a, colorEps);
 
-            if (zoomLevel > ZOOM_THRESHOLD_FOR_DETAILED_VIEW) {
+            if (zoomLevel > ZOOM_THRESHOLD_FOR_MIDDLE) {
                 DrawAirplaneImage(ScrX, ScrY, 0.8, Data->Heading, Data->SpriteImage);   // Draw airplane image. scale is changed from 1.5 to 0.8
             } else {
                 DrawAirplaneImage(ScrX, ScrY, 0.5, Data->Heading, Data->SpriteImage);   // Draw airplane image. scale is changed to smaller
@@ -579,7 +605,7 @@ void __fastcall TForm1::DrawObjects(void)
                 {
                     double ScrX2, ScrY2;
                     LatLon2XY(lat, lon, ScrX2, ScrY2);
-                    glColor4f(1.0, 1.0, 0.0, 1.0);  // yellow color for heading line
+                    SetGLColor4f(1.0f, 1.0f, 0.0f, 1.0f, colorEps); // yellow
                     glBegin(GL_LINE_STRIP);
                     glVertex2f(ScrX, ScrY);
                     glVertex2f(ScrX2, ScrY2);
@@ -587,48 +613,35 @@ void __fastcall TForm1::DrawObjects(void)
                 }
             }
 
-            if (zoomLevel > ZOOM_THRESHOLD_FOR_DETAILED_VIEW) {
+            // Draw ICAO text
+            if (zoomLevel > ZOOM_THRESHOLD_FOR_HIGH) {
                 // ICAO code text besides the aircraft with yellow color and black outline for better readability
                 // Draw black outline for ICAO text
-                glColor4f(0.0, 0.0, 0.0, 1.0);  // black outline
+                SetGLColor4f(0.0, 0.0, 0.0, 1.0, colorEps);  // black outline
                 glRasterPos2i(ScrX + 39, ScrY - 10);
                 ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
                 glRasterPos2i(ScrX + 41, ScrY - 10);
                 ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
-                glRasterPos2i(ScrX + 40, ScrY - 11);
-                ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
-                glRasterPos2i(ScrX + 40, ScrY - 9);
-                ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
-                
                 // Draw main ICAO text in bright yellow
-                glColor4f(1.0, 1.0, 0.0, 1.0);  // bright yellow color for ICAO code
+                SetGLColor4f(1.0, 1.0, 0.0, 1.0, colorEps);  // bright yellow color for ICAO code
                 glRasterPos2i(ScrX + 40, ScrY - 10);
                 ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
-            } else {
-                // ICAO code text besides the aircraft with yellow color and black outline for better readability
-                // Draw black outline for ICAO text
-                glColor4f(0.0, 0.0, 0.0, 1.0);  // black outline
-                glRasterPos2i(ScrX + 39, ScrY - 10);
-                ObjectDisplay->Draw2DTextAdditional(Data->HexAddr);
-                glRasterPos2i(ScrX + 41, ScrY - 10);
-                ObjectDisplay->Draw2DTextAdditional(Data->HexAddr);
-                glRasterPos2i(ScrX + 40, ScrY - 11);
-                ObjectDisplay->Draw2DTextAdditional(Data->HexAddr);
-                glRasterPos2i(ScrX + 40, ScrY - 9);
-                ObjectDisplay->Draw2DTextAdditional(Data->HexAddr);
-                
+            } else if(zoomLevel > ZOOM_THRESHOLD_FOR_MIDDLE && zoomLevel <= ZOOM_THRESHOLD_FOR_HIGH) {
                 // Draw main ICAO text in bright yellow
-                glColor4f(1.0, 1.0, 0.0, 1.0);  // bright yellow color for ICAO code
+                SetGLColor4f(1.0, 1.0, 0.0, 1.0, colorEps);  // bright yellow color for ICAO code
                 glRasterPos2i(ScrX + 40, ScrY - 10);
-                ObjectDisplay->Draw2DTextAdditional(Data->HexAddr);
-            }
-
-            if (zoomLevel > ZOOM_THRESHOLD_FOR_DETAILED_VIEW) {
+                ObjectDisplay->Draw2DTextDefault(Data->HexAddr);
+            } 
+            else {
+            }            
+            
+            // Draw aircraft info text
+            if (zoomLevel > ZOOM_THRESHOLD_FOR_HIGH) {
                 AnsiString callsignHeadAltSpeedText = "";
                 
                 // Add callsign if available
                 if (Data->HaveFlightNum && strlen(Data->FlightNum) > 0) {
-                    AnsiString flightNum = AnsiString(Data->FlightNum).Trim();  // can remove trim()
+                    AnsiString flightNum = AnsiString(Data->FlightNum);
                     if (!flightNum.IsEmpty()) {
                         callsignHeadAltSpeedText += flightNum;
                     } else {
@@ -664,22 +677,18 @@ void __fastcall TForm1::DrawObjects(void)
     
                 // Draw the aircraft info text with callsign, heading, altitude and speed 
                 // Draw black outline for aircraft info text
-                glColor4f(0.0, 0.0, 0.0, 1.0);  // black outline
+                SetGLColor4f(0.0, 0.0, 0.0, 1.0, colorEps);  // black outline
                 glRasterPos2i(ScrX + 39, ScrY - 25);
                 ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
                 glRasterPos2i(ScrX + 41, ScrY - 25);
                 ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
-                glRasterPos2i(ScrX + 40, ScrY - 26);
-                ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
-                glRasterPos2i(ScrX + 40, ScrY - 24);
-                ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
-                // Draw main text
-                glColor4f(0.5, 1.0, 0.0, 1.0);  // lime green for high visibility
+                // Draw main aircraft info text
+                SetGLColor4f(0.5, 1.0, 0.0, 1.0, colorEps);  // lime green for high visibility
                 glRasterPos2i(ScrX + 40, ScrY - 25);
                 ObjectDisplay->Draw2DTextAdditional(callsignHeadAltSpeedText);
     
                 // track age information below the ICAO code
-                glColor4f(1.0, 0.0, 0.0, 1.0);  // red
+                SetGLColor4f(1.0, 0.0, 0.0, 1.0, colorEps);  // red
                 glRasterPos2i(ScrX + 40, ScrY - 40);    // TODO: location should be adjusted based on font size setting from the dfm file
                 TimeDifferenceInSecToChar(Data->LastSeen, Data->TimeElapsedInSec, sizeof(Data->TimeElapsedInSec));
                 ObjectDisplay->Draw2DTextAdditional(Data->TimeElapsedInSec + AnsiString(" seconds ago"));
@@ -687,6 +696,16 @@ void __fastcall TForm1::DrawObjects(void)
 
         }
     }
+    static int lopcont= 0;
+    if (lopcont % 20 == 0) {
+        double avgBlockTime = totalBlockTime / blockCounter;
+        std::cout << "Filter block avg time: " << avgBlockTime << " ms (total: " << totalBlockTime 
+                    << " ms over " << blockCounter << " iterations)" << std::endl;
+    }
+    lopcont++;
+
+    blockCounter = 0;
+    totalBlockTime = 0.0;
     // End performance measurement for aircraft processing loop
     auto loopEnd = std::chrono::high_resolution_clock::now();
     auto loopDuration = std::chrono::duration_cast<std::chrono::milliseconds>(loopEnd - loopStart);
@@ -891,7 +910,7 @@ void __fastcall TForm1::DrawObjects(void)
         }
     }
     EXECUTION_TIMER_ELAPSED(elapsed, drawingTime);
-    LOG("Elapsed: " + to_string(elapsed) + "ms");
+    LOG("Viewable aircraft: " + to_string(ViewableAircraft) + " Elapsed: " + to_string(elapsed) + "ms");
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ObjectDisplayMouseDown(TObject *Sender,
@@ -1048,8 +1067,6 @@ void __fastcall TForm1::HookTrack(int X, int Y, bool CPA_Hook)  // handle track 
                 if (acData) {
                     printf("%s\n\n", acData->toString().c_str());
                     RegNumLabel->Caption = acData->Registration.IsEmpty() ? "Unknown" : acData->Registration;
-                    ManufactureLabel->Caption = acData->ManufacturerName.IsEmpty() ? "Unknown" : acData->ManufacturerName;
-                    ModelLabel->Caption = acData->Model.IsEmpty() ? "Unknown" : acData->Model;
                     OperatorLabel->Caption = acData->OperatorName.IsEmpty() ? "Unknown" : acData->OperatorName;
 
                     // Get country information using ICAO address
@@ -1058,13 +1075,39 @@ void __fastcall TForm1::HookTrack(int X, int Y, bool CPA_Hook)  // handle track 
                         CountryLabel->Caption = country;
                     else
                         CountryLabel->Caption = "Unknown";
+
+                    const TAircraftTypeInfo type = AircraftDB->GetAircraftType(ADS_B_Aircraft->ICAO);
+                    TypeLabel->Caption = type.categoryName;
+
+                    // Check if we have a valid flight number
+                    if (ADS_B_Aircraft->HaveFlightNum && strlen(ADS_B_Aircraft->FlightNum) > 0) {
+                        std::string callsign(ADS_B_Aircraft->FlightNum);
+                        Route route = RouteMgr.GetRoute(callsign);
+
+                        // Get waypoints and join them with "->" separator
+                        std::vector<std::string> waypoints = route.getWaypoints();
+                        if (!waypoints.empty()) {
+                            std::string routeStr = "";
+                            for (size_t i = 0; i < waypoints.size(); ++i) {
+                                if (i > 0) {
+                                    routeStr += "->";
+                                }
+                                routeStr += waypoints[i];
+                            }
+                            RouteLabel->Caption = routeStr.c_str();
+                        } else {
+                            RouteLabel->Caption = "Unknown";
+                        }
+                    } else {
+                        RouteLabel->Caption = "Unknown";
+                    }
                 } else {
                     printf("No AircraftDB info\n\n");
                     RegNumLabel->Caption = "N/A";
-                    ManufactureLabel->Caption = "N/A";
-                    ModelLabel->Caption = "N/A";
                     OperatorLabel->Caption = "N/A";
                     CountryLabel->Caption = "N/A";
+                    TypeLabel->Caption = "N/A";
+                    RouteLabel->Caption = "N/A";
                 }
             }
             else    // selection of the second aircarft
@@ -1138,55 +1181,58 @@ void __fastcall TForm1::ZoomOutClick(TObject *Sender)
     ObjectDisplay->Repaint();
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Purge(void)
+// Internal helper to remove aircrafts matching predicate
+void TForm1::PurgeInternal(std::function<bool(TADS_B_Aircraft*)> shouldPurge)
 {
     uint32_t *Key;
     ght_iterator_t iterator;
     TADS_B_Aircraft *Data;
     void *p;
-    __int64 CurrentTime = GetCurrentTimeInMsec();
-    __int64 StaleTimeInMs = CSpinStaleTime->Value * 1000;
 
-    if (PurgeStale->Checked == false)
-        return;
+    // Collect keys to remove to avoid iterator invalidation
+    std::vector<uint32_t> keysToRemove;
 
     for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
          Data; Data = (TADS_B_Aircraft *)ght_next(HashTable, &iterator, (const void **)&Key))
     {
-        if ((CurrentTime - Data->LastSeen) >= StaleTimeInMs)
-        {
-            p = ght_remove(HashTable, sizeof(*Key), Key);
-            ;
-            if (!p)
-                ShowMessage("Removing the current iterated entry failed! This is a BUG\n");
-
-            delete Data;
-        }
+        if (shouldPurge(Data))
+            keysToRemove.push_back(*Key);
     }
+
+    for (auto icao : keysToRemove)
+    {
+        Data = (TADS_B_Aircraft *)ght_get(HashTable, sizeof(icao), &icao);
+        p = ght_remove(HashTable, sizeof(icao), &icao);
+        if (!p)
+            ShowMessage("Removing the current iterated entry failed! This is a BUG\n");
+        delete Data;
+    }
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::Purge(void)
+{
+    if (PurgeStale->Checked == false)
+        return;
+
+    __int64 CurrentTime = GetCurrentTimeInMsec();
+    __int64 StaleTimeInMs = CSpinStaleTime->Value * 1000;
+
+    auto shouldPurge = [CurrentTime, StaleTimeInMs](TADS_B_Aircraft* Data) {
+        return (CurrentTime - Data->LastSeen) >= StaleTimeInMs;
+    };
+
+    PurgeInternal(shouldPurge);
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::PurgeButtonClick(TObject *Sender)
+{
+    auto alwaysPurge = [](TADS_B_Aircraft*) { return true; };
+    PurgeInternal(alwaysPurge);
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::Timer2Timer(TObject *Sender)
 {
     Purge();
-}
-//---------------------------------------------------------------------------
-void __fastcall TForm1::PurgeButtonClick(TObject *Sender)
-{
-    uint32_t *Key;
-    ght_iterator_t iterator;
-    TADS_B_Aircraft *Data;
-    void *p;
-
-    for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
-         Data; Data = (TADS_B_Aircraft *)ght_next(HashTable, &iterator, (const void **)&Key))
-    {
-
-        p = ght_remove(HashTable, sizeof(*Key), Key);
-        if (!p)
-            ShowMessage("Removing the current iterated entry failed! This is a BUG\n");
-
-        delete Data;
-    }
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::InsertClick(TObject *Sender)
@@ -1276,6 +1322,19 @@ void __fastcall TForm1::AreaListViewSelectItem(TObject *Sender, TListItem *Item,
         Delete->Enabled = true;
     else
         Delete->Enabled = false;
+    
+    if (HaveSelected)
+    {
+        AreaFilter.allFiltersDeactivate();
+        for (unsigned int i = 0; i < Count; i++)
+        {
+            TArea *Area = (TArea *)Areas->Items[i];
+            if (Area->Selected)
+            {   
+                AreaFilter.activateFilter(AnsiStringToStdString(Area->Name));
+            }
+        }
+    }
     ObjectDisplay->Repaint();
 }
 //---------------------------------------------------------------------------
@@ -1293,7 +1352,7 @@ void __fastcall TForm1::DeleteClick(TObject *Sender)
             Area = (TArea *)AreaListView->Items->Item[i]->Data;
             std::cout << "Deleting area: " << Area->Name.c_str() << std::endl;
             AreaFilter.removeFilter(AnsiStringToStdString(Area->Name));
-
+            AreaFilter.allFiltersActivate();
             for (Index = 0; Index < Areas->Count; Index++)
             {
                 if (Area == Areas->Items[Index])
@@ -1412,7 +1471,7 @@ void __fastcall TForm1::RawConnectButtonClick(TObject *Sender)
         #ifdef ERROR_HANDLING_ENABLED
         try {
             if (mPIErrorMonitorThread != NULL) {
-                mPIErrorMonitorThread->Terminate(); 
+                mPIErrorMonitorThread->Terminate();
                 // delete mPIErrorMonitorThread;
                 // mPIErrorMonitorThread = NULL;
             }
@@ -1421,7 +1480,7 @@ void __fastcall TForm1::RawConnectButtonClick(TObject *Sender)
             std::cout << "Error while setting up ssh connection: " << e.Message.c_str() << std::endl;
         }
         try {
-           
+
             mPIErrorMonitorThread = new PIErrorMonitor(true);
             mPIErrorMonitorThread->registerErrorHandler(HandlePIErrorState);
             AnsiString hostAnsi = RawIpAddress->Text;
@@ -1462,7 +1521,7 @@ void __fastcall TForm1::RawConnectButtonClick(TObject *Sender)
         // } catch (const EIdException &e) {
         //     ShowMessage("Error while connecting: " + e.Message);
         // }
-        // #endif    
+        // #endif
     }
 }
 //---------------------------------------------------------------------------
@@ -1682,10 +1741,13 @@ void __fastcall TForm1::SBSConnectButtonClick(TObject *Sender)
 //---------------------------------------------------------------------------
 // Constructor for the thread class
 __fastcall TTCPClientSBSHandleThread::TTCPClientSBSHandleThread(bool value, 
-    TMessageProcessorThread* procThread) : TThread(value), msgProcThread(procThread)
+    TMessageProcessorThread* procThread, double playbackSpeed) : TThread(value), msgProcThread(procThread), PlaybackSpeed(playbackSpeed)
 {
 	printf("[Thread] TTCPClientSBSHandleThread created.\n");
 	FreeOnTerminate = true; // Automatically free the thread object after execution
+    UseFileInsteadOfNetwork = false;
+    First = true;
+    LastTime = 0;
 }
 //---------------------------------------------------------------------------
 // Destructor for the thread class
@@ -1728,7 +1790,7 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
                     break;
                 }
 
-                // Read timestamp frist
+                // Read timestamp first
                 AnsiString TimestampMsg = Form1->PlayBackSBSStream->ReadLine();
                 Time = StrToInt64(TimestampMsg);
                 if (First)
@@ -1738,8 +1800,13 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
                 }
                 SleepTime = Time - LastTime;
                 LastTime = Time;
-                if (SleepTime > 0)
-                    Sleep(SleepTime);
+                if (SleepTime > 0 && PlaybackSpeed > 0.0)
+                {
+                    EXECUTION_TIMER(sleepTime);
+                    Sleep((int)(SleepTime / PlaybackSpeed));
+                    EXECUTION_TIMER_ELAPSED(elapsed, sleepTime);
+                    LOG("Sleep time: " + to_string(elapsed) + "ms");
+                }
                 if (Form1->PlayBackSBSStream->EndOfStream)
                 {
                     printf("End SBS Playback 2\n");
@@ -1919,7 +1986,7 @@ void __fastcall TMessageProcessorThread::Execute(void)
                             }
                             if (AircraftDB->IsMilitary(ADS_B_Aircraft->ICAO, &cntry)) {
                                 ADS_B_Aircraft->IsMilitary = true;
-                                ADS_B_Aircraft->SpriteImage = Form1->CurrentSpriteImage + 76;                            
+                                ADS_B_Aircraft->SpriteImage = Form1->CurrentSpriteImage + 76;
                             }
 
                             if (Form1->CycleImages->Checked)
@@ -1994,7 +2061,16 @@ void __fastcall TForm1::SBSPlaybackButtonClick(TObject *Sender)
                 }
                 else
                 {
-                    TCPClientSBSHandleThread = new TTCPClientSBSHandleThread(true, msgProcThread);
+                    // 콤보박스에서 속도 읽기
+                    double playbackSpeed = 1.0;
+                    if (SBSPlaybackSpeedComboBox)
+                    {
+                        int idx = SBSPlaybackSpeedComboBox->ItemIndex;
+                        if (idx == 1) playbackSpeed = 2.0;
+                        else if (idx == 2) playbackSpeed = 3.0;
+                        else playbackSpeed = 1.0;
+                    }
+                    TCPClientSBSHandleThread = new TTCPClientSBSHandleThread(true, msgProcThread, playbackSpeed);
                     TCPClientSBSHandleThread->UseFileInsteadOfNetwork = true;
                     TCPClientSBSHandleThread->First = true;
                     TCPClientSBSHandleThread->FreeOnTerminate = TRUE;
@@ -2002,6 +2078,7 @@ void __fastcall TForm1::SBSPlaybackButtonClick(TObject *Sender)
                     TCPClientSBSHandleThread->Resume();
                     SBSPlaybackButton->Caption = "Stop SBS Playback";
                     SBSConnectButton->Enabled = false;
+                    SBSPlaybackSpeedComboBox->Enabled = false;
                 }
             }
         }
@@ -2013,6 +2090,7 @@ void __fastcall TForm1::SBSPlaybackButtonClick(TObject *Sender)
         PlayBackSBSStream = NULL;
         SBSPlaybackButton->Caption = "SBS Playback";
         SBSConnectButton->Enabled = true;
+        SBSPlaybackSpeedComboBox->Enabled = true;
     }
 }
 //---------------------------------------------------------------------------
@@ -2463,7 +2541,7 @@ int TForm1::GetUnregisteredAircraftCount(void)
 void __fastcall TForm1::UpdateUnregisteredCount(void)
 {
     UnregisteredAircraftCount = GetUnregisteredAircraftCount();
-    UnregisteredCountLabel->Caption = "Unregistered: " + IntToStr(UnregisteredAircraftCount);
+    UnregisteredCount->Caption = "Unregistered: " + IntToStr(UnregisteredAircraftCount);
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::HideUnregisteredCheckBoxClick(TObject *Sender)
@@ -2550,21 +2628,21 @@ void __fastcall TForm1::SBSThreadTerminated(TObject *Sender)
 void __fastcall TForm1::DrawBlackDot(double lat, double lot)
 {
     double ScrX, ScrY;
-    
+
     LatLon2XY(lat, lot, ScrX, ScrY);
-    
+
     glEnable(GL_POINT_SMOOTH);
-    glEnable(GL_BLEND);      
+    glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-    
+
     glPointSize(20.0);
     // glColor4f(0.0, 0.0, 0.0, 1.0);
-    
+
     glBegin(GL_POINTS);
     glVertex2f(ScrX, ScrY);
     glEnd();
-    
+
     glDisable(GL_POINT_SMOOTH);
     glDisable(GL_BLEND);
 }
@@ -2573,56 +2651,56 @@ void __fastcall TForm1::DrawBlackDot(double lat, double lot)
 void __fastcall TForm1::DrawAirportsBatch(void)
 {
     auto start_time = std::chrono::high_resolution_clock::now();
-    
+
     std::vector<std::pair<double, double>> airportPositions;
-    
+
     std::unordered_map<std::string, Airport> &airportCodeMap = AirportMgr.getAirportCodeMap();
     airportPositions.reserve(airportCodeMap.size());
-    
+
     double maxLatFromCorners, minLatFromCorners, maxLonFromCorners, minLonFromCorners;
     getScreenLatLonBounds(minLatFromCorners, maxLatFromCorners, minLonFromCorners, maxLonFromCorners);
 
     static int boundaryLogCount = 0;
     boundaryLogCount++;
     if (boundaryLogCount % 500 == 0) {
-        std::cout << "Screen Boundary Log (#" << boundaryLogCount << "): " 
+        std::cout << "Screen Boundary Log (#" << boundaryLogCount << "): "
                   << "Lat[" << minLatFromCorners << ", " << maxLatFromCorners << "] "
-                  << "Lon[" << minLonFromCorners << ", " << maxLonFromCorners << "]" 
+                  << "Lon[" << minLonFromCorners << ", " << maxLonFromCorners << "]"
                   << std::endl;
     }
-    
+
     int loopCount = 0;
     for(const auto &airportPair : airportCodeMap) {
         const Airport &airport = airportPair.second;
         double airportLat = airport.getLatitude();
         double airportLon = airport.getLongitude();
-        
+
         // Only draw tower if airport has IATA code
         std::string iataCode = airport.getIATA();
-        if (!iataCode.empty() && 
-            airportLat >= minLatFromCorners && airportLat <= maxLatFromCorners && 
+        if (!iataCode.empty() &&
+            airportLat >= minLatFromCorners && airportLat <= maxLatFromCorners &&
             airportLon >= minLonFromCorners && airportLon <= maxLonFromCorners) {
             double ScrX, ScrY;
             LatLon2XY(airportLat, airportLon, ScrX, ScrY);
             airportPositions.push_back({ScrX, ScrY});
         }
     }
-    
+
     int i = 0;
 
     for(const auto& pos : airportPositions) {
         DrawTowerImage(pos.first, pos.second, getCurrentZoomLevel());
     }
-    
+
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-    
+
 
     static int call_count = 0;
     call_count++;
     if (call_count % 100 == 0) {
         char time_str[256];
-        sprintf(time_str, "Airport tower drawing took %lld milliseconds for %zu airports (call #%d)", 
+        sprintf(time_str, "Airport tower drawing took %lld milliseconds for %zu airports (call #%d)",
                 duration.count(), airportPositions.size(), call_count);
         std::cout << time_str << std::endl;
     }
@@ -2635,17 +2713,17 @@ float __fastcall TForm1::getCurrentZoomLevel(void)
     double currentZoom = GetEarthView() ? GetEarthView()->m_Eye.h : 1.0;
     double baseZoom = pow(1.3, 18);
     double zoomRatio = baseZoom / currentZoom;
-    
+
 
     float scale = static_cast<float>(std::min(2.0, zoomRatio * 0.00008));
-    
+
     static int scaleLogCount = 0;
     scaleLogCount++;
     // if (scaleLogCount % 5000 == 0) {
-    //     std::cout << "Scale Log (#" << scaleLogCount << "): " 
-    //               <<  scale 
-    //               << " (currentZoom: "  << GetEarthView()->m_Eye.h 
-    //               << ", zoomRatio: " <<  zoomRatio << ")" 
+    //     std::cout << "Scale Log (#" << scaleLogCount << "): "
+    //               <<  scale
+    //               << " (currentZoom: "  << GetEarthView()->m_Eye.h
+    //               << ", zoomRatio: " <<  zoomRatio << ")"
     //               << std::endl;
     // }
 
@@ -2658,82 +2736,87 @@ bool __fastcall TForm1::LoadTowerTexture(void)
     if (towerTextureLoaded) {
         return true;
     }
-    
+
     const char *filename = "..\\..\\Symbols\\tower-64.png";
     int width, height, nrChannels;
-    
+
     unsigned char *imageData = stbi_load(filename, &width, &height, &nrChannels, 0);
     if (!imageData) {
         std::cout << "Failed to load tower texture: " << filename << std::endl;
         return false;
     }
-    
+
     glGenTextures(1, &towerTextureID);
     glBindTexture(GL_TEXTURE_2D, towerTextureID);
-    
+
     GLenum format = (nrChannels == 4) ? GL_RGBA : GL_RGB;
     glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, imageData);
-    
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    
+
     glBindTexture(GL_TEXTURE_2D, 0);
-    
+
     stbi_image_free(imageData);
-    
+
     towerTextureLoaded = true;
     std::cout << "Tower texture loaded successfully: " << width << "x" << height << " (" << nrChannels << " channels)" << std::endl;
-    
+
     return true;
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TForm1::DrawTowerImage(float x, float y, float scale)
 {
-    if (!LoadTowerTexture()) {
-        return; 
-    }
-    
+
+
     // Save current OpenGL state
     GLboolean blendEnabled = glIsEnabled(GL_BLEND);
     GLboolean textureEnabled = glIsEnabled(GL_TEXTURE_2D);
     GLint blendSrc, blendDst;
     glGetIntegerv(GL_BLEND_SRC, &blendSrc);
     glGetIntegerv(GL_BLEND_DST, &blendDst);
-    
+
     glPushMatrix();
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
+    if (!blendEnabled)
+    {
+        glEnable(GL_BLEND);
+    }
+    if (!textureEnabled)
+    {
+        glEnable(GL_TEXTURE_2D);
+    }
+    
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
+
     glBindTexture(GL_TEXTURE_2D, towerTextureID);
-    
+
     // Set sky blue color to make tower more visible
     glColor4f(0.5f, 0.8f, 1.0f, 1.0f); // Sky blue with full opacity
-    
+
     glTranslatef(x, y, 0.0f);
-    
-    
+
+
     float size = 32.0f * scale;
-    
+
     glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f); glVertex2f(-size/2, size/2); 
-    glTexCoord2f(1.0f, 0.0f); glVertex2f(size/2, size/2);  
-    glTexCoord2f(1.0f, 1.0f); glVertex2f(size/2, -size/2); 
+    glTexCoord2f(0.0f, 0.0f); glVertex2f(-size/2, size/2);
+    glTexCoord2f(1.0f, 0.0f); glVertex2f(size/2, size/2);
+    glTexCoord2f(1.0f, 1.0f); glVertex2f(size/2, -size/2);
     glTexCoord2f(0.0f, 1.0f); glVertex2f(-size/2, -size/2);
     glEnd();
-    
+
     // Reset color to white to not affect other drawings
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    
+
     glBindTexture(GL_TEXTURE_2D, 0);
     
     // Restore previous OpenGL state
-    if (!textureEnabled) glDisable(GL_TEXTURE_2D);
-    if (!blendEnabled) glDisable(GL_BLEND);
-    else glBlendFunc(blendSrc, blendDst);
+    // if (!textureEnabled) glDisable(GL_TEXTURE_2D);
+    // if (!blendEnabled) glDisable(GL_BLEND);
+    // else glBlendFunc(blendSrc, blendDst);
     glPopMatrix();
 }
 //---------------------------------------------------------------------------
@@ -2741,20 +2824,20 @@ void __fastcall TForm1::getScreenLatLonBounds(double &minLat, double &maxLat, do
 {
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
-    
+
     int screenX = viewport[0];
     int screenY = viewport[1];
     int screenWidth = viewport[2];
     int screenHeight = viewport[3];
-    
+
     double topLeftLat, topLeftLon, topRightLat, topRightLon;
     double bottomLeftLat, bottomLeftLon, bottomRightLat, bottomRightLon;
-    
+
     XY2LatLon2(screenX, (ObjectDisplay->Height - 1) - screenY, bottomLeftLat, bottomLeftLon);                    // ����
-    XY2LatLon2(screenWidth, (ObjectDisplay->Height - 1) - screenY, bottomRightLat, bottomRightLon);             // ����  
+    XY2LatLon2(screenWidth, (ObjectDisplay->Height - 1) - screenY, bottomRightLat, bottomRightLon);             // ����
     XY2LatLon2(screenX, (ObjectDisplay->Height - 1) - screenHeight, topLeftLat, topLeftLon);                    // �»�
     XY2LatLon2(screenWidth, (ObjectDisplay->Height - 1) - screenHeight, topRightLat, topRightLon);              // ���
-    
+
     maxLat = std::max({topLeftLat, topRightLat, bottomLeftLat, bottomRightLat});
     minLat = std::min({topLeftLat, topRightLat, bottomLeftLat, bottomRightLat});
     maxLon = std::max({topLeftLon, topRightLon, bottomLeftLon, bottomRightLon});
@@ -2861,8 +2944,8 @@ void __fastcall TForm1::AddAreaToFilter(TArea* area)
         std::cerr << "Error: Cannot add null area to filter" << std::endl;
         return;
     }
-    
-    std::unique_ptr<AirplaneFilterInterface> artccBoundaryFilter(new ZoneFilter());
+    //std::unique_ptr<AirplaneFilterInterface> artccBoundaryFilter(new ZoneFilter());
+    std::unique_ptr<ZoneFilter> artccBoundaryFilter(new ZoneFilter());
     std::string areaName(AnsiStringToStdString(area->Name));
     std::cout << "Adding filter area: " << areaName << std::endl;
     artccBoundaryFilter->updateFilterArea(*area, AnsiStringToStdString(area->Name));
@@ -2871,3 +2954,114 @@ void __fastcall TForm1::AddAreaToFilter(TArea* area)
     printf("Area %s added to AreaFilter\n", area->Name.c_str());
 }
 //---------------------------------------------------------------------------
+void __fastcall TForm1::SearchAircraftClick(TObject *Sender)
+{
+    AnsiString searchInput = AircraftNumber->Text.Trim().UpperCase();
+    
+    if (searchInput.IsEmpty()) {
+        ShowMessage("Please enter an ICAO code or callsign to search.");
+        return;
+    }
+    
+    // Search through all aircraft in the hash table
+    uint32_t *Key;
+    ght_iterator_t iterator;
+    TADS_B_Aircraft *Data;
+    TADS_B_Aircraft *foundAircraft = nullptr;
+    
+    for (Data = (TADS_B_Aircraft *)ght_first(HashTable, &iterator, (const void **)&Key);
+         Data; Data = (TADS_B_Aircraft *)ght_next(HashTable, &iterator, (const void **)&Key))
+    {
+        if (Data->HaveLatLon) {
+            // Check ICAO code (HexAddr)
+            AnsiString icaoCode = AnsiString(Data->HexAddr).UpperCase();
+            
+            // Check callsign (FlightNum)
+            AnsiString callsign = "";
+            if (Data->HaveFlightNum && strlen(Data->FlightNum) > 0) {
+                callsign = AnsiString(Data->FlightNum).Trim().UpperCase();
+            }
+            
+            // Match either ICAO or callsign
+            if (icaoCode == searchInput || callsign == searchInput) {
+                foundAircraft = Data;
+                break;
+            }
+        }
+    }
+    
+    if (foundAircraft) {
+        // Aircraft found - center map on aircraft and highlight it
+        if (GetEarthView()) {
+            // Method 1: Use proper coordinate transformation
+            // The EarthView coordinate system: -0.5 to +0.5 for both x and y
+            // Longitude: -180° to +180° maps to -0.5 to +0.5
+            double normalizedLon = foundAircraft->Longitude / 360.0;
+            
+            // Latitude: -90° to +90°, but need to account for Mercator projection
+            // Use the inverse of what LatLon2XY does
+            double latRad = foundAircraft->Latitude * M_PI / 180.0;
+            double mercatorY = asinh(tan(latRad)) / (2 * M_PI);
+            
+            // Set the eye position to center on the aircraft
+            GetEarthView()->m_Eye.x = normalizedLon;
+            GetEarthView()->m_Eye.y = mercatorY;
+            
+            // Set TrackHook to highlight the aircraft
+            TrackHook.ICAO_CC = foundAircraft->ICAO;
+            TrackHook.Valid_CC = true;
+            
+            // Refresh the display
+            ObjectDisplay->Repaint();
+            
+            // Show success message with coordinates for debugging
+            AnsiString message = "Aircraft found: " + AnsiString(foundAircraft->HexAddr);
+            if (foundAircraft->HaveFlightNum && strlen(foundAircraft->FlightNum) > 0) {
+                message += " (" + AnsiString(foundAircraft->FlightNum).Trim() + ")";
+            }
+            message += "\nLat: " + FloatToStrF(foundAircraft->Latitude, ffFixed, 8, 4) + 
+                      " Lon: " + FloatToStrF(foundAircraft->Longitude, ffFixed, 8, 4);
+            message += "\nEye.x: " + FloatToStrF(GetEarthView()->m_Eye.x, ffFixed, 8, 6) +
+                      " Eye.y: " + FloatToStrF(GetEarthView()->m_Eye.y, ffFixed, 8, 6);
+            ShowMessage(message);
+        }
+    } else {
+        // Aircraft not found
+        ShowMessage("Aircraft with ICAO '" + searchInput + "' or callsign '" + searchInput + "' not found.");
+    }
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::AircraftNumberChange(TObject *Sender)
+{
+    // Optional: Real-time validation or formatting of input
+    AnsiString inputText = AircraftNumber->Text.Trim();
+    
+    // Convert to uppercase for consistency (ICAO codes are typically uppercase)
+    if (inputText != inputText.UpperCase()) {
+        int cursorPos = AircraftNumber->SelStart;
+        AircraftNumber->Text = inputText.UpperCase();
+        AircraftNumber->SelStart = cursorPos;
+    }
+    
+    // Optional: Enable/disable search button based on input
+    // You can add validation logic here if needed
+}
+//---------------------------------------------------------------------------
+
+
+
+void __fastcall TForm1::MilitaryClick(TObject *Sender)
+{
+    if (IsMilitary->Checked)
+    {
+        // Enable the search button when checkbox is checked
+        DefaultFilter.activateFilter("military");
+    }
+    else
+    {
+        // Disable the search button when checkbox is unchecked
+        DefaultFilter.deactivateFilter("military");
+    }
+}
+//---------------------------------------------------------------------------
+
