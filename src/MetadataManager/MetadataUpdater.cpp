@@ -19,67 +19,69 @@
 using namespace std;
 
 
-bool MetaDataUpdater::update(const string& src, const std::function<void(bool)>& fileUnavailableCallback) {
-    std::cout << "MetaDataUpdater::update called with src: " << src << std::endl;
+bool MetaDataUpdater::update(const string& url, const string& file, const std::function<void(bool)>& callback) {
+    std::cout << "[MetaDataUpdater] update from" << url << std::endl;
     
     if (isUpdateThreadRunning) {
-        std::cout << "Update thread is already running" << std::endl;
+        std::cout << "[MetaDataUpdater] Update thread is already running" << std::endl;
         return true;
     }
     
-    updateSource = src;
-    
-    if (fileUnavailableCallback) {
-        std::cout << "Update callback function set from parameter" << std::endl;
+    if (callback) {
+        std::cout << "[MetaDataUpdater] Update callback function set from parameter" << std::endl;
     } else {
-        std::cout << "No callback function provided" << std::endl;
+        std::cout << "[MetaDataUpdater] No callback function provided" << std::endl;
     }
     
     isUpdateThreadRunning = true;
     shouldStop = false;
     
-    updateThread = std::thread([this, src, fileUnavailableCallback]() {
+    updateThread = std::thread([this, url, file, callback]() {
         std::cout << "[UPDATE_THREAD] Starting periodic update thread..." << std::endl;
         
-        auto lastCallbackTime = std::chrono::steady_clock::now();
+        // auto lastCallbackTime = std::chrono::steady_clock::now();
         const auto tenMinutes = std::chrono::minutes(10);
-        const auto oneHour = std::chrono::hours(1);
+        // const auto oneHour = std::chrono::hours(1);
+        const auto tenSeconds = std::chrono::seconds(10);
+
+        const auto period = tenMinutes; // Check every 10 minutes
+        // const auto period = tenSeconds; // Check every 10 minutes
+
+        int periodInSeconds = std::chrono::duration_cast<std::chrono::seconds>(period).count();
         
         while (!shouldStop) {
-            auto currentTime = std::chrono::steady_clock::now();
+            // auto currentTime = std::chrono::steady_clock::now();
             
-            std::cout << "[UPDATE_THREAD] Performing 10-minute check..." << std::endl;
-            std::time_t fileUpdatedTime = webDownloadManager.getLastModifiedTime(src);
-            if (fileUpdatedTime == 0) {
-                std::cout << "[UPDATE_THREAD] Failed to get last modified time for: " << src << std::endl;
-                fileUnavailableCallback(true);
-                std::cout << "[UPDATE_THREAD] Retrying after 600 seconds..." << std::endl;
-                for(int i = 0; i < 600 && !shouldStop; ++i) {
-                    std::this_thread::sleep_for(std::chrono::seconds(1));
-                }
-                continue;
-            }
-            std::time_t currentDBFileTime = FileLastWriteTimeToTimeT("routes.csv");
-            std::cout << "[UPDATE_THREAD] File updated time: " << std::ctime(&fileUpdatedTime) 
-                      << "Current DB file time: " << std::ctime(&currentDBFileTime) << std::endl;
+            // std::cout << "[UPDATE_THREAD] Performing 10-minute check..." << std::endl;
+            // std::time_t remoteUpdatedTime = webDownloadManager.getLastModifiedTime(url);
+            // if (remoteUpdatedTime == 0) {
+            //     std::cout << "[UPDATE_THREAD] Failed to get last modified time for: " << url << std::endl;
+            //     std::cout << "[UPDATE_THREAD] Retrying after 600 seconds..." << std::endl;
+
+            //     for(int i = 0; i < periodInSeconds && !shouldStop; ++i) {
+            //         std::this_thread::sleep_for(std::chrono::seconds(1));
+            //     }
+            //     continue;
+            // }
+            // std::time_t currentDBFileTime = FileLastWriteTimeToTimeT(file);
+            // std::cout << "[UPDATE_THREAD] File updated time: " << std::ctime(&remoteUpdatedTime) 
+            //           << "Current DB file time: " << std::ctime(&currentDBFileTime) << std::endl;
             
-            if (fileUpdatedTime > currentDBFileTime) {
+            // if (remoteUpdatedTime < currentDBFileTime) {
                 std::cout << "[UPDATE_THREAD] New data available, updating..." << std::endl;
-                fileUnavailableCallback(false);
                 webDownloadManager.setTimeLogging(true);
-                bool res = webDownloadManager.downloadFile("https://vrs-standing-data.adsb.lol/routes.csv", "routes.csv");
+                bool res = webDownloadManager.downloadFile(url, file);
                 if (!res) {
-                    std::cout << "[UPDATE_THREAD] Failed to download file header from: " << src << std::endl;
+                    std::cout << "[UPDATE_THREAD] Failed to download file header from: " << url << std::endl;
                     continue;
                 }
-                std::cout << "[UPDATE_THREAD] Downloaded file header from: " << src << std::endl;
-                fileUnavailableCallback(true);
-            } else {
-                fileUnavailableCallback(true);
-                std::cout << "[UPDATE_THREAD] No new data available" << std::endl;
-            }
+                std::cout << "[UPDATE_THREAD] Downloaded file header from: " << url << std::endl;
+                callback(true);
+            // } else {
+            //     std::cout << "[UPDATE_THREAD] No new data available" << std::endl;
+            // }
             
-            for (int i = 0; i < 600 && !shouldStop; ++i) {
+            for (int i = 0; i < periodInSeconds && !shouldStop; ++i) {
                 std::this_thread::sleep_for(std::chrono::seconds(1));
             }
         }
@@ -95,30 +97,30 @@ bool MetaDataUpdater::update(const string& src, const std::function<void(bool)>&
 }
 
 bool MetaDataUpdater::initialize() {
-    std::cout << "MetaDataUpdater::initialize called" << endl;
+    std::cout << "[MetaDataUpdater] initialize called" << endl;
     return true;
 }
 
 bool MetaDataUpdater::reset() {
-    std::cout << "MetaDataUpdater::reset called" << endl;
+    std::cout << "[MetaDataUpdater] reset called" << endl;
     return true;
 }
 
 bool MetaDataUpdater::stop() {
-    std::cout << "MetaDataUpdater::stop called" << endl;
+    std::cout << "[MetaDataUpdater] stop called" << endl;
     
     shouldStop = true;
     
     if (isUpdateThreadRunning) {
-        std::cout << "Waiting for update thread to stop..." << endl;
+        std::cout << "[MetaDataUpdater] Waiting for update thread to stop..." << endl;
         for (int i = 0; i < 50 && isUpdateThreadRunning; ++i) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         
         if (isUpdateThreadRunning) {
-            std::cout << "Warning: Update thread did not stop within timeout" << endl;
+            std::cout << "[MetaDataUpdater] Warning: Update thread did not stop within timeout" << endl;
         } else {
-            std::cout << "Update thread stopped successfully" << endl;
+            std::cout << "[MetaDataUpdater] Update thread stopped successfully" << endl;
         }
     }
     
@@ -142,12 +144,12 @@ void MetaDataUpdater::setTimeLogging(bool enable) {
 }
 
 bool MetaDataUpdater::downloadFileHeader(const string &url, const string &outputPath) {
-    std::cout << "Downloading file header from: " << url << " to: " << outputPath << endl;
+    std::cout << "[MetaDataUpdater] Downloading file header from: " << url << " to: " << outputPath << endl;
     return webDownloadManager.downloadFile(url, outputPath);
 }
 
 bool MetaDataUpdater::downloadOnBackground(const string &url, const string &outputPath) {
-    std::cout << "Starting background download from: " << url << " to: " << outputPath << endl;
+    std::cout << "[MetaDataUpdater] Starting background download from: " << url << " to: " << outputPath << endl;
     
     thread downloadThread([this, url, outputPath]() {
         bool result = webDownloadManager.downloadFile(url, outputPath, 
@@ -169,12 +171,12 @@ bool MetaDataUpdater::downloadOnBackground(const string &url, const string &outp
     
     downloadThread.detach();
     
-    cout << "Background download thread started for: " << url << endl;
+    cout << "[MetaDataUpdater] Background download thread started for: " << url << endl;
     return true;
 }
 
 future<bool> MetaDataUpdater::downloadOnBackgroundWithFuture(const string &url, const string &outputPath) {
-    cout << "Starting future-based background download from: " << url << " to: " << outputPath << endl;
+    cout << "[MetaDataUpdater] Starting future-based background download from: " << url << " to: " << outputPath << endl;
     
     return std::async(std::launch::async, [this, url, outputPath]() -> bool {
         std::cout << "[FUTURE] Starting download in background thread..." << std::endl;
@@ -196,7 +198,7 @@ future<bool> MetaDataUpdater::downloadOnBackgroundWithFuture(const string &url, 
 std::vector<std::future<bool>> MetaDataUpdater::downloadMultipleOnBackground(
     const std::vector<std::pair<std::string, std::string>>& urlPathPairs) {
     
-    std::cout << "Starting parallel download of " << urlPathPairs.size() << " files..." << std::endl;
+    std::cout << "[MetaDataUpdater] Starting parallel download of " << urlPathPairs.size() << " files..." << std::endl;
     
     std::vector<std::future<bool>> futures;
     futures.reserve(urlPathPairs.size());
@@ -205,12 +207,12 @@ std::vector<std::future<bool>> MetaDataUpdater::downloadMultipleOnBackground(
         futures.push_back(downloadOnBackgroundWithFuture(pair.first, pair.second));
     }
     
-    std::cout << "All download threads started" << std::endl;
+    std::cout << "[MetaDataUpdater] All download threads started" << std::endl;
     return futures;
 }
 
 void MetaDataUpdater::waitForDownloadsCompletion(std::vector<std::future<bool>>& futures) {
-    std::cout << "Waiting for " << futures.size() << " downloads to complete..." << std::endl;
+    std::cout << "[MetaDataUpdater] Waiting for " << futures.size() << " downloads to complete..." << std::endl;
     
     int completedCount = 0;
     int successCount = 0;
@@ -223,7 +225,7 @@ void MetaDataUpdater::waitForDownloadsCompletion(std::vector<std::future<bool>>&
                 successCount++;
             }
             
-            std::cout << "Download " << completedCount << "/" << futures.size() 
+            std::cout << "[MetaDataUpdater] Download " << completedCount << "/" << futures.size() 
                       << " completed. Success: " << (result ? "Yes" : "No") << std::endl;
         } catch (const std::exception& e) {
             std::cout << "Download " << completedCount << " threw exception: " << e.what() << std::endl;
@@ -231,12 +233,12 @@ void MetaDataUpdater::waitForDownloadsCompletion(std::vector<std::future<bool>>&
         }
     }
     
-    std::cout << "All downloads completed. Success rate: " << successCount << "/" 
+    std::cout << "[MetaDataUpdater] All downloads completed. Success rate: " << successCount << "/" 
               << completedCount << " (" << (successCount * 100 / completedCount) << "%)" << std::endl;
 }
 
 void MetaDataUpdater::setUpdateCallback(const std::function<void()>& callback) {
-    std::cout << "Setting update callback function" << endl;
+    std::cout << "[MetaDataUpdater] Setting update callback function" << endl;
 }
 
 bool MetaDataUpdater::isUpdateRunning() const {
@@ -252,7 +254,7 @@ std::time_t MetaDataUpdater::FileLastWriteTimeToTimeT(const std::string& filePat
 
 
     if (!GetFileAttributesExW(wfilepath.c_str(), GetFileExInfoStandard, &fileInfo)) {
-        std::cout << "could not get a time " << filePath << std::endl;
+        std::cout << "[MetaDataUpdater] could not get a time " << filePath << std::endl;
         return std::time_t(0);
     }
     
@@ -267,19 +269,19 @@ std::time_t MetaDataUpdater::FileLastWriteTimeToTimeT(const std::string& filePat
 }
 
 void MetaDataUpdater::scheduleUpdate(int intervalMinutes) {
-    std::cout << "Scheduling updates every " << intervalMinutes << " minutes" << std::endl;
+    std::cout << "[MetaDataUpdater] Scheduling updates every " << intervalMinutes << " minutes" << std::endl;
     
     if (intervalMinutes > 0) {
-        std::cout << "Update scheduling configured for " << intervalMinutes << " minute intervals" << std::endl;
+        std::cout << "[MetaDataUpdater] Update scheduling configured for " << intervalMinutes << " minute intervals" << std::endl;
     }
 }
 
 void MetaDataUpdater::stopUpdates() {
-    std::cout << "Stopping all update processes" << std::endl;
+    std::cout << "[MetaDataUpdater] Stopping all update processes" << std::endl;
     
     if (stop()) {
-        std::cout << "Updates stopped successfully" << std::endl;
+        std::cout << "[MetaDataUpdater] Updates stopped successfully" << std::endl;
     } else {
-        std::cout << "Failed to stop updates" << std::endl;
+        std::cout << "[MetaDataUpdater] Failed to stop updates" << std::endl;
     }
 }

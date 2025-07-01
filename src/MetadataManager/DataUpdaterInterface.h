@@ -9,7 +9,7 @@ public:
     virtual ~DataUpdaterInterface() = default;
     
 
-    virtual bool update(const std::string& src, const std::function<void(bool)>& callback) = 0;
+    virtual bool update(const std::string& url, const std::string& file, const std::function<void(bool)>& callback) = 0;
     virtual bool initialize() = 0;
     virtual bool reset() = 0;
     virtual bool stop() = 0;

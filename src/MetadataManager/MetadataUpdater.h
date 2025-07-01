@@ -39,8 +39,8 @@ public:
     MetaDataUpdater(const std::string& sourceUrl, const std::string& targetFile) 
         : updateSource(sourceUrl), targetFile(targetFile) { 
     }
-    
-    bool update(const std::string& src, const std::function<void(bool)>& callback) override;
+
+    bool update(const std::string& url, const std::string& file, const std::function<void(bool)>& callback) override;
     bool initialize() override;
     bool reset() override;
     bool stop() override;
