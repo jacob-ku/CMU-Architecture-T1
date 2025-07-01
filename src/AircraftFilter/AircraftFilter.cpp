@@ -149,10 +149,14 @@ bool AircraftFilter::filterAircraft(const TADS_B_Aircraft& aircraft) {
         // std::cout << "[KEY]AircraftFilter: Applying filter '" << filterName << "' to aircraft " << aircraft.HexAddr << std::endl;
         try {
             if (filterInstance->isAirplaneIncluded(aircraft)) {
-                // std::cout << "AircraftFilter: Aircraft " << aircraft.HexAddr 
+                // std::cout << "[AircraftFilter]AircraftFilter: Aircraft " << aircraft.HexAddr 
                 //          << " pass filter: " << filterName << std::endl;
                          return true; // Aircraft passed the filter                
             } else {
+                if (filterInstance->getAndfilter()) {
+                    return false;
+                    //std::cout  << " did not pass filter: " << filterName << std::endl;
+                }
                 continue;
             }
         } catch (const std::exception& e) {

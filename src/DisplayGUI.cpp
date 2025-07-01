@@ -21,6 +21,7 @@
 #include "ntds2d.h"
 #include "AircraftFilter/ZoneFilter.h"
 #include "AircraftFilter/ScreenFilter.h"
+#include "AircraftFilter/MilitaryFilter.h"
 #include "LatLonConv.h"
 #include "PointInPolygon.h"
 #include "DecodeRawADS_B.h"
@@ -326,6 +327,8 @@ void __fastcall TForm1::ObjectDisplayInit(TObject *Sender)
     AircraftDB = new TAircraftDB();
     AircraftDB->LoadDatabaseAsync(AircraftDBPathFileName);
 
+    std::unique_ptr<MilitaryFilter> militaryfilter = std::make_unique<MilitaryFilter>();
+    DefaultFilter.addFilter("military", std::move(militaryfilter));
     // initialize message processor thread
     if (!msgProcThread)
     {
@@ -443,10 +446,13 @@ void __fastcall TForm1::DrawObjects(void)
     TArea screenBoundsArea = getScreenBoundsAsArea();
     
     std::unique_ptr<ScreenFilter> screenfilter = std::make_unique<ScreenFilter>();
+
+
     screenfilter->updateFilterArea(screenBoundsArea, "screen_bounds");
+    screenfilter->setAndFilter(true);
+
     DefaultFilter.addFilter("screen_bounds", std::move(screenfilter));
     DefaultFilter.activateFilter("screen_bounds");
-    
     // AreaFilter.filterAircraftPosition(40.0, -80.0);
     if (AreaTemp)
     {
@@ -538,13 +544,13 @@ void __fastcall TForm1::DrawObjects(void)
             }
 
             ViewableAircraft++;
-            // if(DefaultFilter.filterAircraftPosition(Data->Latitude, Data->Longitude))
-            // {
-            //     inscreen++; // Skip aircraft if it does not match the filter criteria
-            // } else
-            // {
-            //     continue; // Reset filtered count if aircraft matches the filter
-            // }
+            if(DefaultFilter.filterAircraft(*Data))
+            {
+                inscreen++; // Skip aircraft if it does not match the filter criteria
+            } else
+            {
+                continue; // Reset filtered count if aircraft matches the filter
+            }
             
             // Performance measurement for filter block
             auto blockStart = std::chrono::high_resolution_clock::now();
@@ -2972,6 +2978,23 @@ void __fastcall TForm1::AircraftNumberChange(TObject *Sender)
     
     // Optional: Enable/disable search button based on input
     // You can add validation logic here if needed
+}
+//---------------------------------------------------------------------------
+
+
+
+void __fastcall TForm1::MilitaryClick(TObject *Sender)
+{
+    if (IsMilitary->Checked)
+    {
+        // Enable the search button when checkbox is checked
+        DefaultFilter.activateFilter("military");
+    }
+    else
+    {
+        // Disable the search button when checkbox is unchecked
+        DefaultFilter.deactivateFilter("military");
+    }
 }
 //---------------------------------------------------------------------------
 
