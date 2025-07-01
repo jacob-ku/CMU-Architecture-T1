@@ -3,7 +3,7 @@ object Form1: TForm1
   Top = 0
   Caption = 'ADS-B Viewer'
   ClientHeight = 1110
-  ClientWidth = 1666
+  ClientWidth = 1121
   Color = clBtnFace
   Constraints.MinHeight = 740
   Font.Charset = DEFAULT_CHARSET
@@ -43,7 +43,7 @@ object Form1: TForm1
     ParentFont = False
   end
   object RightPanel: TPanel
-    Left = 1416
+    Left = 871
     Top = 0
     Width = 250
     Height = 1110
@@ -51,8 +51,6 @@ object Form1: TForm1
     Color = clWindow
     Constraints.MaxWidth = 250
     TabOrder = 0
-    ExplicitLeft = 1414
-    ExplicitHeight = 1102
     object Panel1: TPanel
       Left = 1
       Top = 962
@@ -60,7 +58,6 @@ object Form1: TForm1
       Height = 147
       Align = alBottom
       TabOrder = 0
-      ExplicitTop = 954
       object Label12: TLabel
         Left = 8
         Top = 8
@@ -154,13 +151,13 @@ object Form1: TForm1
       Left = 1
       Top = 1
       Width = 248
-      Height = 648
+      Height = 776
       Align = alTop
       Constraints.MinHeight = 70
       TabOrder = 1
       object Label15: TLabel
         Left = 72
-        Top = 517
+        Top = 565
         Width = 98
         Height = 13
         Caption = 'Areas Of Interest'
@@ -225,7 +222,7 @@ object Form1: TForm1
       end
       object AreaListView: TListView
         Left = 5
-        Top = 536
+        Top = 584
         Width = 240
         Height = 82
         Columns = <
@@ -246,7 +243,7 @@ object Form1: TForm1
       end
       object Insert: TButton
         Left = 5
-        Top = 624
+        Top = 672
         Width = 36
         Height = 18
         Caption = 'Insert'
@@ -255,7 +252,7 @@ object Form1: TForm1
       end
       object Delete: TButton
         Left = 158
-        Top = 624
+        Top = 672
         Width = 44
         Height = 18
         Caption = 'Delete'
@@ -265,7 +262,7 @@ object Form1: TForm1
       end
       object Complete: TButton
         Left = 45
-        Top = 624
+        Top = 672
         Width = 57
         Height = 18
         Caption = 'Complete'
@@ -275,7 +272,7 @@ object Form1: TForm1
       end
       object Cancel: TButton
         Left = 107
-        Top = 624
+        Top = 672
         Width = 41
         Height = 18
         Caption = 'Cancel'
@@ -902,12 +899,24 @@ object Form1: TForm1
         TabOrder = 19
         OnClick = SBSPlaybackButtonClick
       end
+      object SBSPlaybackSpeedComboBox: TComboBox
+        Left = 115
+        Top = 517
+        Width = 118
+        Height = 20
+        TabOrder = 20
+        Text = '1.0'
+        Items.Strings = (
+          '1.0'
+          '2.0'
+          '3.0')
+      end
     end
     object Panel2: TPanel
       Left = 1
-      Top = 649
+      Top = 777
       Width = 248
-      Height = 313
+      Height = 185
       Align = alClient
       TabOrder = 2
       object LabelErrorMessage: TLabel
@@ -972,7 +981,7 @@ object Form1: TForm1
   object ObjectDisplay: TOpenGLPanel
     Left = 0
     Top = 0
-    Width = 1416
+    Width = 871
     Height = 1110
     Cursor = crCross
     Align = alClient
@@ -1001,8 +1010,6 @@ object Form1: TForm1
     OnInit = ObjectDisplayInit
     OnResize = ObjectDisplayResize
     OnPaint = ObjectDisplayPaint
-    ExplicitWidth = 1406
-    ExplicitHeight = 1078
   end
   object MainMenu1: TMainMenu
     Left = 24
@@ -1041,12 +1048,14 @@ object Form1: TForm1
   object Timer1: TTimer
     Interval = 500
     OnTimer = Timer1Timer
-    Left = 88
+    Left = 24
+    Top = 64
   end
   object Timer2: TTimer
     Interval = 5000
     OnTimer = Timer2Timer
-    Left = 136
+    Left = 16
+    Top = 120
   end
   object IdTCPClientRaw: TIdTCPClient
     OnDisconnected = IdTCPClientRawDisconnected
@@ -1055,17 +1064,20 @@ object Form1: TForm1
     Port = 0
     ReadTimeout = -1
     ReuseSocket = rsTrue
-    Left = 208
+    Left = 16
+    Top = 192
   end
   object RecordRawSaveDialog: TSaveDialog
     DefaultExt = 'raw'
     Filter = 'raw|*.raw'
-    Left = 328
+    Left = 16
+    Top = 256
   end
   object PlaybackRawDialog: TOpenDialog
     DefaultExt = 'raw'
     Filter = 'raw|*.raw'
-    Left = 448
+    Left = 16
+    Top = 320
   end
   object IdTCPClientSBS: TIdTCPClient
     OnDisconnected = IdTCPClientSBSDisconnected
@@ -1074,16 +1086,19 @@ object Form1: TForm1
     Port = 0
     ReadTimeout = -1
     ReuseSocket = rsTrue
-    Left = 552
+    Left = 16
+    Top = 392
   end
   object RecordSBSSaveDialog: TSaveDialog
     DefaultExt = 'sbs'
     Filter = 'sbs|*.sbs'
-    Left = 664
+    Left = 16
+    Top = 456
   end
   object PlaybackSBSDialog: TOpenDialog
     DefaultExt = 'sbs'
     Filter = 'sbs|*.sbs'
-    Left = 784
+    Left = 16
+    Top = 512
   end
 end
