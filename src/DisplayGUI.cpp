@@ -1646,10 +1646,13 @@ void __fastcall TForm1::SBSConnectButtonClick(TObject *Sender)
 //---------------------------------------------------------------------------
 // Constructor for the thread class
 __fastcall TTCPClientSBSHandleThread::TTCPClientSBSHandleThread(bool value, 
-    TMessageProcessorThread* procThread) : TThread(value), msgProcThread(procThread)
+    TMessageProcessorThread* procThread, double playbackSpeed) : TThread(value), msgProcThread(procThread), PlaybackSpeed(playbackSpeed)
 {
 	printf("[Thread] TTCPClientSBSHandleThread created.\n");
 	FreeOnTerminate = true; // Automatically free the thread object after execution
+    UseFileInsteadOfNetwork = false;
+    First = true;
+    LastTime = 0;
 }
 //---------------------------------------------------------------------------
 // Destructor for the thread class
@@ -1692,7 +1695,7 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
                     break;
                 }
 
-                // Read timestamp frist
+                // Read timestamp first
                 AnsiString TimestampMsg = Form1->PlayBackSBSStream->ReadLine();
                 Time = StrToInt64(TimestampMsg);
                 if (First)
@@ -1702,8 +1705,8 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
                 }
                 SleepTime = Time - LastTime;
                 LastTime = Time;
-                if (SleepTime > 0)
-                    Sleep(SleepTime);
+                if (SleepTime > 0 && PlaybackSpeed > 0.0)
+                    Sleep((int)(SleepTime / PlaybackSpeed));
                 if (Form1->PlayBackSBSStream->EndOfStream)
                 {
                     printf("End SBS Playback 2\n");
@@ -1956,7 +1959,16 @@ void __fastcall TForm1::SBSPlaybackButtonClick(TObject *Sender)
                 }
                 else
                 {
-                    TCPClientSBSHandleThread = new TTCPClientSBSHandleThread(true, msgProcThread);
+                    // 콤보박스에서 속도 읽기
+                    double playbackSpeed = 1.0;
+                    if (SBSPlaybackSpeedComboBox)
+                    {
+                        int idx = SBSPlaybackSpeedComboBox->ItemIndex;
+                        if (idx == 1) playbackSpeed = 2.0;
+                        else if (idx == 2) playbackSpeed = 3.0;
+                        else playbackSpeed = 1.0;
+                    }
+                    TCPClientSBSHandleThread = new TTCPClientSBSHandleThread(true, msgProcThread, playbackSpeed);
                     TCPClientSBSHandleThread->UseFileInsteadOfNetwork = true;
                     TCPClientSBSHandleThread->First = true;
                     TCPClientSBSHandleThread->FreeOnTerminate = TRUE;

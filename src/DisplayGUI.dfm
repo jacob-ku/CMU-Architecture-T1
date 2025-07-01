@@ -151,13 +151,13 @@ object Form1: TForm1
       Left = 1
       Top = 1
       Width = 248
-      Height = 648
+      Height = 776
       Align = alTop
       Constraints.MinHeight = 70
       TabOrder = 1
       object Label15: TLabel
         Left = 72
-        Top = 517
+        Top = 565
         Width = 98
         Height = 13
         Caption = 'Areas Of Interest'
@@ -222,7 +222,7 @@ object Form1: TForm1
       end
       object AreaListView: TListView
         Left = 5
-        Top = 536
+        Top = 584
         Width = 240
         Height = 82
         Columns = <
@@ -243,7 +243,7 @@ object Form1: TForm1
       end
       object Insert: TButton
         Left = 5
-        Top = 624
+        Top = 672
         Width = 36
         Height = 18
         Caption = 'Insert'
@@ -252,7 +252,7 @@ object Form1: TForm1
       end
       object Delete: TButton
         Left = 158
-        Top = 624
+        Top = 672
         Width = 44
         Height = 18
         Caption = 'Delete'
@@ -262,7 +262,7 @@ object Form1: TForm1
       end
       object Complete: TButton
         Left = 45
-        Top = 624
+        Top = 672
         Width = 57
         Height = 18
         Caption = 'Complete'
@@ -272,7 +272,7 @@ object Form1: TForm1
       end
       object Cancel: TButton
         Left = 107
-        Top = 624
+        Top = 672
         Width = 41
         Height = 18
         Caption = 'Cancel'
@@ -899,12 +899,24 @@ object Form1: TForm1
         TabOrder = 19
         OnClick = SBSPlaybackButtonClick
       end
+      object SBSPlaybackSpeedComboBox: TComboBox
+        Left = 115
+        Top = 517
+        Width = 118
+        Height = 20
+        TabOrder = 20
+        Text = '1.0'
+        Items.Strings = (
+          '1.0'
+          '2.0'
+          '3.0')
+      end
     end
     object Panel2: TPanel
       Left = 1
-      Top = 649
+      Top = 777
       Width = 248
-      Height = 313
+      Height = 185
       Align = alClient
       TabOrder = 2
       object LabelErrorMessage: TLabel
@@ -997,9 +1009,6 @@ object Form1: TForm1
     OnInit = ObjectDisplayInit
     OnResize = ObjectDisplayResize
     OnPaint = ObjectDisplayPaint
-    ExplicitTop = -4
-    ExplicitWidth = 521
-    ExplicitHeight = 581
   end
   object MainMenu1: TMainMenu
     Left = 24

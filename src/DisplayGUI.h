@@ -1,4 +1,4 @@
-//---------------------------------------------------------------------------
+﻿//---------------------------------------------------------------------------
 
 #ifndef DisplayGUIH
 #define DisplayGUIH
@@ -110,7 +110,8 @@ public:
     bool UseFileInsteadOfNetwork;
     bool First;
     __int64 LastTime;
-    __fastcall TTCPClientSBSHandleThread(bool value, TMessageProcessorThread* procThread);
+    double PlaybackSpeed; // 추가: 재생 속도 (1.0, 2.0, 3.0)
+    __fastcall TTCPClientSBSHandleThread(bool value, TMessageProcessorThread* procThread, double playbackSpeed = 1.0);
     ~TTCPClientSBSHandleThread();
 };
 //---------------------------------------------------------------------------
@@ -213,6 +214,7 @@ class TForm1 : public TForm
     TLabel *Label25;
     TLabel *RouteLabel;
     TLabel *Label27;
+	TComboBox *SBSPlaybackSpeedComboBox; // SBS 재생 속도 선택 콤보박스 (디자인에 추가 필요)
     void __fastcall ObjectDisplayInit(TObject *Sender);
     void __fastcall ObjectDisplayResize(TObject *Sender);
     void __fastcall ObjectDisplayPaint(TObject *Sender);
