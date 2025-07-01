@@ -215,9 +215,6 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <CppCompile Include="AircraftFilter\AltitudeFilter.cpp">
             <BuildOrder>88</BuildOrder>
         </CppCompile>
-        <CppCompile Include="AircraftFilter\AreaFilter.cpp">
-            <BuildOrder>84</BuildOrder>
-        </CppCompile>
         <CppCompile Include="AircraftFilter\ScreenFilter.cpp">
             <BuildOrder>89</BuildOrder>
         </CppCompile>
@@ -1573,6 +1570,14 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <PostBuildEvent>copy &quot;$(PROJECTDIR)\OSC\bin\bcclib\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y&amp;&amp;copy &quot;$(PROJECTDIR)\Metadata\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y</PostBuildEvent>
         <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
     </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' And '$(FileToCompile)'=='AircraftFilter\ScreenFilter.cpp'">
+        <PreBuildEvent/>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent>copy &quot;$(PROJECTDIR)\OSC\bin\bcclib\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y&amp;&amp;copy &quot;$(PROJECTDIR)\Metadata\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y</PostBuildEvent>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Release' And '$(FileToCompile)'=='Util\WebDownloadManager.h'">
         <PreBuildEvent/>
         <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
@@ -1605,23 +1610,7 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <PostBuildEvent>copy &quot;$(PROJECTDIR)\OSC\bin\bcclib\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y&amp;&amp;copy &quot;$(PROJECTDIR)\Metadata\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y</PostBuildEvent>
         <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(Config)'=='Release' And '$(FileToCompile)'=='Map\MapSrc\GoogleLayer.cpp'">
-        <PreBuildEvent/>
-        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
-        <PreLinkEvent/>
-        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
-        <PostBuildEvent>copy &quot;$(PROJECTDIR)\OSC\bin\bcclib\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y&amp;&amp;copy &quot;$(PROJECTDIR)\Metadata\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y</PostBuildEvent>
-        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
-    </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Release' And '$(FileToCompile)'=='Map\MapSrc\ViewPoint.cpp'">
-        <PreBuildEvent/>
-        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
-        <PreLinkEvent/>
-        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
-        <PostBuildEvent>copy &quot;$(PROJECTDIR)\OSC\bin\bcclib\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y&amp;&amp;copy &quot;$(PROJECTDIR)\Metadata\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y</PostBuildEvent>
-        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Config)'=='Release' And '$(FileToCompile)'=='Map\MapSrc\GlUtil.h'">
         <PreBuildEvent/>
         <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
         <PreLinkEvent/>
@@ -1637,7 +1626,7 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <PostBuildEvent>copy &quot;$(PROJECTDIR)\OSC\bin\bcclib\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y&amp;&amp;copy &quot;$(PROJECTDIR)\Metadata\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y</PostBuildEvent>
         <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(Config)'=='Release' And '$(FileToCompile)'=='Map\Providers\AbstractMapProvider.cpp'">
+    <PropertyGroup Condition="'$(Config)'=='Release' And '$(FileToCompile)'=='Map\MapSrc\GlUtil.h'">
         <PreBuildEvent/>
         <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
         <PreLinkEvent/>
@@ -1653,7 +1642,23 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <PostBuildEvent>copy &quot;$(PROJECTDIR)\OSC\bin\bcclib\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y&amp;&amp;copy &quot;$(PROJECTDIR)\Metadata\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y</PostBuildEvent>
         <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
     </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' And '$(FileToCompile)'=='Map\Providers\AbstractMapProvider.cpp'">
+        <PreBuildEvent/>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent>copy &quot;$(PROJECTDIR)\OSC\bin\bcclib\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y&amp;&amp;copy &quot;$(PROJECTDIR)\Metadata\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y</PostBuildEvent>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Release' And '$(FileToCompile)'=='Map\MapSrc\KeyholeConnection.h'">
+        <PreBuildEvent/>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent>copy &quot;$(PROJECTDIR)\OSC\bin\bcclib\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y&amp;&amp;copy &quot;$(PROJECTDIR)\Metadata\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y</PostBuildEvent>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' And '$(FileToCompile)'=='Map\MapSrc\GoogleLayer.cpp'">
         <PreBuildEvent/>
         <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
         <PreLinkEvent/>
@@ -2101,6 +2106,14 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <PostBuildEvent>copy &quot;$(PROJECTDIR)\OSC\bin\bcclib\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y&amp;&amp;copy &quot;$(PROJECTDIR)\Metadata\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y</PostBuildEvent>
         <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
     </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' And '$(FileToCompile)'=='AircraftFilter\AltitudeFilter.cpp'">
+        <PreBuildEvent/>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent>copy &quot;$(PROJECTDIR)\OSC\bin\bcclib\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y&amp;&amp;copy &quot;$(PROJECTDIR)\Metadata\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y</PostBuildEvent>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Release' And '$(FileToCompile)'=='MetadataManager\DataUpdaterInterface.h'">
         <PreBuildEvent/>
         <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
@@ -2486,14 +2499,6 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Release' And '$(FileToCompile)'=='TimeFunctions.cpp'">
-        <PreBuildEvent/>
-        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
-        <PreLinkEvent/>
-        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
-        <PostBuildEvent>copy &quot;$(PROJECTDIR)\OSC\bin\bcclib\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y&amp;&amp;copy &quot;$(PROJECTDIR)\Metadata\*.*&quot; &quot;$(OUTPUTDIR)&quot; /Y</PostBuildEvent>
-        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Config)'=='Release' And '$(FileToCompile)'=='AircraftFilter\AreaFilter.cpp'">
         <PreBuildEvent/>
         <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
         <PreLinkEvent/>
