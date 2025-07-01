@@ -42,6 +42,11 @@ protected:
 	 */
 	void Process(TilePtr tile);
 
+	/**
+	 * Cleanup resources after thread termination.
+	 */
+	virtual void CleanupResources();
+
 private:
 	gefetch_t	m_GEFetch;
 	int         ServerType;
