@@ -2574,7 +2574,7 @@ void __fastcall TForm1::FormClose(TObject *Sender, TCloseAction &Action)
 {
     printf("[FormClose] Starting application shutdown...\n");
 
-    int result = MessageDlg("Confirm exit: are you sure you want to close the program?",
+    int result = MessageDlg("Confirm exit: are you sure to close the program?",
                         mtConfirmation,
                         TMsgDlgButtons() << mbYes << mbNo, 0);
     if (result == mrNo)
