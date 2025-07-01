@@ -942,8 +942,8 @@ object Form1: TForm1
         OnChange = MapComboBoxChange
         Items.Strings = (
           'Google Maps'
-          'Google Street View'
-          'Google Terrain with Labels'
+          'Google Street'
+          'Google Terrain'
           'VFR'
           'IFS Low'
           'IFS High'

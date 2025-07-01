@@ -82,17 +82,14 @@ KeyholeConnection::KeyholeConnection(int type)
 }
 
 KeyholeConnection::~KeyholeConnection() {
-	printf("KeyholeConnection: destructor\n");
+}
 
-	// First, the parent class destructor will be called to safely terminate the thread
-	// Then, clean up the gefetch resources
-
+void KeyholeConnection::CleanupResources() {
 	if (m_GEFetch) {
 		printf("KeyholeConnection: cleaning up gefetch\n");
 		gefetch_cleanup(m_GEFetch);
 		m_GEFetch = 0;
 	}
-	printf("KeyholeConnection: destructor done\n");
 }
 
 void KeyholeConnection::Process(TilePtr tile) {

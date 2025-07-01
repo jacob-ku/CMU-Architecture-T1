@@ -59,6 +59,8 @@ protected:
 	 */
 	virtual void Process(TilePtr tile) = 0;
 
+	virtual void CleanupResources() {}
+
 private:
 	/**
 	 * Entry point for worker thread.
