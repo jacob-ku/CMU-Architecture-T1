@@ -2013,6 +2013,7 @@ void __fastcall TForm1::SBSPlaybackButtonClick(TObject *Sender)
                     TCPClientSBSHandleThread->Resume();
                     SBSPlaybackButton->Caption = "Stop SBS Playback";
                     SBSConnectButton->Enabled = false;
+                    SBSPlaybackSpeedComboBox->Enabled = false;
                 }
             }
         }
@@ -2024,6 +2025,7 @@ void __fastcall TForm1::SBSPlaybackButtonClick(TObject *Sender)
         PlayBackSBSStream = NULL;
         SBSPlaybackButton->Caption = "SBS Playback";
         SBSConnectButton->Enabled = true;
+        SBSPlaybackSpeedComboBox->Enabled = true;
     }
 }
 //---------------------------------------------------------------------------
