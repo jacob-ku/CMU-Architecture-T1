@@ -58,7 +58,7 @@ SimpleTileStorage::~SimpleTileStorage() {
 
 	/* wait for thread to finish with timeout */
 	printf("SimpleTileStorage: wait for thread to finish\n");
-	DWORD waitResult = WaitForSingleObject(m_Thread, 5000); // 5 second timeout
+	DWORD waitResult = WaitForSingleObject(m_Thread, 10);
 	if (waitResult == WAIT_TIMEOUT) {
 		printf("SimpleTileStorage: thread termination timeout, forcing termination\n");
 		// Force terminate thread if it doesn't respond
@@ -86,6 +86,9 @@ SimpleTileStorage::~SimpleTileStorage() {
 		CloseHandle(m_Thread);
 		m_Thread = NULL;
 	}
+	// Call resource cleanup for derived classes
+	this->CleanupResources();
+
 	printf("SimpleTileStorage: destructor done\n");
 }
 
