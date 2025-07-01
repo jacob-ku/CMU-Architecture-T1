@@ -383,6 +383,12 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <None Include="Map\Providers\MapProviderFactory.h">
             <BuildOrder>51</BuildOrder>
         </None>
+        <CppCompile Include="Map\Providers\OpenStreetMapProvider.cpp">
+            <BuildOrder>86</BuildOrder>
+        </CppCompile>
+        <None Include="Map\Providers\OpenStreetMapProvider.h">
+            <BuildOrder>87</BuildOrder>
+        </None>
         <CppCompile Include="Map\Providers\VFRMapProvider.cpp">
             <BuildOrder>45</BuildOrder>
         </CppCompile>
