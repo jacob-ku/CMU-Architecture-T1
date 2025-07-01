@@ -884,32 +884,33 @@ object Form1: TForm1
       object SBSRecordButton: TButton
         Left = 5
         Top = 494
-        Width = 76
+        Width = 68
         Height = 17
         Caption = 'SBS Record'
         TabOrder = 18
         OnClick = SBSRecordButtonClick
       end
       object SBSPlaybackButton: TButton
-        Left = 87
+        Left = 79
         Top = 494
-        Width = 82
+        Width = 74
         Height = 17
         Caption = 'SBS Playback'
         TabOrder = 19
         OnClick = SBSPlaybackButtonClick
       end
       object SBSPlaybackSpeedComboBox: TComboBox
-        Left = 175
+        Left = 159
         Top = 494
-        Width = 58
+        Width = 74
         Height = 20
+        ItemIndex = 0
         TabOrder = 20
-        Text = '1.0'
+        Text = 'Speed X1'
         Items.Strings = (
-          '1.0'
-          '2.0'
-          '3.0')
+          'Speed X1'
+          'Speed X2'
+          'Speed X3')
       end
       object SearchAircraft: TButton
         Left = 5
