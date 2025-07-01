@@ -7,7 +7,7 @@ Route::Route(const std::string& cs, const std::string& c, const std::string& n, 
 }
 
 Route::Route(const Route& other)
-    : callsign(other.callsign), code(other.code), number(other.number), airlinecoode(other.airlinecoode), waypoints(other.waypoints) {
+    : callsign(other.callsign), code(other.code), number(other.number), airlinecoode(other.airlinecoode), waypoints(other.waypoints), waypointsStr(other.waypointsStr) {
 }
 
 Route& Route::operator=(const Route& other) {
@@ -17,28 +17,33 @@ Route& Route::operator=(const Route& other) {
         number = other.number;
         airlinecoode = other.airlinecoode;
         waypoints = other.waypoints;
+        waypointsStr = other.waypointsStr;
     }
     return *this;
 }
 
-std::string Route::getCallsign() const {
+const std::string& Route::getCallsign() const {
     return callsign;
 }
 
-std::string Route::getCode() const {
+const std::string& Route::getCode() const {
     return code;
 }
 
-std::string Route::getNumber() const {
+const std::string& Route::getNumber() const {
     return number;
 }
 
-std::string Route::getAirlineCode() const {
+const std::string& Route::getAirlineCode() const {
     return airlinecoode;
 }
 
-std::vector<std::string> Route::getWaypoints() const {
+const std::vector<std::string>& Route::getWaypoints() const {
     return waypoints; 
+}
+
+const std::string& Route::getWaypointStr() const {
+    return waypointsStr;
 }
 
 void Route::splitStringByDash(const std::string& input, std::vector<std::string>& result) const {
@@ -47,20 +52,21 @@ void Route::splitStringByDash(const std::string& input, std::vector<std::string>
     if (input.empty()) {
         return;
     }
-    
-    std::string current = "";
-    for (size_t i = 0; i < input.length(); ++i) {
-        if (input[i] == '-') {
-            if (!current.empty()) {
-                result.push_back(current);
-                current = "";
-            }
-        } else {
-            current += input[i];
+
+    // split input by '-' and push to the result vector
+    size_t start = 0;
+    size_t end = input.find('-');
+    while (end != std::string::npos) {
+        std::string token = input.substr(start, end - start);
+        if (!token.empty()) {
+            result.push_back(token);
         }
+        start = end + 1;
+        end = input.find('-', start);
     }
 
-    if (!current.empty()) {
-        result.push_back(current);
+    std::string token = input.substr(start, end - start);
+    if (!token.empty()) {
+        result.push_back(token);
     }
 }

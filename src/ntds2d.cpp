@@ -1,4 +1,4 @@
-//---------------------------------------------------------------------------
+﻿//---------------------------------------------------------------------------
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <windows.h>
@@ -447,3 +447,85 @@ int i;
 }
  //---------------------------------------------------------------------------
 #endif
+
+// Region Code 계산 함수
+int computeRegionCode(double x, double y, double minX, double minY, double maxX, double maxY) {
+    int code = RESION_INSIDE;
+
+    if (x < minX) code |= RESION_LEFT;
+    else if (x > maxX) code |= RESION_RIGHT;
+
+    if (y < minY) code |= RESION_BOTTOM;
+    else if (y > maxY) code |= RESION_TOP;
+
+    return code;
+}
+
+// Cohen-Sutherland 알고리즘
+std::vector<std::pair<double, double>> cohenSutherlandClip(
+    double x1, double y1, double x2, double y2,
+    double minX, double minY, double maxX, double maxY) {
+    
+    int code1 = computeRegionCode(x1, y1, minX, minY, maxX, maxY);
+    int code2 = computeRegionCode(x2, y2, minX, minY, maxX, maxY);
+
+    std::vector<std::pair<double, double>> intersectionPoints;
+
+    while (true) {
+        if ((code1 | code2) == 0) {
+            // 두 점이 모두 뷰포인트 내부에 있음
+            break;
+        } else if (code1 & code2) {
+            // 두 점이 같은 외부 영역에 있음 (교차 없음)
+            break;
+        } else {
+            // 직선이 뷰포인트와 교차함
+            double x, y;
+
+            // 뷰포인트 외부에 있는 점 선택
+            int codeOut = code1 ? code1 : code2;
+
+            // 교차점 계산
+            if (codeOut & RESION_TOP) {
+                x = x1 + (x2 - x1) * (maxY - y1) / (y2 - y1);
+                y = maxY;
+            } else if (codeOut & RESION_BOTTOM) {
+                x = x1 + (x2 - x1) * (minY - y1) / (y2 - y1);
+                y = minY;
+            } else if (codeOut & RESION_RIGHT) {
+                y = y1 + (y2 - y1) * (maxX - x1) / (x2 - x1);
+                x = maxX;
+            } else if (codeOut & RESION_LEFT) {
+                y = y1 + (y2 - y1) * (minX - x1) / (x2 - x1);
+                x = minX;
+            }
+
+            // 교차점이 뷰포인트 내부에 있는지 확인
+            if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+                // 중복 교차점 제거
+                if (intersectionPoints.empty() || 
+                    (intersectionPoints.back().first != x || intersectionPoints.back().second != y)) {
+                    intersectionPoints.emplace_back(x, y);
+                }
+            }
+
+            // 교차점이 2개 계산되면 종료
+            if (intersectionPoints.size() == 2) {
+                break;
+            }
+
+            // 외부 점을 교차점으로 대체
+            if (codeOut == code1) {
+                x1 = x;
+                y1 = y;
+                code1 = computeRegionCode(x1, y1, minX, minY, maxX, maxY);
+            } else {
+                x2 = x;
+                y2 = y;
+                code2 = computeRegionCode(x2, y2, minX, minY, maxX, maxY);
+            }
+        }
+    }
+
+    return intersectionPoints;
+}

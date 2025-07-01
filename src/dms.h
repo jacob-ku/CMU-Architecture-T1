@@ -50,7 +50,7 @@
 namespace DMS
 {
     // static const char *DEG_SIM = "\u00B0";
-    static const char *DEG_SIM = "�";
+    static const char *DEG_SIM = "º";
     //
     //  Convert decimal degrees to degrees, minutes and seconds
     //
