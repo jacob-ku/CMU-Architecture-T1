@@ -910,7 +910,7 @@ void __fastcall TForm1::DrawObjects(void)
         }
     }
     EXECUTION_TIMER_ELAPSED(elapsed, drawingTime);
-    LOG("Viewable aircraft: " + to_string(ViewableAircraft) + " Elapsed: " + to_string(elapsed) + "ms");
+    LOG("Viewable aircraft: " + std::to_string(ViewableAircraft) + " Elapsed: " + std::to_string(elapsed) + "ms");
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ObjectDisplayMouseDown(TObject *Sender,
@@ -1082,10 +1082,10 @@ void __fastcall TForm1::HookTrack(int X, int Y, bool CPA_Hook)  // handle track 
                     // Check if we have a valid flight number
                     if (ADS_B_Aircraft->HaveFlightNum && strlen(ADS_B_Aircraft->FlightNum) > 0) {
                         std::string callsign(ADS_B_Aircraft->FlightNum);
-                        Route route = RouteMgr.GetRoute(callsign);
+                        const Route* route = RouteMgr.getRouteByCallSign(callsign);
 
                         // Get waypoints and join them with "->" separator
-                        std::vector<std::string> waypoints = route.getWaypoints();
+                        std::vector<std::string> waypoints = route->getWaypoints();
                         if (!waypoints.empty()) {
                             std::string routeStr = "";
                             for (size_t i = 0; i < waypoints.size(); ++i) {
@@ -1805,7 +1805,7 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
                     EXECUTION_TIMER(sleepTime);
                     Sleep((int)(SleepTime / PlaybackSpeed));
                     EXECUTION_TIMER_ELAPSED(elapsed, sleepTime);
-                    LOG("Sleep time: " + to_string(elapsed) + "ms");
+                    LOG("Sleep time: " + std::to_string(elapsed) + "ms");
                 }
                 if (Form1->PlayBackSBSStream->EndOfStream)
                 {
