@@ -11,6 +11,7 @@
 interface AirplaneFilterInterface {
     private:
     bool filterActive;
+    protected:
     bool isAndFilter;
 
     public: 
@@ -27,6 +28,8 @@ interface AirplaneFilterInterface {
     virtual void DeactivateFilter() = 0;
     virtual bool isFilterActive() const = 0;
     virtual void setAndFilter(bool value) = 0;
+    virtual bool getAndfilter() const = 0;
+
 };
 
 #endif

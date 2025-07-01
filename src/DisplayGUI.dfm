@@ -929,6 +929,15 @@ object Form1: TForm1
         TextHint = 'Enter Aircraft Number'
         OnChange = AircraftNumberChange
       end
+      object IsMilitary: TCheckBox
+        Left = 5
+        Top = 696
+        Width = 97
+        Height = 17
+        Caption = 'Military'
+        TabOrder = 23
+        OnClick = MilitaryClick
+      end
     end
     object Panel2: TPanel
       Left = 1

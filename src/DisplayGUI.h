@@ -1,4 +1,4 @@
-//---------------------------------------------------------------------------
+ï»¿//---------------------------------------------------------------------------
 
 #ifndef DisplayGUIH
 #define DisplayGUIH
@@ -110,7 +110,7 @@ public:
     bool UseFileInsteadOfNetwork;
     bool First;
     __int64 LastTime;
-    double PlaybackSpeed; // Ãß°¡: Àç»ý ¼Óµµ (1.0, 2.0, 3.0)
+    double PlaybackSpeed; // ï¿½ß°ï¿½: ï¿½ï¿½ï¿½ ï¿½Óµï¿½ (1.0, 2.0, 3.0)
     __fastcall TTCPClientSBSHandleThread(bool value, TMessageProcessorThread* procThread, double playbackSpeed = 1.0);
     ~TTCPClientSBSHandleThread();
 };
@@ -214,9 +214,10 @@ class TForm1 : public TForm
     TLabel *Label25;
     TLabel *RouteLabel;
     TLabel *Label27;
-    TComboBox *SBSPlaybackSpeedComboBox; // SBS Àç»ý ¼Óµµ ¼±ÅÃ ÄÞº¸¹Ú½º (µðÀÚÀÎ¿¡ Ãß°¡ ÇÊ¿ä)
+    TComboBox *SBSPlaybackSpeedComboBox; // SBS ï¿½ï¿½ï¿½ ï¿½Óµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Þºï¿½ï¿½Ú½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½ß°ï¿½ ï¿½Ê¿ï¿½)
     TButton *SearchAircraft;
     TEdit *AircraftNumber;
+	TCheckBox *IsMilitary;
     void __fastcall ObjectDisplayInit(TObject *Sender);
     void __fastcall ObjectDisplayResize(TObject *Sender);
     void __fastcall ObjectDisplayPaint(TObject *Sender);
@@ -269,6 +270,7 @@ class TForm1 : public TForm
     void __fastcall UseRawHyattClick(TObject *Sender);
     void __fastcall SearchAircraftClick(TObject *Sender);
     void __fastcall AircraftNumberChange(TObject *Sender);
+	void __fastcall MilitaryClick(TObject *Sender);
 
 private: // User declarations
     MapProvider* currentMapProvider;
