@@ -884,36 +884,38 @@ object Form1: TForm1
       object SBSRecordButton: TButton
         Left = 5
         Top = 494
-        Width = 76
+        Width = 104
         Height = 17
         Caption = 'SBS Record'
         TabOrder = 18
         OnClick = SBSRecordButtonClick
       end
       object SBSPlaybackButton: TButton
-        Left = 87
-        Top = 494
-        Width = 82
+        Left = 5
+        Top = 517
+        Width = 103
         Height = 17
         Caption = 'SBS Playback'
         TabOrder = 19
         OnClick = SBSPlaybackButtonClick
       end
       object SBSPlaybackSpeedComboBox: TComboBox
-        Left = 175
-        Top = 494
-        Width = 58
+        Left = 114
+        Top = 517
+        Width = 119
         Height = 20
+        Style = csDropDownList
+        ItemIndex = 0
         TabOrder = 20
-        Text = '1.0'
+        Text = 'Speed X1'
         Items.Strings = (
-          '1.0'
-          '2.0'
-          '3.0')
+          'Speed X1'
+          'Speed X2'
+          'Speed X3')
       end
       object SearchAircraft: TButton
         Left = 5
-        Top = 517
+        Top = 539
         Width = 103
         Height = 20
         Caption = 'Search Aircraft'
@@ -921,8 +923,8 @@ object Form1: TForm1
         OnClick = SearchAircraftClick
       end
       object AircraftNumber: TEdit
-        Left = 115
-        Top = 517
+        Left = 114
+        Top = 539
         Width = 118
         Height = 20
         TabOrder = 22
@@ -1037,6 +1039,7 @@ object Form1: TForm1
     OnInit = ObjectDisplayInit
     OnResize = ObjectDisplayResize
     OnPaint = ObjectDisplayPaint
+    ExplicitLeft = 3
   end
   object MainMenu1: TMainMenu
     Left = 24

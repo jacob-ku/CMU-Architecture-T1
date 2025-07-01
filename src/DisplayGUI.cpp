@@ -1736,7 +1736,12 @@ void __fastcall TTCPClientSBSHandleThread::Execute(void)
                 SleepTime = Time - LastTime;
                 LastTime = Time;
                 if (SleepTime > 0 && PlaybackSpeed > 0.0)
+                {
+                    EXECUTION_TIMER(sleepTime);
                     Sleep((int)(SleepTime / PlaybackSpeed));
+                    EXECUTION_TIMER_ELAPSED(elapsed, sleepTime);
+                    LOG("Sleep time: " + to_string(elapsed) + "ms");
+                }
                 if (Form1->PlayBackSBSStream->EndOfStream)
                 {
                     printf("End SBS Playback 2\n");
@@ -2008,6 +2013,7 @@ void __fastcall TForm1::SBSPlaybackButtonClick(TObject *Sender)
                     TCPClientSBSHandleThread->Resume();
                     SBSPlaybackButton->Caption = "Stop SBS Playback";
                     SBSConnectButton->Enabled = false;
+                    SBSPlaybackSpeedComboBox->Enabled = false;
                 }
             }
         }
@@ -2019,6 +2025,7 @@ void __fastcall TForm1::SBSPlaybackButtonClick(TObject *Sender)
         PlayBackSBSStream = NULL;
         SBSPlaybackButton->Caption = "SBS Playback";
         SBSConnectButton->Enabled = true;
+        SBSPlaybackSpeedComboBox->Enabled = true;
     }
 }
 //---------------------------------------------------------------------------
