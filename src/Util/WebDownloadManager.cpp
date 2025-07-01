@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 
-WebDownloadManager::WebDownloadManager() : enableTimeLogging(false)
+WebDownloadManager::WebDownloadManager() : enableTimeLogging(true)
 {
 
 }
@@ -196,6 +196,7 @@ std::string WebDownloadManager::downloadToString(const std::string &url)
 
     CURL *curl;
     CURLcode res;
+    long response_code = 0;
     std::string response;
 
     curl = curl_easy_init();
@@ -236,10 +237,17 @@ std::string WebDownloadManager::downloadToString(const std::string &url)
         if (res != CURLE_OK) {
             std::cout << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
             return ""; // 실패 시 빈 문자열 반환
+        }
+
+        // CURLE_OK
+        if (enableTimeLogging) {
+            std::cout << "String downloaded successfully. Content length: " << response.length() << " bytes" << std::endl;
+        }
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+
+        if(response_code >= 400 || response_code < 500) {   // client error including 404 NOT_FOUND
+            return "400";   // TODO: fix this   
         } else {
-            if (enableTimeLogging) {
-                std::cout << "String downloaded successfully. Content length: " << response.length() << " bytes" << std::endl;
-            }
             return response;
         }
     }
@@ -281,19 +289,19 @@ std::time_t WebDownloadManager::getLastModifiedTime(const std::string &url)
                 
                 if (enableTimeLogging) {
                     if (last_modified > 0) {
-                        std::cout << "Last modified time retrieved for " << url << ": " << last_modified << std::endl;
+                        std::cout << "[WebDownloadManager] Last modified time retrieved for " << url << ": " << last_modified << std::endl;
                     } else {
-                        std::cout << "No last modified time available for " << url << std::endl;
+                        std::cout << "[WebDownloadManager] No last modified time available for " << url << std::endl;
                     }
                 }
             } else {
                 if (enableTimeLogging) {
-                    std::cout << "HTTP response code " << response_code << " for " << url << std::endl;
+                    std::cout << "[WebDownloadManager] HTTP response code " << response_code << " for " << url << std::endl;
                 }
             }
         } else {
             if (enableTimeLogging) {
-                std::cout << "Failed to get last modified time for " << url << ": " << curl_easy_strerror(res) << std::endl;
+                std::cout << "[WebDownloadManager] Failed to get last modified time for " << url << ": " << curl_easy_strerror(res) << std::endl;
             }
         }
 

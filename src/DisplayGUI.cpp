@@ -42,8 +42,9 @@
 #include "Util/WebDownloadManager.h"
 
 /*  소요시간 측정용
-    측정 시작:   EXECUTION_TIMER("SomeName");
-    측정 종료:   int64_t elapsedTime = EXECUTION_TIMER_ELAPSED("SomeName");
+    측정 시작:   EXECUTION_TIMER( SomeName );
+    측정 종료:   EXECUTION_TIMER_ELAPSED( elapsedTimeInMs, SomeName );
+    결과 사용:   printf("Elapsed time: %lld ms\n", elapsedTimeInMs);
 */
 #define ELAPSED_TIME_CHK    // NOTE: 사용 시 Enable 할 것
 #include "Util/ExecutionTimer.h"
@@ -317,11 +318,11 @@ void __fastcall TForm1::ObjectDisplayInit(TObject *Sender)
 
     // ----- Metadata database initialization -----
     // using local files to initialize
-    AirportMgr.LoadAirport();
+    AirportMgr.LoadAirportFromFile();
     RouteMgr.LoadRouteFromFile();
 
     // invoke thread to handle periodic updates
-    RouteMgr.StartUpdateMonitor();
+    RouteMgr.startUpdateMonitor();
 
     // load DB asynchronously in background
     AircraftDB = new TAircraftDB();
@@ -766,6 +767,38 @@ void __fastcall TForm1::DrawObjects(void)
 
             MsgCntLabel->Caption = "Raw: " + IntToStr((int)Data->NumMessagesRaw) + " SBS: " + IntToStr((int)Data->NumMessagesSBS);
             TrkLastUpdateTimeLabel->Caption = TimeToChar(Data->LastSeen);
+
+            // draw route line
+            std::string callSign = Data->FlightNum;   // CallSign
+            const Route* route = RouteMgr.getRouteByCallSign(callSign);
+
+            const std::vector<std::string>& routes = route->getWaypoints();
+
+            if(!routes.empty())
+            {
+                std::string departureAirportCode = routes.front();
+                std::string arrivalAirportCode = routes.back();
+    
+                const Airport* departureAirport = AirportMgr.getAirportByCode(departureAirportCode);
+                std::cout << "Departure Airport: " << departureAirport->getName() << std::endl;
+                std::cout << "Departure Airport Code: " << departureAirportCode << std::endl;
+                std::cout << "Departure Airport Latitude: " << departureAirport->getLatitude() << std::endl;
+                std::cout << "Departure Airport Longitude: " << departureAirport->getLongitude() << std::endl;
+                const Airport* arrivalAirport = AirportMgr.getAirportByCode(arrivalAirportCode);
+                std::cout << "Arrival Airport: " << arrivalAirport->getName() << std::endl;
+                std::cout << "Arrival Airport Code: " << arrivalAirportCode << std::endl;
+                std::cout << "Arrival Airport Latitude: " << arrivalAirport->getLatitude() << std::endl;
+                std::cout << "Arrival Airport Longitude: " << arrivalAirport->getLongitude() << std::endl;
+
+                // latlon to XY
+//                LatLon2XY(departureAirport->getLatitude(), departureAirport->getLongitude(), ScrX, ScrY);
+//                double arrX, arrY;
+//                LatLon2XY(arrivalAirport->getLatitude(), arrivalAirport->getLongitude(), arrX, arrY);
+//                DrawLeader(ScrX, ScrY, arrX, arrY);
+            } else {
+                std::cout << "No route found for call sign: " << callSign << std::endl;
+            }
+
 
             // draw circle for hooked aircraft
             glColor4f(1.0, 0.0, 0.0, 1.0);

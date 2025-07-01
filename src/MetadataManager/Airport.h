@@ -1,10 +1,11 @@
-#include <iostream>
-#ifndef AIRPORT_H_
-#define AIRPORT_H_
-using namespace std;
+#ifndef AIRPORT_H
+#define AIRPORT_H
+
+#include <string>
 
 class Airport
 {
+private:
     std::string code;
     std::string name;
     std::string icao;
@@ -14,21 +15,20 @@ class Airport
     float longitude;
     int altitude;
 
-    public:
-    Airport(std::string c, std::string n, std::string ic, std::string ia, std::string co, float lat, float lon, int alt);
+public:
+    Airport(const std::string& c, const std::string& n, const std::string& ic,
+        const std::string& ia, const std::string& co, const float lat,
+        const float lon, const int alt);
     Airport();
-
-    ~Airport();    
-    std::string getCode() const;
-    std::string getName() const;
-    std::string getICAO() const;
-    std::string getIATA() const;
-    std::string getCountry() const;
+    ~Airport();
+   
+    const std::string& getCode() const;
+    const std::string& getName() const;
+    const std::string& getICAO() const;
+    const std::string& getIATA() const;
+    const std::string& getCountry() const;
     float getLatitude() const;
     float getLongitude() const;
-    int getAltitude() const;
-   
+    int getAltitude() const; 
 };
-
-
-#endif // AIRPORT_H_
+#endif // AIRPORT_H
