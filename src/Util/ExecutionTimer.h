@@ -1,4 +1,6 @@
-// Utility/ExecutionTimer.h
+#ifndef EXECUTION_TIMER_H
+#define EXECUTION_TIMER_H
+
 #pragma once
 #include <stdint.h>
 #include "TimeFunctions.h"
@@ -19,3 +21,5 @@ public:
 private:
     int64_t startTime;
 };
+
+#endif

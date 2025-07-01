@@ -4,7 +4,7 @@
 #include <iostream>
 
 // Enable or disable logging
-#define LOGGER_ENABLE 1
+#define LOGGER_ENABLE 0
 
 #if LOGGER_ENABLE
     #define LOG(msg) (std::cout << (msg) << std::endl)
