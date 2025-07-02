@@ -1,0 +1,108 @@
+@startuml deployment-view
+!theme toy
+title ADS-B BigQuery Integration - Deployment View
+
+node "Development Machine" {
+
+    package "DisplayGUI Process" {
+        component [DisplayGUI.exe] as gui
+        component [HTTP Client] as http_client
+        component [WebSocket Client] as ws_client
+    }
+
+    package "Python Environment" {
+        component [Analytics API Server] as api_server
+        component [Real-Time Alert System] as alert_system
+        component [ADS-B Bridge] as bridge
+        component [Real-Time Streaming] as streaming
+        component [Analysis Scripts] as analyses
+    }
+
+    package "Local Cache" {
+        database [API Response Cache] as cache
+        database [Alert History] as alert_db
+    }
+
+    package "Configuration" {
+        file [config.json] as config
+        file [YourJsonFile.json] as credentials
+    }
+}
+
+cloud "Network" {
+    component [dump1090] as dump
+    interface "SBS-1 Stream" as sbs_interface
+}
+
+cloud "Google Cloud Platform" {
+    package "BigQuery Service" {
+        database [SBS_Data Dataset] as dataset
+        table [RealTimeStream Table] as stream_table
+        table [AircraftMetadata Table] as metadata_table
+        component [Analytics Engine] as analytics_engine
+    }
+
+    package "Cloud IAM" {
+        component [Service Account Auth] as auth
+    }
+}
+
+' Internal Connections
+gui --> http_client : uses
+gui --> ws_client : uses
+http_client --> api_server : HTTP/8080
+ws_client --> alert_system : WebSocket/8081
+
+api_server --> cache : read/write
+alert_system --> alert_db : write
+api_server --> config : reads
+streaming --> credentials : auth
+
+bridge --> streaming : data flow
+analyses --> config : reads
+
+' External Connections
+dump --> sbs_interface : SBS Messages
+bridge --> sbs_interface : Port 30003
+
+streaming --> dataset : HTTPS/Insert
+api_server --> dataset : HTTPS/Query
+alert_system --> dataset : HTTPS/Monitor
+
+dataset --> stream_table : contains
+dataset --> metadata_table : contains
+analytics_engine --> stream_table : processes
+analytics_engine --> metadata_table : joins
+
+credentials --> auth : authenticates
+
+note right of dump
+    **ADS-B Data Source**
+    • Port: 30003
+    • Protocol: SBS-1
+    • Rate: ~1000 msg/min
+end note
+
+note right of api_server
+    **REST API Server**
+    • Port: 8080
+    • Cache TTL: 30s
+    • Response Time: <100ms
+end note
+
+note right of alert_system
+    **WebSocket Server**
+    • Port: 8081
+    • Real-time alerts
+    • Connection management
+end note
+
+note right of dataset
+    **BigQuery Dataset**
+    • Storage: Columnar
+    • Compression: Auto
+    • Partitioning: By date
+    • Retention: 90 days
+end note
+
+@enduml

@@ -1,0 +1,140 @@
+@startuml data-flow
+!theme toy
+title ADS-B BigQuery Integration - Data Flow View
+
+!define LIGHTBLUE #E1F5FE
+!define LIGHTGREEN #E8F5E8
+!define LIGHTYELLOW #FFF8E1
+!define LIGHTRED #FFEBEE
+
+rectangle "Data Sources" LIGHTBLUE {
+    (ADS-B Aircraft) as aircraft
+    (Radio Signals) as signals
+}
+
+rectangle "Data Ingestion" LIGHTGREEN {
+    (dump1090) as dump
+    (SBS-1 Messages) as sbs
+    (ADSBBridge) as bridge
+    (Parsed JSON) as json
+}
+
+rectangle "Data Streaming" LIGHTYELLOW {
+    (RealTimeStreaming) as streaming
+    (Message Batches) as batches
+    (Schema Validation) as validation
+}
+
+rectangle "Data Storage" LIGHTBLUE {
+    database "BigQuery Dataset" as dataset {
+        table "RealTimeStream" as stream_table
+        table "AircraftMetadata" as metadata_table
+        table "FlightTracks" as tracks_table
+    }
+}
+
+rectangle "Data Processing" LIGHTGREEN {
+    (Analytics Queries) as queries
+    (Real-time Analytics) as analytics
+    (Emergency Detection) as emergency
+    (Trajectory Analysis) as trajectory
+}
+
+rectangle "Data Output" LIGHTYELLOW {
+    (REST API Responses) as api_response
+    (WebSocket Alerts) as ws_alerts
+    (Analysis Reports) as reports
+    (DisplayGUI Updates) as gui_updates
+}
+
+rectangle "Data Consumers" LIGHTRED {
+    (DisplayGUI Application) as gui
+    (Air Traffic Controller) as controller
+    (Analysis Scripts) as analysis_scripts
+}
+
+' Data Flow Arrows with Labels
+aircraft --> signals : "broadcasts"
+signals --> dump : "receives 1090MHz"
+dump --> sbs : "formats as SBS-1"
+sbs --> bridge : "TCP stream\nport 30003"
+bridge --> json : "parses & validates"
+json --> streaming : "structured data"
+streaming --> batches : "groups 100 msgs"
+batches --> validation : "schema check"
+validation --> stream_table : "batch insert"
+
+stream_table --> queries : "SQL queries"
+metadata_table --> queries : "aircraft lookup"
+tracks_table --> queries : "historical data"
+
+queries --> analytics : "traffic summary"
+queries --> emergency : "squawk monitoring"
+queries --> trajectory : "path analysis"
+
+analytics --> api_response : "JSON format"
+emergency --> ws_alerts : "real-time push"
+trajectory --> reports : "batch analysis"
+
+api_response --> gui_updates : "HTTP/8080"
+ws_alerts --> gui_updates : "WebSocket/8081"
+reports --> analysis_scripts : "file output"
+
+gui_updates --> gui : "display refresh"
+gui --> controller : "visual alerts"
+
+note right of aircraft
+    **Data Source**
+    • ~1000 aircraft visible
+    • 1-2 messages/sec per aircraft
+    • Position, altitude, velocity
+    • Squawk codes, call signs
+end note
+
+note right of bridge
+    **Message Processing**
+    • Real-time parsing
+    • Data validation
+    • Error handling
+    • Coordinate conversion
+end note
+
+note right of streaming
+    **Batch Optimization**
+    • Buffer management
+    • Deduplication
+    • Schema enforcement
+    • Retry logic
+end note
+
+note right of dataset
+    **Storage Strategy**
+    • Partitioned by date
+    • Compressed columns
+    • Automatic expiration
+    • High-speed inserts
+end note
+
+note right of queries
+    **Analytics Engine**
+    • Real-time aggregation
+    • Emergency detection
+    • Trajectory analysis
+    • Predictive models
+end note
+
+note right of gui
+    **User Interface**
+    • Real-time map display
+    • Alert notifications
+    • Traffic statistics
+    • Aircraft details
+end note
+
+' Data Volume Annotations
+note on link between aircraft and signals : "~1000 aircraft\n~1-2 Hz per aircraft"
+note on link between dump and bridge : "~1000 msgs/min\nSBS-1 format"
+note on link between streaming and stream_table : "Batches of 100\nEvery 5-10 seconds"
+note on link between queries and analytics : "Sub-second response\n30s cache TTL"
+
+@enduml

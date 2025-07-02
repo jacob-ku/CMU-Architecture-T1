@@ -1,0 +1,109 @@
+{
+  "bigquery": {
+    "project_id": "scs-lg-arch-1",
+    "dataset_id": "SBS_Data",
+    "tables": {
+      "realtime_stream": "RealTimeStream",
+      "aircraft_metadata": "AircraftMetadata", 
+      "flight_tracks": "FlightTracks"
+    },
+    "credentials_path": "YourJsonFile.json",
+    "location": "US"
+  },
+  "streaming": {
+    "batch_size": 100,
+    "max_queue_size": 10000,
+    "retry_attempts": 3,
+    "retry_delay_seconds": 5,
+    "enable_compression": true
+  },
+  "adsb": {
+    "sbs_port": 30003,
+    "raw_port": 30002,
+    "enable_raw_messages": false,
+    "filter_ground_vehicles": true,
+    "min_altitude": 0,
+    "max_altitude": 60000
+  },
+  "analytics": {
+    "enable_real_time": true,
+    "enable_emergency_detection": true,
+    "enable_pattern_analysis": true,
+    "emergency_squawk_codes": ["7500", "7600", "7700"],
+    "update_interval_seconds": 30
+  },
+  "api": {
+    "enable_web_api": true,
+    "port": 8080,
+    "cors_enabled": true,
+    "rate_limit_per_minute": 100
+  },
+  "logging": {
+    "level": "INFO",
+    "file_path": "logs/adsb_bigquery.log",
+    "max_file_size_mb": 100,
+    "backup_count": 5,
+    "enable_console": true
+  },
+  "regions": {
+    "korea": {
+      "name": "Korea",
+      "lat_min": 33.0,
+      "lat_max": 39.0,
+      "lon_min": 125.0,
+      "lon_max": 132.0
+    },
+    "japan": {
+      "name": "Japan", 
+      "lat_min": 30.0,
+      "lat_max": 46.0,
+      "lon_min": 129.0,
+      "lon_max": 146.0
+    },
+    "usa_west": {
+      "name": "USA West Coast",
+      "lat_min": 32.0,
+      "lat_max": 49.0,
+      "lon_min": -125.0,
+      "lon_max": -115.0
+    }
+  },
+  "airports": {
+    "ICN": {
+      "name": "Incheon International Airport",
+      "lat": 37.4602,
+      "lon": 126.4407,
+      "radius_km": 50
+    },
+    "NRT": {
+      "name": "Narita International Airport", 
+      "lat": 35.7647,
+      "lon": 140.3864,
+      "radius_km": 50
+    },
+    "LAX": {
+      "name": "Los Angeles International Airport",
+      "lat": 33.9425,
+      "lon": -118.4081,
+      "radius_km": 50
+    },
+    "JFK": {
+      "name": "John F. Kennedy International Airport",
+      "lat": 40.6413,
+      "lon": -73.7781,
+      "radius_km": 50
+    }
+  },
+  "performance": {
+    "enable_monitoring": true,
+    "memory_limit_mb": 1024,
+    "cpu_limit_percent": 80,
+    "disk_space_warning_gb": 10
+  },
+  "security": {
+    "enable_authentication": false,
+    "api_key_required": false,
+    "allowed_origins": ["http://localhost:3000", "https://yourdomain.com"],
+    "rate_limiting": true
+  }
+}

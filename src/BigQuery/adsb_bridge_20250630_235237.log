@@ -1,0 +1,71 @@
+[2025-06-30 23:52:37] INFO: Initializing ADS-B Bridge...
+[2025-06-30 23:52:38] INFO: ADS-B Bridge initialized successfully
+[2025-06-30 23:52:38] INFO: ADS-B Bridge started
+[2025-06-30 23:52:38] INFO: Starting SBS message processing...
+[2025-06-30 23:52:38] INFO: ADS-B 데이터 소스 연결 성공: 128.237.96.41:5002
+[2025-06-30 23:52:52] INFO: Processed 1000 messages, Queue: 1
+[2025-06-30 23:53:04] INFO: Processed 2000 messages, Queue: 1
+[2025-06-30 23:53:16] INFO: Processed 3000 messages, Queue: 1
+[2025-06-30 23:53:28] INFO: Processed 4000 messages, Queue: 1
+[2025-06-30 23:53:40] INFO: Processed 5000 messages, Queue: 1
+[2025-06-30 23:53:52] INFO: Processed 6000 messages, Queue: 1
+[2025-06-30 23:54:04] INFO: Processed 7000 messages, Queue: 1
+[2025-06-30 23:54:16] INFO: Processed 8000 messages, Queue: 1
+[2025-06-30 23:54:28] INFO: Processed 9000 messages, Queue: 1
+[2025-06-30 23:54:40] INFO: Processed 10000 messages, Queue: 1
+[2025-06-30 23:54:52] INFO: Processed 11000 messages, Queue: 1
+[2025-06-30 23:55:03] INFO: Processed 12000 messages, Queue: 1
+[2025-06-30 23:55:15] INFO: Processed 13000 messages, Queue: 1
+[2025-06-30 23:55:27] INFO: Processed 14000 messages, Queue: 1
+[2025-06-30 23:55:39] INFO: Processed 15000 messages, Queue: 1
+[2025-06-30 23:55:52] INFO: Processed 16000 messages, Queue: 1
+[2025-06-30 23:56:04] INFO: Processed 17000 messages, Queue: 1
+[2025-06-30 23:56:16] INFO: Processed 18000 messages, Queue: 1
+[2025-06-30 23:56:28] INFO: Processed 19000 messages, Queue: 1
+[2025-06-30 23:56:40] INFO: Processed 20000 messages, Queue: 1
+[2025-06-30 23:56:52] INFO: Processed 21000 messages, Queue: 1
+[2025-06-30 23:57:04] INFO: Processed 22000 messages, Queue: 1
+[2025-06-30 23:57:16] INFO: Processed 23000 messages, Queue: 1
+[2025-06-30 23:57:28] INFO: Processed 24000 messages, Queue: 1
+[2025-06-30 23:57:40] INFO: Processed 25000 messages, Queue: 1
+[2025-06-30 23:57:52] INFO: Processed 26000 messages, Queue: 1
+[2025-06-30 23:58:04] INFO: Processed 27000 messages, Queue: 1
+[2025-06-30 23:58:16] INFO: Processed 28000 messages, Queue: 1
+[2025-06-30 23:58:28] INFO: Processed 29000 messages, Queue: 1
+[2025-06-30 23:58:40] INFO: Processed 30000 messages, Queue: 1
+[2025-06-30 23:58:52] INFO: Processed 31000 messages, Queue: 1
+[2025-06-30 23:59:04] INFO: Processed 32000 messages, Queue: 1
+[2025-06-30 23:59:16] INFO: Processed 33000 messages, Queue: 1
+[2025-06-30 23:59:28] INFO: Processed 34000 messages, Queue: 1
+[2025-06-30 23:59:40] INFO: Processed 35000 messages, Queue: 1
+[2025-06-30 23:59:51] INFO: Processed 36000 messages, Queue: 1
+[2025-07-01 00:00:03] INFO: Processed 37000 messages, Queue: 1
+[2025-07-01 00:00:15] INFO: Processed 38000 messages, Queue: 1
+[2025-07-01 00:00:27] INFO: Processed 39000 messages, Queue: 1
+[2025-07-01 00:00:39] INFO: Processed 40000 messages, Queue: 1
+[2025-07-01 00:00:51] INFO: Processed 41000 messages, Queue: 1
+[2025-07-01 00:01:03] INFO: Processed 42000 messages, Queue: 1
+[2025-07-01 00:01:15] INFO: Processed 43000 messages, Queue: 1
+[2025-07-01 00:01:27] INFO: Processed 44000 messages, Queue: 1
+[2025-07-01 00:01:39] INFO: Processed 45000 messages, Queue: 1
+[2025-07-01 00:01:51] INFO: Processed 46000 messages, Queue: 1
+[2025-07-01 00:02:03] INFO: Processed 47000 messages, Queue: 1
+[2025-07-01 00:02:15] INFO: Processed 48000 messages, Queue: 1
+[2025-07-01 00:02:27] INFO: Processed 49000 messages, Queue: 1
+[2025-07-01 00:02:39] INFO: Processed 50000 messages, Queue: 1
+[2025-07-01 00:02:51] INFO: Processed 51000 messages, Queue: 1
+[2025-07-01 00:03:03] INFO: Processed 52000 messages, Queue: 1
+[2025-07-01 00:03:15] INFO: Processed 53000 messages, Queue: 1
+[2025-07-01 00:03:27] INFO: Processed 54000 messages, Queue: 1
+[2025-07-01 00:03:39] INFO: Processed 55000 messages, Queue: 1
+[2025-07-01 00:03:51] INFO: Processed 56000 messages, Queue: 1
+[2025-07-01 00:04:03] INFO: Processed 57000 messages, Queue: 1
+[2025-07-01 00:04:15] INFO: Processed 58000 messages, Queue: 1
+[2025-07-01 00:04:27] INFO: Processed 59000 messages, Queue: 1
+[2025-07-01 00:04:39] INFO: Processed 60000 messages, Queue: 1
+[2025-07-01 00:04:51] INFO: Processed 61000 messages, Queue: 1
+[2025-07-01 00:05:03] INFO: Processed 62000 messages, Queue: 1
+[2025-07-01 00:05:15] INFO: Processed 63000 messages, Queue: 1
+[2025-07-01 00:05:27] INFO: Processed 64000 messages, Queue: 1
+[2025-07-01 00:05:39] INFO: Processed 65000 messages, Queue: 1
+[2025-07-01 00:05:46] INFO: ADS-B Bridge stopped. Runtime: 0:13:08.383493, Messages: 65488
