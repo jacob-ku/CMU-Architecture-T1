@@ -30,6 +30,7 @@ static GLuint AIR_TRACK_HOSTILE;
 static GLuint AIR_TRACK_UNKNOWN;
 static GLuint SURFACE_TRACK_FRIEND;
 static GLuint TRACKHOOK;
+// static GLuint AIRPORTHOOK;
 
 static GLuint TextureSpites[NUM_SPRITES];
 static int NumSprites = 0;
@@ -129,7 +130,7 @@ void MakeAirTrackFriend(void)
     AIR_TRACK_FRIEND = glGenLists(1);
     glNewList(AIR_TRACK_FRIEND, GL_COMPILE);
     glPointSize(3.0);
-    glLineWidth(2.0);
+    glLineWidth(5.0);
 #if 1
     glEnable(GL_LINE_SMOOTH);
     glEnable(GL_POINT_SMOOTH);
@@ -139,7 +140,7 @@ void MakeAirTrackFriend(void)
 #endif
 
     glBegin(GL_LINE_STRIP);
-    for (i = 0; i <= 50; i++)
+    for (i = 0; i <= 100; i++)
     {
         cosine = cos(i * PI / 50.0) * RADIUS;
         sine = sin(i * PI / 50.0) * RADIUS;
@@ -256,6 +257,33 @@ void MakeTrackHook(void)     // make circle for hooked trace
     glEndList();
 }
 //---------------------------------------------------------------------------
+// void MakeAirportHook(void)     // make circle for hooked trace
+// {
+//     GLuint i;
+//     GLfloat cosine, sine;
+//     AIRPORTHOOK = glGenLists(1);
+//     glNewList(AIRPORTHOOK, GL_COMPILE);
+//     glPointSize(5.0);
+//     glLineWidth(10.0);
+// #if 1
+//     glEnable(GL_LINE_SMOOTH);
+//     glEnable(GL_POINT_SMOOTH);
+//     glEnable(GL_BLEND);
+//     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+// #endif
+
+//     glBegin(GL_LINE_STRIP);
+//     for (i = 0; i < 100; i++)
+//     {
+//         cosine = cos(i * 2 * PI / 100.0) * RADIUS * 3;
+//         sine = sin(i * 2 * PI / 100.0) * RADIUS * 3;
+//         glVertex2f(cosine, sine);
+//     }
+//     glEnd();
+//     glEndList();
+// }
+//---------------------------------------------------------------------------
 void DrawAirplaneImage(float x, float y, float scale, float heading, int imageNum)
 {
     glPushMatrix();
@@ -337,6 +365,14 @@ void DrawTrackHook(float x, float y)    // draw circle made by MakeTrackHook
     glPopMatrix();
 }
 //---------------------------------------------------------------------------
+// void DrawAirportHook(float x, float y)    // draw circle made by MakeTrackHook
+// {
+//     glPushMatrix();
+//     glTranslated(x, y, 0.0);
+//     glCallList(AIRPORTHOOK);
+//     glPopMatrix();
+// }
+//---------------------------------------------------------------------------
 void DrawRadarCoverage(float xc, float yc, float major, float minor)
 {
     glBegin(GL_TRIANGLE_FAN);
@@ -356,6 +392,40 @@ void DrawLeader(float x1, float y1, float x2, float y2)
     glBegin(GL_LINE_STRIP);
     glVertex2f(x1, y1);
     glVertex2f(x2, y2);
+    glEnd();
+}
+//---------------------------------------------------------------------------
+void DrawArrowLine(float x1, float y1, float x2, float y2)
+{
+    glBegin(GL_LINE_STRIP);
+    glVertex2f(x1, y1);
+    glVertex2f(x2, y2);
+    glEnd();
+
+    // Calculate the direction vector of the line
+    float dx = x2 - x1;
+    float dy = y2 - y1;
+    float length = sqrt(dx * dx + dy * dy);
+
+    // Normalize the direction vector
+    dx /= length;
+    dy /= length;
+
+    // Define the size of the arrowhead
+    float arrowSize = 20.0f;
+
+    // Calculate the points for the arrowhead
+    float arrowX1 = x2 - arrowSize * (dx - dy * 0.5f);
+    float arrowY1 = y2 - arrowSize * (dy + dx * 0.5f);
+
+    float arrowX2 = x2 - arrowSize * (dx + dy * 0.5f);
+    float arrowY2 = y2 - arrowSize * (dy - dx * 0.5f);
+
+    // Draw the arrowhead as a filled triangle
+    glBegin(GL_TRIANGLES);
+    glVertex2f(x2, y2);
+    glVertex2f(arrowX1, arrowY1);
+    glVertex2f(arrowX2, arrowY2);
     glEnd();
 }
 //---------------------------------------------------------------------------

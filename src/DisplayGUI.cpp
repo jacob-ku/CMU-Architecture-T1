@@ -313,6 +313,7 @@ void __fastcall TForm1::ObjectDisplayInit(TObject *Sender)
     MakeAirTrackUnknown();
     MakePoint();
     MakeTrackHook();
+    // MakeAirportHook();
     currentMapProvider->Resize(ObjectDisplay->Width,ObjectDisplay->Height);
     glPushAttrib(GL_LINE_BIT);
     glPopAttrib();
@@ -844,6 +845,55 @@ void __fastcall TForm1::DrawObjects(void)
             {
                 const std::vector<std::string>& routes = route->getWaypoints();
 
+                if (routes.size() >= 2) {
+                    const Airport* startAirport = AirportMgr.getAirportByCode(routes.front());
+                    LatLon2XY(startAirport->getLatitude(), startAirport->getLongitude(), ScrX, ScrY);
+
+                    // within viewport
+                    if(computeRegionCode(ScrX, ScrY, 0, 0, (GLsizei)ObjectDisplay->Width, ObjectDisplay->Height) == 0) {
+                        glColor4f(1.0, 0.41, 0.71, 1.0);
+                        DrawAirTrackFriend(ScrX, ScrY);
+                    }
+                    glColor4f(0.0, 1.0, 1.0, 1.0); // Cyan color for route line
+
+                    for (size_t i = 0; i + 1 < routes.size(); ++i) {
+                        std::string first = routes[i];
+                        std::string second = routes[i + 1];
+
+                        const Airport* departureAirport = AirportMgr.getAirportByCode(first);
+                        const Airport* arrivalAirport = AirportMgr.getAirportByCode(second);
+
+                        // latlon to XY
+                        LatLon2XY(departureAirport->getLatitude(), departureAirport->getLongitude(), ScrX, ScrY);
+                        double arrX, arrY;
+                        LatLon2XY(arrivalAirport->getLatitude(), arrivalAirport->getLongitude(), arrX, arrY);
+
+                        std::vector<std::pair<double, double>> intersections = cohenSutherlandClip(ScrX, ScrY, arrX, arrY, 0, 0, (GLsizei)ObjectDisplay->Width, (GLsizei)ObjectDisplay->Height);
+
+                        // 결과 출력
+                        // std::cout << "Intersection points:\n";
+                        // for (const auto& point : intersections) {
+                        //     std::cout << "(" << point.first << ", " << point.second << ")\n";
+                        // }
+
+                        int numIntersections = intersections.size();
+                        if(numIntersections == 2) {
+                            // Draw the route line between the two intersection points
+                            DrawArrowLine(intersections[0].first, intersections[0].second, intersections[1].first, intersections[1].second);
+                        } else if(numIntersections >= 1) {
+                            if(computeRegionCode(ScrX, ScrY, 0, 0, (GLsizei)ObjectDisplay->Width, ObjectDisplay->Height) == 0) {
+                                DrawArrowLine(ScrX, ScrY, intersections[0].first, intersections[0].second);
+                            } else {
+                                DrawArrowLine(intersections[0].first, intersections[0].second, arrX, arrY);
+                            }
+                        } else {
+                            DrawArrowLine(ScrX, ScrY, arrX, arrY);
+                        }
+                    }
+                }
+            
+
+                /*
                 if(!routes.empty())
                 {
                     // std::cout << "Route found for call sign: " << route->getWaypointStr() << std::endl;
@@ -899,6 +949,7 @@ void __fastcall TForm1::DrawObjects(void)
                 } else {
                     // std::cout << "No route found for call sign: " << callSign << std::endl;
                 }
+                */
             }
 
             // draw circle for hooked aircraft
