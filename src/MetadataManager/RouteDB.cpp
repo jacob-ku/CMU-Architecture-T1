@@ -166,7 +166,7 @@ std::unordered_map<std::string, Route>& RouteDB::getRouteCallSignMap() {
 }
 
 const Route* RouteDB::getRouteByCallsign(const std::string& callsign) {
-    std::cout << "[RouteDB] Searching for route with callsign: " << callsign << std::endl;
+    // std::cout << "[RouteDB] Searching for route with callsign: " << callsign << std::endl;
 
 //    if (isLoaded.load() == false) {
 //        std::cout << "[RouteDB] RouteDB is not loaded. try to retrieve from the web" << std::endl;
@@ -178,10 +178,10 @@ const Route* RouteDB::getRouteByCallsign(const std::string& callsign) {
     }
 
     if (routeMap->find(callsign) == routeMap->end()) {
-        std::cerr << "[RouteDB] Error: Route with callsign '" << callsign << "' not found." << std::endl;
+        // std::cerr << "[RouteDB] Error: Route with callsign '" << callsign << "' not found." << std::endl;
         return new Route();
     }
-    std::cout << "[RouteDB] Found route data for callsign: " << callsign << std::endl;
+    // std::cout << "[RouteDB] Found route data for callsign: " << callsign << std::endl;
 
     return &((*routeMap)[callsign]);
 //    std::string routedata = lineDataMap[callsign];

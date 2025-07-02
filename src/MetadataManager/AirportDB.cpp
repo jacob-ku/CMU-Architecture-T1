@@ -11,7 +11,7 @@
 
 AirportDB::AirportDB() {
     airportCodeMap.reserve(AIRPORT_MAX_NUM); // Reserve space for maximum number of airports
-    std::cout << "[AirportDB] Ctor: done" << std::endl;
+    // std::cout << "[AirportDB] Ctor: done" << std::endl;
 }
 
 AirportDB::~AirportDB() {
@@ -20,7 +20,7 @@ AirportDB::~AirportDB() {
         delete &(pair.second); // releae dynamically allocated Airport
     }
     airportCodeMap.clear();
-    std::cout << "[AirportDB] Dtor: done" << std::endl;
+    // std::cout << "[AirportDB] Dtor: done" << std::endl;
 }
 
 bool AirportDB::loadFromFile(const std::string& filePath) {
@@ -62,7 +62,7 @@ bool AirportDB::loadFromFile(const std::string& filePath) {
                     airportCodeMap[key] = *airport;
                 }
             } else {
-                std::cout << "[AirportDB] Warning: No comma found in line: " << line << std::endl;
+                // std::cout << "[AirportDB] Warning: No comma found in line: " << line << std::endl;
             }
         }
         file.close();
@@ -83,7 +83,7 @@ std::unordered_map<std::string, Airport>& AirportDB::getAirportCodeMap() {
 }
 
 const Airport* AirportDB::getAirportByCode(const std::string& code) {
-    std::cout << "[AirportDB] Searching for airport with code: " << code << std::endl;
+    // std::cout << "[AirportDB] Searching for airport with code: " << code << std::endl;
 
     if (airportCodeMap.find(code) == airportCodeMap.end()) {
         return nullptr; // Return nullptr if not found
@@ -95,7 +95,7 @@ const Airport* AirportDB::getAirportByCode(const std::string& code) {
 }
 
 const Airport* AirportDB::getAirportByICAO(const std::string& icao) {
-    std::cout << "[AirportDB] Searching for airport with ICAO: " << icao << std::endl;
+    // std::cout << "[AirportDB] Searching for airport with ICAO: " << icao << std::endl;
     for (const auto& pair : airportCodeMap) {
         if (pair.second.getICAO() == icao) {
             return &(pair.second);

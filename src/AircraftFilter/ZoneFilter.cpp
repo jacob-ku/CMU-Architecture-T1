@@ -274,7 +274,7 @@ void ZoneFilter::printPolygonInfo() const {
 void ZoneFilter::setAndFilter(bool value) {
     // Set AND filter mode for ZoneFilter
     // This could be used to determine how multiple conditions are combined
-    std::cout << "ZoneFilter: AND filter mode set to " << (value ? "true" : "false") << std::endl;
+    // std::cout << "ZoneFilter: AND filter mode set to " << (value ? "true" : "false") << std::endl;
     isAndFilter = value;
     // Implementation can be expanded based on specific requirements
 }
@@ -298,8 +298,8 @@ bool ZoneFilter::getVisualCenter(double& longitude, double& latitude) const {
         latitude = (boost::geometry::get<boost::geometry::min_corner, 1>(boundingBox) + 
                    boost::geometry::get<boost::geometry::max_corner, 1>(boundingBox)) / 2.0;
         
-        std::cout << "ZoneFilter: Visual center calculated - Lon: " << longitude 
-                  << ", Lat: " << latitude << std::endl;
+        // std::cout << "ZoneFilter: Visual center calculated - Lon: " << longitude 
+        //           << ", Lat: " << latitude << std::endl;
         
         return true;
         
@@ -354,8 +354,8 @@ bool ZoneFilter::getMaxInscribedRectangle(const boost::geometry::model::polygon<
         double stepHeightDown = maxHeightDown / steps;
         double stepHeightUp = maxHeightUp / steps;
         
-        std::cout << "ZoneFilter: Searching for max rectangle from center (" 
-                  << visualCenterLon << ", " << visualCenterLat << ")" << std::endl;
+        // std::cout << "ZoneFilter: Searching for max rectangle from center (" 
+        //           << visualCenterLon << ", " << visualCenterLat << ")" << std::endl;
         
         // 4방향으로 확장하면서 최대 사각형 찾기
         for (int wl = 1; wl <= steps; wl++) {
@@ -403,10 +403,10 @@ bool ZoneFilter::getMaxInscribedRectangle(const boost::geometry::model::polygon<
             minLat = bestMinLat;
             maxLat = bestMaxLat;
             
-            std::cout << "ZoneFilter: Max inscribed rectangle found:" << std::endl;
-            std::cout << "  Bounds: [" << minLon << ", " << minLat << "] to [" << maxLon << ", " << maxLat << "]" << std::endl;
-            std::cout << "  Size: " << (maxLon - minLon) << " x " << (maxLat - minLat) << " (area: " << maxArea << ")" << std::endl;
-            std::cout << "  Center: (" << ((minLon + maxLon) / 2.0) << ", " << ((minLat + maxLat) / 2.0) << ")" << std::endl;
+            // std::cout << "ZoneFilter: Max inscribed rectangle found:" << std::endl;
+            // std::cout << "  Bounds: [" << minLon << ", " << minLat << "] to [" << maxLon << ", " << maxLat << "]" << std::endl;
+            // std::cout << "  Size: " << (maxLon - minLon) << " x " << (maxLat - minLat) << " (area: " << maxArea << ")" << std::endl;
+            // std::cout << "  Center: (" << ((minLon + maxLon) / 2.0) << ", " << ((minLat + maxLat) / 2.0) << ")" << std::endl;
             
             return true;
         } else {
