@@ -321,6 +321,9 @@ bool SBS_Message_Decode(char *msg)
             ADS_B_Aircraft->IsMilitary = true;
             ADS_B_Aircraft->SpriteImage = Form1->CurrentSpriteImage + 76;                            
         }
+        if (ADS_B_Aircraft->IsHelicopter && ADS_B_Aircraft->IsMilitary) {
+            ADS_B_Aircraft->SpriteImage = Form1->CurrentSpriteImage + 50;
+        }
         if (Form1->CycleImages->Checked)
             Form1->CurrentSpriteImage = (Form1->CurrentSpriteImage + 1) % Form1->NumSpriteImages;
         if (ght_insert(Form1->HashTable, ADS_B_Aircraft, sizeof(addr), &addr) < 0)

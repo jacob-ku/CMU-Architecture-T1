@@ -224,6 +224,11 @@ __fastcall TForm1::TForm1(TComponent *Owner)
     PlayBackRawStream = NULL;
     TrackHook.Valid_CC = false;
     TrackHook.Valid_CPA = false;
+    
+    // Initialize airport highlighting variables
+    HighlightedAirportValid = false;
+    HighlightedAirportLat = 0.0;
+    HighlightedAirportLon = 0.0;
 
     HashTable = ght_create(50000);
 
@@ -443,6 +448,29 @@ void __fastcall TForm1::DrawObjects(void)
 
     // --- drawing area of interest (polygon) ---
     DrawAirportsBatch();
+    
+    // --- drawing highlighted airport (red circle) ---
+    if (HighlightedAirportValid) {
+        double ScrX, ScrY;
+        LatLon2XY(HighlightedAirportLat, HighlightedAirportLon, ScrX, ScrY);
+        
+        // Draw red circle for highlighted airport
+        glEnable(GL_POINT_SMOOTH);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+        
+        glPointSize(25.0);  // Larger than normal for visibility
+        glColor4f(1.0, 0.0, 0.0, 0.8);  // Red with slight transparency
+        
+        glBegin(GL_POINTS);
+        glVertex2f(ScrX, ScrY);
+        glEnd();
+        
+        glDisable(GL_POINT_SMOOTH);
+        glDisable(GL_BLEND);
+    }
+    
     TArea screenBoundsArea = getScreenBoundsAsArea();
     
     std::unique_ptr<ScreenFilter> screenfilter = std::make_unique<ScreenFilter>();
@@ -562,11 +590,11 @@ void __fastcall TForm1::DrawObjects(void)
             {
                 continue; // Reset filtered count if aircraft matches the filter
             }
-			auto blockEnd = std::chrono::high_resolution_clock::now();
-			auto blockDuration = std::chrono::duration_cast<std::chrono::microseconds>(blockEnd - blockStart);
+            auto blockEnd = std::chrono::high_resolution_clock::now();
+            auto blockDuration = std::chrono::duration_cast<std::chrono::microseconds>(blockEnd - blockStart);
 
-			totalBlockTime += blockDuration.count() / 1000.0; // Convert to milliseconds
-			blockCounter++;
+            totalBlockTime += blockDuration.count() / 1000.0; // Convert to milliseconds
+            blockCounter++;
             LatLon2XY(Data->Latitude, Data->Longitude, ScrX, ScrY);
             // 화면 밖이면 continue (예: -50~Width+50, -50~Height+50 범위만)
             if (ScrX < -50 || ScrX > ObjectDisplay->Width + 50 || ScrY < -50 || ScrY > ObjectDisplay->Height + 50)
@@ -2003,6 +2031,9 @@ void __fastcall TMessageProcessorThread::Execute(void)
                                 ADS_B_Aircraft->IsMilitary = true;
                                 ADS_B_Aircraft->SpriteImage = Form1->CurrentSpriteImage + 76;
                             }
+                            if (ADS_B_Aircraft->IsHelicopter && ADS_B_Aircraft->IsMilitary) {
+                                ADS_B_Aircraft->SpriteImage = Form1->CurrentSpriteImage + 50;
+                            }
 
                             if (Form1->CycleImages->Checked)
                                 Form1->CurrentSpriteImage = (Form1->CurrentSpriteImage + 1) % Form1->NumSpriteImages;
@@ -3062,9 +3093,6 @@ void __fastcall TForm1::AircraftNumberChange(TObject *Sender)
     // You can add validation logic here if needed
 }
 //---------------------------------------------------------------------------
-
-
-
 void __fastcall TForm1::MilitaryClick(TObject *Sender)
 {
     if (IsMilitary->Checked)
@@ -3076,6 +3104,95 @@ void __fastcall TForm1::MilitaryClick(TObject *Sender)
     {
         // Disable the search button when checkbox is unchecked
         DefaultFilter.deactivateFilter("military");
+    }
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::SearchAirportClick(TObject *Sender)
+{
+    AnsiString searchInput = AirportCode->Text.Trim().UpperCase();
+    
+    if (searchInput.IsEmpty()) {
+        ShowMessage("Please enter an IATA code to search for an airport.");
+        return;
+    }
+    
+    // Get airport data from AirportManager
+    std::unordered_map<std::string, Airport> &airportCodeMap = AirportMgr.getAirportCodeMap();
+    Airport *foundAirport = nullptr;
+    
+    // Search through all airports for matching IATA code
+    for (auto &airportPair : airportCodeMap) {
+        const Airport &airport = airportPair.second;
+        
+        // Get IATA code and convert to upper case for comparison
+        std::string iataCode = airport.getIATA();
+        AnsiString iataStr = AnsiString(iataCode.c_str()).UpperCase();
+        
+        if (iataStr == searchInput) {
+            foundAirport = const_cast<Airport*>(&airport);
+            break;
+        }
+    }
+    
+    if (foundAirport) {
+        // Airport found - center map on airport and show red circle
+        if (GetEarthView()) {
+            double airportLat = foundAirport->getLatitude();
+            double airportLon = foundAirport->getLongitude();
+            
+            // Convert lat/lon to normalized map coordinates using Mercator projection
+            double normalizedLon = airportLon / 360.0;
+            double latRad = airportLat * M_PI / 180.0;
+            double mercatorY = asinh(tan(latRad)) / (2 * M_PI);
+            
+            // Set the eye position to center on the airport
+            GetEarthView()->m_Eye.x = normalizedLon;
+            GetEarthView()->m_Eye.y = mercatorY;
+            
+            // Set TrackHook to show red circle at airport location
+            // Note: We need to create a temporary aircraft-like object for the hook
+            // Or use a different method to highlight the airport
+            
+            // Alternative: Store airport coordinates for highlighting in render loop
+            // For now, we'll use a global variable to mark the airport location
+            HighlightedAirportLat = airportLat;
+            HighlightedAirportLon = airportLon;
+            HighlightedAirportValid = true;
+            
+            // Refresh the display
+            ObjectDisplay->Repaint();
+            
+            // Show success message
+            AnsiString message = "Airport found: " + AnsiString(foundAirport->getName().c_str());
+            message += "\nIATA: " + AnsiString(foundAirport->getIATA().c_str());
+            message += "\nICAO: " + AnsiString(foundAirport->getICAO().c_str());
+            message += "\nCountry: " + AnsiString(foundAirport->getCountry().c_str());
+            message += "\nLat: " + FloatToStrF(airportLat, ffFixed, 8, 4) + 
+                      " Lon: " + FloatToStrF(airportLon, ffFixed, 8, 4);
+            ShowMessage(message);
+        }
+    } else {
+        // Airport not found
+        ShowMessage("Airport with IATA code '" + searchInput + "' not found.");
+    }
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::AirportCodeChange(TObject *Sender)
+{
+    // Real-time validation and formatting of IATA code input
+    AnsiString inputText = AirportCode->Text.Trim();
+    
+    // Convert to uppercase for consistency (IATA codes are typically uppercase)
+    if (inputText != inputText.UpperCase()) {
+        int cursorPos = AirportCode->SelStart;
+        AirportCode->Text = inputText.UpperCase();
+        AirportCode->SelStart = cursorPos;
+    }
+    
+    // Optional: Limit input to 3 characters (standard IATA code length)
+    if (inputText.Length() > 3) {
+        AirportCode->Text = inputText.SubString(1, 3);
+        AirportCode->SelStart = 3;
     }
 }
 //---------------------------------------------------------------------------

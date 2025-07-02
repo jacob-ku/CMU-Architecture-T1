@@ -111,7 +111,7 @@ public:
     bool UseFileInsteadOfNetwork;
     bool First;
     __int64 LastTime;
-    double PlaybackSpeed; // �߰�: ��� �ӵ� (1.0, 2.0, 3.0)
+    double PlaybackSpeed; // 추가: 재생 속도 (1.0, 2.0, 3.0)
     __fastcall TTCPClientSBSHandleThread(bool value, TMessageProcessorThread* procThread, double playbackSpeed = 1.0);
     ~TTCPClientSBSHandleThread();
 };
@@ -216,10 +216,12 @@ class TForm1 : public TForm
     TLabel *RouteLabel;
     TLabel *Label27;
     TComboBox *SBSPlaybackSpeedComboBox; // SBS ��� �ӵ� ���� �޺��ڽ� (�����ο� �߰� �ʿ�)
-    TButton *SearchAircraft;
-    TEdit *AircraftNumber;
-	TCheckBox *IsMilitary;
-	TComboBox *RawPlaybackSpeedComboBox;
+    TButton *SearchAircraft; // Button for searching aircraft by number
+    TEdit *AircraftNumber; // Edit for aircraft number input
+    TButton *SearchAirport; // New button for searching airports
+    TEdit *AirportCode; // New edit for airport code
+    TCheckBox *IsMilitary;
+    TComboBox *RawPlaybackSpeedComboBox;
     void __fastcall ObjectDisplayInit(TObject *Sender);
     void __fastcall ObjectDisplayResize(TObject *Sender);
     void __fastcall ObjectDisplayPaint(TObject *Sender);
@@ -272,7 +274,9 @@ class TForm1 : public TForm
     void __fastcall UseRawHyattClick(TObject *Sender);
     void __fastcall SearchAircraftClick(TObject *Sender);
     void __fastcall AircraftNumberChange(TObject *Sender);
-	void __fastcall MilitaryClick(TObject *Sender);
+    void __fastcall SearchAirportClick(TObject *Sender);
+    void __fastcall AirportCodeChange(TObject *Sender);
+    void __fastcall MilitaryClick(TObject *Sender);
 
 private: // User declarations
     MapProvider* currentMapProvider;
@@ -348,6 +352,11 @@ public:  // User declarations
     AnsiString AircraftDBPathFileName;
     AnsiString ARTCCBoundaryDataPathFileName;
     int UnregisteredAircraftCount;
+    
+    // Airport highlighting variables
+    double HighlightedAirportLat;
+    double HighlightedAirportLon;
+    bool HighlightedAirportValid;
     FlatEarthView* GetEarthView() const;
     TileManager* GetTileManager() const;
     int GetUnregisteredAircraftCount(void);
