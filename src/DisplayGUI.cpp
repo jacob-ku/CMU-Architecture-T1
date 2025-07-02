@@ -224,6 +224,7 @@ __fastcall TForm1::TForm1(TComponent *Owner)
     PlayBackRawStream = NULL;
     TrackHook.Valid_CC = false;
     TrackHook.Valid_CPA = false;
+    LabelErrorMessage->Caption = "";
     
     // Initialize airport highlighting variables
     HighlightedAirportValid = false;
@@ -1249,6 +1250,12 @@ void __fastcall TForm1::HookTrack(int X, int Y, bool CPA_Hook)  // handle track 
             AltLabel->Caption = "N/A";
             MsgCntLabel->Caption = "N/A";
             TrkLastUpdateTimeLabel->Caption = "N/A";
+
+            RegNumLabel->Caption = "N/A";
+            OperatorLabel->Caption = "N/A";
+            CountryLabel->Caption = "N/A";
+            TypeLabel->Caption = "N/A";
+            RouteLabel->Caption = "N/A";
         }
         else
         {
