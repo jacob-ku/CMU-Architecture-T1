@@ -295,7 +295,7 @@ object Form1: TForm1
         Width = 126
         Height = 20
         TabOrder = 10
-        Text = '172.20.2.97'
+        Text = '172.26.43.119'
       end
       object CycleImages: TCheckBox
         Left = 107
