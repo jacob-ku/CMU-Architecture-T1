@@ -585,7 +585,6 @@ void __fastcall TForm1::DrawObjects(void)
             {
                 Data->Speed = 0;// Skip aircraft with speed over 2000 knots
                 Data->HaveSpeedAndHeading = false;
-                std::cout << "abnormal speed aircraft detected: " << Data->HexAddr << " with speed: " << Data->Speed << " knots" << std::endl;
             }
             if (Count > 0)
             {
@@ -2677,10 +2676,14 @@ void __fastcall TForm1::FormClose(TObject *Sender, TCloseAction &Action)
     if (TCPClientRawHandleThread)
     {
         TCPClientRawHandleThread->Terminate();
+        IdTCPClientRaw->Disconnect();
+        IdTCPClientRaw->IOHandler->InputBuffer->Clear();
     }
     if (TCPClientSBSHandleThread)
     {
         TCPClientSBSHandleThread->Terminate();
+        IdTCPClientSBS->Disconnect();
+        IdTCPClientSBS->IOHandler->InputBuffer->Clear();
     }
 
     if (msgProcThread) {
