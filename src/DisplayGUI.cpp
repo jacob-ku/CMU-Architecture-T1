@@ -1019,6 +1019,34 @@ void __fastcall TForm1::ObjectDisplayMouseDown(TObject *Sender,
     }
     else if (Button == mbRight)
     {
+        // 공항 하이라이트 제거 기능을 가장 먼저 처리
+        if (HighlightedAirportValid) {
+            // 하이라이트된 공항의 화면 좌표 계산
+            double airportScreenX, airportScreenY;
+            LatLon2XY(HighlightedAirportLat, HighlightedAirportLon, airportScreenX, airportScreenY);
+            // 좌표 변환이 유효한지 간단히 확인
+            if (airportScreenX >= 0 && airportScreenX <= ObjectDisplay->Width && 
+                airportScreenY >= 0 && airportScreenY <= ObjectDisplay->Height) {
+                // 클릭 위치와 공항 위치 간의 픽셀 거리 계산
+                double pixelDistance = sqrt(pow(X - airportScreenX, 2) + pow(Y - airportScreenY, 2));
+                
+                // 25픽셀 반경 내에서 클릭했는지 확인 (빨간원 크기와 동일)
+                if (pixelDistance <= 25.0) {
+                    // 하이라이트 제거
+                    HighlightedAirportValid = false;
+                    HighlightedAirportLat = 0.0;
+                    HighlightedAirportLon = 0.0;
+                    
+                    // 화면 새로고침
+                    ObjectDisplay->Invalidate();
+                    
+                    // 제거 확인 메시지 표시
+                    ShowMessage("Airport highlight removed.");
+                    return; // 다른 마우스 처리를 하지 않고 종료
+                }
+            }
+        }
+
         if (AreaTemp)
         {
             if (AreaTemp->NumPoints < MAX_AREA_POINTS)
