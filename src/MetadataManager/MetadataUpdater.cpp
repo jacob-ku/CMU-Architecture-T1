@@ -74,6 +74,9 @@ bool MetaDataUpdater::update(const string& url, const string& file, const std::f
                 bool res = webDownloadManager.downloadFile(url, file);
                 if (!res) {
                     std::cout << "[UPDATE_THREAD] Failed to download file header from: " << url << std::endl;
+                    for (int i = 0; i < periodInSeconds && !shouldStop; ++i) {
+                       std::this_thread::sleep_for(std::chrono::seconds(1));
+                    }    
                     continue;
                 }
                 std::cout << "[UPDATE_THREAD] Downloaded file header from: " << url << std::endl;

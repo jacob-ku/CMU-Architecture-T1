@@ -482,6 +482,8 @@ void __fastcall TForm1::DrawObjects(void)
     DefaultFilter.addFilter("screen_bounds", std::move(screenfilter));
     DefaultFilter.activateFilter("screen_bounds");
     // AreaFilter.filterAircraftPosition(40.0, -80.0);
+    float maxArealat = -90.0, minArealat = 90.0;
+    float maxArealon = -180.0, minArealon = 180.0;
     if (AreaTemp)
     {
         glPointSize(3.0);
@@ -515,6 +517,15 @@ void __fastcall TForm1::DrawObjects(void)
         glBegin(GL_LINE_LOOP);
         for (j = 0; j < Area->NumPoints; j++)
         {
+            if (Area->Points[j][1] > maxArealat)
+                maxArealat = Area->Points[j][1];
+            if (Area->Points[j][1] < minArealat)
+                minArealat = Area->Points[j][1];    
+            if (Area->Points[j][0] > maxArealon)
+                maxArealon = Area->Points[j][0];
+            if (Area->Points[j][0] < minArealon)
+                minArealon = Area->Points[j][0];
+            
             LatLon2XY(Area->Points[j][1], Area->Points[j][0], ScrX, ScrY);
             glVertex2f(ScrX, ScrY);
         }
@@ -570,7 +581,21 @@ void __fastcall TForm1::DrawObjects(void)
             if (HideUnregisteredCheckBox->Checked && !AircraftDB->aircraft_is_registered(Data->ICAO)) {
                 continue;
             }
-
+            if(Data->Speed > 2000.0)
+            {
+                Data->Speed = 0;// Skip aircraft with speed over 2000 knots
+                Data->HaveSpeedAndHeading = false;
+                std::cout << "abnormal speed aircraft detected: " << Data->HexAddr << " with speed: " << Data->Speed << " knots" << std::endl;
+            }
+            if (Count > 0)
+            {
+                // Check if the aircraft is within the area of interest
+                if (Data->Latitude < minArealat || Data->Latitude > maxArealat ||
+                    Data->Longitude < minArealon || Data->Longitude > maxArealon)
+                {
+                    continue; // Skip aircraft outside the area of interest
+                }
+            }
             ViewableAircraft++;
             if(DefaultFilter.filterAircraft(*Data))
             {
@@ -758,8 +783,22 @@ void __fastcall TForm1::DrawObjects(void)
     ViewableAircraftCountLabel->Caption = ViewableAircraft;
     if (TrackHook.Valid_CC)
     {
+        bool HookedInArea = false;
         Data = (TADS_B_Aircraft *)ght_get(HashTable, sizeof(TrackHook.ICAO_CC), (void *)&TrackHook.ICAO_CC);
-        if (Data)
+        if (Data != NULL)
+        {
+            // Check if the hooked aircraft is within the area filter
+            if (Count > 0 && AreaFilter.filterAircraft(*Data))
+            {
+                HookedInArea = true;
+            }
+            // If the hooked aircraft is not in the area filter, reset the hook
+        }
+        if (Count == 0)
+        {
+            HookedInArea = true; // No aircrafts in the area
+        }
+        if (Data && HookedInArea)
         {
             // update side bar text for hooked aircraft
             ICAOLabel->Caption = Data->HexAddr;
@@ -855,7 +894,7 @@ void __fastcall TForm1::DrawObjects(void)
                         DrawLeader(ScrX, ScrY, arrX, arrY);
                     }
                 } else {
-                    std::cout << "No route found for call sign: " << callSign << std::endl;
+                    // std::cout << "No route found for call sign: " << callSign << std::endl;
                 }
             }
 
