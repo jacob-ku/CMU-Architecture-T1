@@ -919,6 +919,12 @@ void __fastcall TForm1::DrawObjects(void)
             AltLabel->Caption = "N/A";
             MsgCntLabel->Caption = "N/A";
             TrkLastUpdateTimeLabel->Caption = "N/A";
+
+            RegNumLabel->Caption = "N/A";
+            OperatorLabel->Caption = "N/A";
+            CountryLabel->Caption = "N/A";
+            TypeLabel->Caption = "N/A";
+            RouteLabel->Caption = "N/A";
         }
     }
 
