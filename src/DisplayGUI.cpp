@@ -421,25 +421,6 @@ void __fastcall TForm1::DrawObjects(void)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 
-    // line settings
-    glLineWidth(3.0);
-    glPointSize(4.0);
-    glColor4f(1.0, 1.0, 1.0, 1.0);
-
-    // XY position
-    LatLon2XY(MapCenterLat, MapCenterLon, ScrX, ScrY);
-
-    // draw crosshair
-    glBegin(GL_LINE_STRIP);
-    glVertex2f(ScrX - 20.0, ScrY);
-    glVertex2f(ScrX + 20.0, ScrY);
-    glEnd();
-
-    glBegin(GL_LINE_STRIP);
-    glVertex2f(ScrX, ScrY - 20.0);
-    glVertex2f(ScrX, ScrY + 20.0);
-    glEnd();
-
     uint32_t *Key;
     ght_iterator_t iterator;
     TADS_B_Aircraft *Data, *DataCPA;
@@ -639,7 +620,7 @@ void __fastcall TForm1::DrawObjects(void)
                 Data->Heading = 0.0;
                 r = 1.0f; g = 0.0f; b = 0.0f; // red
             }
-            SetGLColor4f(r, g, b, a, colorEps);
+            SetGLColor4f(r, g, b, a, 0);
 
             if (zoomLevel > ZOOM_THRESHOLD_FOR_MIDDLE) {
                 DrawAirplaneImage(ScrX, ScrY, 0.8, Data->Heading, Data->SpriteImage);   // Draw airplane image. scale is changed from 1.5 to 0.8
@@ -656,7 +637,7 @@ void __fastcall TForm1::DrawObjects(void)
                 {
                     double ScrX2, ScrY2;
                     LatLon2XY(lat, lon, ScrX2, ScrY2);
-                    SetGLColor4f(1.0f, 1.0f, 0.0f, 1.0f, colorEps); // yellow
+                    SetGLColor4f(1.0f, 1.0f, 0.0f, 1.0f, 0); // yellow
                     glBegin(GL_LINE_STRIP);
                     glVertex2f(ScrX, ScrY);
                     glVertex2f(ScrX2, ScrY2);
@@ -996,6 +977,28 @@ void __fastcall TForm1::DrawObjects(void)
             CpaDistanceValue->Caption = "None";
         }
     }
+
+    // line settings
+    glLineWidth(3.0);
+    glPointSize(4.0);
+    glColor4f(1.0, 1.0, 1.0, 1.0);
+
+    // XY position
+    LatLon2XY(MapCenterLat, MapCenterLon, ScrX, ScrY);
+    ScrX = ObjectDisplay->Width / 2.0;
+    ScrY = ObjectDisplay->Height / 2.0;
+
+    // draw crosshair
+    glBegin(GL_LINE_STRIP);
+    glVertex2f(ScrX - 20.0, ScrY);
+    glVertex2f(ScrX + 20.0, ScrY);
+    glEnd();
+
+    glBegin(GL_LINE_STRIP);
+    glVertex2f(ScrX, ScrY - 20.0);
+    glVertex2f(ScrX, ScrY + 20.0);
+    glEnd();
+
     EXECUTION_TIMER_ELAPSED(elapsed, drawingTime);
     LOG("Viewable aircraft: " + std::to_string(ViewableAircraft) + " Elapsed: " + std::to_string(elapsed) + "ms");
 }
