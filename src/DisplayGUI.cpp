@@ -664,6 +664,28 @@ void __fastcall TForm1::DrawObjects(void)
                 }
             }
 
+            // dead reckoning on connect mode
+            // if(!SBSPlaybackButton->Enabled && !RawPlaybackButton->Enabled) {
+
+                __int64 currentTime = GetCurrentTimeInMsec();
+                const __int64 updateThreshold = 7000; // 5초
+
+                if ((currentTime - Data->LastSeen) > updateThreshold) {
+                    // 7초 이상 업데이트되지 않은 데이터 처리
+                    double lat, lon, az;
+                    double elapsedTimeInHours = (currentTime - Data->LastSeen) / 3600000.0; // 밀리초를 시간으로 변환
+
+                    if (VDirect(Data->Latitude, Data->Longitude, Data->Heading, Data->Speed * elapsedTimeInHours, &lat, &lon, &az) == OKNOERROR) {
+                        double ScrX, ScrY;
+                        LatLon2XY(lat, lon, ScrX, ScrY);
+
+                        // 예상 위치에 반투명 이미지를 그리기
+                        SetGLColor4f(r, g, b, 0.8f, colorEps);; // 반투명 (80% 투명도)
+                        DrawAirplaneImage(ScrX, ScrY, 0.5, Data->Heading, Data->SpriteImage);
+                    }
+                }
+            // }
+
             // Draw ICAO text
             if (zoomLevel > ZOOM_THRESHOLD_FOR_HIGH) {
                 // ICAO code text besides the aircraft with yellow color and black outline for better readability
