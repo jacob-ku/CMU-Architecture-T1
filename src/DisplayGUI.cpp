@@ -1739,11 +1739,23 @@ void __fastcall TForm1::RawPlaybackButtonClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 // Constructor for the thread class
-__fastcall TTCPClientRawHandleThread::TTCPClientRawHandleThread(bool value,
+__fastcall DataRecieverThread::DataRecieverThread(bool value,
     TMessageProcessorThread* procThread, double playbackSpeed) : TThread(value), msgProcThread(procThread), PlaybackSpeed(playbackSpeed)
 {
-	printf("[Thread] TTCPClientRawHandleThread created.\n");
 	FreeOnTerminate = true; // Automatically free the thread object after execution
+}
+//---------------------------------------------------------------------------
+// Destructor for the thread class
+__fastcall DataRecieverThread::~DataRecieverThread()
+{
+	// Clean up resources if needed
+}
+//---------------------------------------------------------------------------
+// Constructor for the thread class
+__fastcall TTCPClientRawHandleThread::TTCPClientRawHandleThread(bool value,
+    TMessageProcessorThread* procThread, double playbackSpeed) : DataRecieverThread(value, procThread, playbackSpeed)
+{
+	printf("[Thread] TTCPClientRawHandleThread created.\n");
 }
 //---------------------------------------------------------------------------
 // Destructor for the thread class
@@ -1875,7 +1887,7 @@ void __fastcall TForm1::SBSConnectButtonClick(TObject *Sender)
 //---------------------------------------------------------------------------
 // Constructor for the thread class
 __fastcall TTCPClientSBSHandleThread::TTCPClientSBSHandleThread(bool value, 
-    TMessageProcessorThread* procThread, double playbackSpeed) : TThread(value), msgProcThread(procThread), PlaybackSpeed(playbackSpeed)
+    TMessageProcessorThread* procThread, double playbackSpeed) : DataRecieverThread(value, procThread, playbackSpeed)
 {
 	printf("[Thread] TTCPClientSBSHandleThread created.\n");
 	FreeOnTerminate = true; // Automatically free the thread object after execution

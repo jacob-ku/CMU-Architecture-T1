@@ -76,31 +76,30 @@ public:
     void clearQueue(void);
 };
 //---------------------------------------------------------------------------
-class TTCPClientRawHandleThread : public TThread
+class DataRecieverThread : public TThread
 {
 private:
-    AnsiString StringMsgBuffer;
-    TMessageProcessorThread* msgProcThread;
-    void __fastcall StopPlayback(void);
-    void __fastcall StopTCPClient(void);
+
+    virtual void __fastcall StopPlayback(void) = 0;
+    virtual void __fastcall StopTCPClient(void) = 0; 
 
 protected:
-    void __fastcall Execute(void);
+    AnsiString StringMsgBuffer;
+    TMessageProcessorThread* msgProcThread;
+virtual void __fastcall Execute(void) = 0;
 
 public:
     bool UseFileInsteadOfNetwork;
     bool First;
     __int64 LastTime;
     double PlaybackSpeed; // 추가: RAW 재생속도 (1.0, 2.0, 3.0)
-    __fastcall TTCPClientRawHandleThread(bool value, TMessageProcessorThread* procThread, double playbackSpeed = 1.0);
-    ~TTCPClientRawHandleThread();
+    __fastcall DataRecieverThread(bool value, TMessageProcessorThread* procThread, double playbackSpeed = 1.0);
+    virtual ~DataRecieverThread();
 };
 //---------------------------------------------------------------------------
-class TTCPClientSBSHandleThread : public TThread
+class TTCPClientRawHandleThread : public DataRecieverThread
 {
 private:
-    AnsiString StringMsgBuffer;
-    TMessageProcessorThread* msgProcThread;
     void __fastcall StopPlayback(void);
     void __fastcall StopTCPClient(void);
 
@@ -108,10 +107,21 @@ protected:
     void __fastcall Execute(void);
 
 public:
-    bool UseFileInsteadOfNetwork;
-    bool First;
-    __int64 LastTime;
-    double PlaybackSpeed; // 추가: 재생 속도 (1.0, 2.0, 3.0)
+    __fastcall TTCPClientRawHandleThread(bool value, TMessageProcessorThread* procThread, double playbackSpeed = 1.0);
+    ~TTCPClientRawHandleThread();
+};
+//---------------------------------------------------------------------------
+class TTCPClientSBSHandleThread : public DataRecieverThread
+{
+private:
+    AnsiString StringMsgBuffer;
+    void __fastcall StopPlayback(void);
+    void __fastcall StopTCPClient(void);
+
+protected:
+    void __fastcall Execute(void);
+
+public:
     __fastcall TTCPClientSBSHandleThread(bool value, TMessageProcessorThread* procThread, double playbackSpeed = 1.0);
     ~TTCPClientSBSHandleThread();
 };
