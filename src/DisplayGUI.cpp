@@ -224,6 +224,7 @@ __fastcall TForm1::TForm1(TComponent *Owner)
     PlayBackRawStream = NULL;
     TrackHook.Valid_CC = false;
     TrackHook.Valid_CPA = false;
+    LabelErrorMessage->Caption = "";
     
     // Initialize airport highlighting variables
     HighlightedAirportValid = false;
@@ -312,6 +313,7 @@ void __fastcall TForm1::ObjectDisplayInit(TObject *Sender)
     MakeAirTrackUnknown();
     MakePoint();
     MakeTrackHook();
+    // MakeAirportHook();
     currentMapProvider->Resize(ObjectDisplay->Width,ObjectDisplay->Height);
     glPushAttrib(GL_LINE_BIT);
     glPopAttrib();
@@ -420,25 +422,6 @@ void __fastcall TForm1::DrawObjects(void)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-
-    // line settings
-    glLineWidth(3.0);
-    glPointSize(4.0);
-    glColor4f(1.0, 1.0, 1.0, 1.0);
-
-    // XY position
-    LatLon2XY(MapCenterLat, MapCenterLon, ScrX, ScrY);
-
-    // draw crosshair
-    glBegin(GL_LINE_STRIP);
-    glVertex2f(ScrX - 20.0, ScrY);
-    glVertex2f(ScrX + 20.0, ScrY);
-    glEnd();
-
-    glBegin(GL_LINE_STRIP);
-    glVertex2f(ScrX, ScrY - 20.0);
-    glVertex2f(ScrX, ScrY + 20.0);
-    glEnd();
 
     uint32_t *Key;
     ght_iterator_t iterator;
@@ -639,7 +622,7 @@ void __fastcall TForm1::DrawObjects(void)
                 Data->Heading = 0.0;
                 r = 1.0f; g = 0.0f; b = 0.0f; // red
             }
-            SetGLColor4f(r, g, b, a, colorEps);
+            SetGLColor4f(r, g, b, a, 0);
 
             if (zoomLevel > ZOOM_THRESHOLD_FOR_MIDDLE) {
                 DrawAirplaneImage(ScrX, ScrY, 0.8, Data->Heading, Data->SpriteImage);   // Draw airplane image. scale is changed from 1.5 to 0.8
@@ -656,7 +639,7 @@ void __fastcall TForm1::DrawObjects(void)
                 {
                     double ScrX2, ScrY2;
                     LatLon2XY(lat, lon, ScrX2, ScrY2);
-                    SetGLColor4f(1.0f, 1.0f, 0.0f, 1.0f, colorEps); // yellow
+                    SetGLColor4f(1.0f, 1.0f, 0.0f, 1.0f, 0); // yellow
                     glBegin(GL_LINE_STRIP);
                     glVertex2f(ScrX, ScrY);
                     glVertex2f(ScrX2, ScrY2);
@@ -862,6 +845,55 @@ void __fastcall TForm1::DrawObjects(void)
             {
                 const std::vector<std::string>& routes = route->getWaypoints();
 
+                if (routes.size() >= 2) {
+                    const Airport* startAirport = AirportMgr.getAirportByCode(routes.front());
+                    LatLon2XY(startAirport->getLatitude(), startAirport->getLongitude(), ScrX, ScrY);
+
+                    // within viewport
+                    if(computeRegionCode(ScrX, ScrY, 0, 0, (GLsizei)ObjectDisplay->Width, ObjectDisplay->Height) == 0) {
+                        glColor4f(1.0, 0.41, 0.71, 1.0);
+                        DrawAirTrackFriend(ScrX, ScrY);
+                    }
+                    glColor4f(0.0, 1.0, 1.0, 1.0); // Cyan color for route line
+
+                    for (size_t i = 0; i + 1 < routes.size(); ++i) {
+                        std::string first = routes[i];
+                        std::string second = routes[i + 1];
+
+                        const Airport* departureAirport = AirportMgr.getAirportByCode(first);
+                        const Airport* arrivalAirport = AirportMgr.getAirportByCode(second);
+
+                        // latlon to XY
+                        LatLon2XY(departureAirport->getLatitude(), departureAirport->getLongitude(), ScrX, ScrY);
+                        double arrX, arrY;
+                        LatLon2XY(arrivalAirport->getLatitude(), arrivalAirport->getLongitude(), arrX, arrY);
+
+                        std::vector<std::pair<double, double>> intersections = cohenSutherlandClip(ScrX, ScrY, arrX, arrY, 0, 0, (GLsizei)ObjectDisplay->Width, (GLsizei)ObjectDisplay->Height);
+
+                        // 결과 출력
+                        // std::cout << "Intersection points:\n";
+                        // for (const auto& point : intersections) {
+                        //     std::cout << "(" << point.first << ", " << point.second << ")\n";
+                        // }
+
+                        int numIntersections = intersections.size();
+                        if(numIntersections == 2) {
+                            // Draw the route line between the two intersection points
+                            DrawArrowLine(intersections[0].first, intersections[0].second, intersections[1].first, intersections[1].second);
+                        } else if(numIntersections >= 1) {
+                            if(computeRegionCode(ScrX, ScrY, 0, 0, (GLsizei)ObjectDisplay->Width, ObjectDisplay->Height) == 0) {
+                                DrawArrowLine(ScrX, ScrY, intersections[0].first, intersections[0].second);
+                            } else {
+                                DrawArrowLine(intersections[0].first, intersections[0].second, arrX, arrY);
+                            }
+                        } else {
+                            DrawArrowLine(ScrX, ScrY, arrX, arrY);
+                        }
+                    }
+                }
+            
+
+                /*
                 if(!routes.empty())
                 {
                     // std::cout << "Route found for call sign: " << route->getWaypointStr() << std::endl;
@@ -917,6 +949,7 @@ void __fastcall TForm1::DrawObjects(void)
                 } else {
                     // std::cout << "No route found for call sign: " << callSign << std::endl;
                 }
+                */
             }
 
             // draw circle for hooked aircraft
@@ -937,6 +970,12 @@ void __fastcall TForm1::DrawObjects(void)
             AltLabel->Caption = "N/A";
             MsgCntLabel->Caption = "N/A";
             TrkLastUpdateTimeLabel->Caption = "N/A";
+
+            RegNumLabel->Caption = "N/A";
+            OperatorLabel->Caption = "N/A";
+            CountryLabel->Caption = "N/A";
+            TypeLabel->Caption = "N/A";
+            RouteLabel->Caption = "N/A";
         }
     }
 
@@ -996,6 +1035,28 @@ void __fastcall TForm1::DrawObjects(void)
             CpaDistanceValue->Caption = "None";
         }
     }
+
+    // line settings
+    glLineWidth(3.0);
+    glPointSize(4.0);
+    glColor4f(1.0, 1.0, 1.0, 1.0);
+
+    // XY position
+    LatLon2XY(MapCenterLat, MapCenterLon, ScrX, ScrY);
+    ScrX = ObjectDisplay->Width / 2.0;
+    ScrY = ObjectDisplay->Height / 2.0;
+
+    // draw crosshair
+    glBegin(GL_LINE_STRIP);
+    glVertex2f(ScrX - 20.0, ScrY);
+    glVertex2f(ScrX + 20.0, ScrY);
+    glEnd();
+
+    glBegin(GL_LINE_STRIP);
+    glVertex2f(ScrX, ScrY - 20.0);
+    glVertex2f(ScrX, ScrY + 20.0);
+    glEnd();
+
     EXECUTION_TIMER_ELAPSED(elapsed, drawingTime);
     LOG("Viewable aircraft: " + std::to_string(ViewableAircraft) + " Elapsed: " + std::to_string(elapsed) + "ms");
 }
@@ -1246,6 +1307,12 @@ void __fastcall TForm1::HookTrack(int X, int Y, bool CPA_Hook)  // handle track 
             AltLabel->Caption = "N/A";
             MsgCntLabel->Caption = "N/A";
             TrkLastUpdateTimeLabel->Caption = "N/A";
+
+            RegNumLabel->Caption = "N/A";
+            OperatorLabel->Caption = "N/A";
+            CountryLabel->Caption = "N/A";
+            TypeLabel->Caption = "N/A";
+            RouteLabel->Caption = "N/A";
         }
         else
         {
@@ -1736,11 +1803,23 @@ void __fastcall TForm1::RawPlaybackButtonClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 // Constructor for the thread class
-__fastcall TTCPClientRawHandleThread::TTCPClientRawHandleThread(bool value,
+__fastcall DataRecieverThread::DataRecieverThread(bool value,
     TMessageProcessorThread* procThread, double playbackSpeed) : TThread(value), msgProcThread(procThread), PlaybackSpeed(playbackSpeed)
 {
-	printf("[Thread] TTCPClientRawHandleThread created.\n");
 	FreeOnTerminate = true; // Automatically free the thread object after execution
+}
+//---------------------------------------------------------------------------
+// Destructor for the thread class
+__fastcall DataRecieverThread::~DataRecieverThread()
+{
+	// Clean up resources if needed
+}
+//---------------------------------------------------------------------------
+// Constructor for the thread class
+__fastcall TTCPClientRawHandleThread::TTCPClientRawHandleThread(bool value,
+    TMessageProcessorThread* procThread, double playbackSpeed) : DataRecieverThread(value, procThread, playbackSpeed)
+{
+	printf("[Thread] TTCPClientRawHandleThread created.\n");
 }
 //---------------------------------------------------------------------------
 // Destructor for the thread class
@@ -1872,7 +1951,7 @@ void __fastcall TForm1::SBSConnectButtonClick(TObject *Sender)
 //---------------------------------------------------------------------------
 // Constructor for the thread class
 __fastcall TTCPClientSBSHandleThread::TTCPClientSBSHandleThread(bool value, 
-    TMessageProcessorThread* procThread, double playbackSpeed) : TThread(value), msgProcThread(procThread), PlaybackSpeed(playbackSpeed)
+    TMessageProcessorThread* procThread, double playbackSpeed) : DataRecieverThread(value, procThread, playbackSpeed)
 {
 	printf("[Thread] TTCPClientSBSHandleThread created.\n");
 	FreeOnTerminate = true; // Automatically free the thread object after execution
